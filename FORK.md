@@ -13,6 +13,9 @@ A personal fork of [abue-ammar/tinycast](https://github.com/abue-ammar/tinycast)
 - **Search Menu Bar Items can pin items** per app: `⌘.` pins or unpins, `⌥⌘↑/↓` reorders, and pins lead
   the list in a Pinned section.
 - **The in-app updater reads this fork's releases**, so an upstream release never replaces this build.
+- **No CI, releases or community files.** This build is personal: `.github/` (release, website and bot
+  workflows, issue forms) and `.coderabbit.yaml` are removed, and `docs/release.md` describes upstream's
+  process only. Install with the script below.
 
 ## Install or update
 
@@ -25,8 +28,11 @@ OpenSSL 3, add `-legacy` to the `openssl pkcs12` command).
 
 ## Pull in upstream changes
 
+Work happens on `development`; `main` only moves when `development` is merged into it.
+
 ```sh
 git fetch upstream --tags
 git merge --no-ff upstream/main
+# If upstream touched a removed file, keep it removed: git rm -r .github .coderabbit.yaml
 ./Scripts/run-tests.sh && ./Scripts/install-local.sh
 ```
