@@ -6,6 +6,10 @@ changes are in its [releases](https://github.com/abue-ammar/tinycast/releases).
 
 ## [Unreleased]
 
+### Added
+
+- A notice at the top of the README that this is a modified fork, as AGPL-3.0 section 5(a) asks.
+
 ## [1.0.0] - 2026-10-15
 
 Based on upstream v0.11.22-beta.121.
