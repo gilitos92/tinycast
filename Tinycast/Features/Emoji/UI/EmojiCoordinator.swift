@@ -22,8 +22,7 @@ final class EmojiCoordinator {
 
     func pasteEmoji(_ entry: EmojiEntry) {
         frequentEmoji.record(entry.glyph)
-        let previous = windowController.previousApp
-        paletteCoordinator.hidePalette(restoreFocus: false)
+        let previous = paletteCoordinator.hidePaletteForPaste()
         Paster.pasteString(entry.display(tone: settings.emojiSkinTone), previousApp: previous)
     }
 

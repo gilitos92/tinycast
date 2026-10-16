@@ -124,6 +124,13 @@ final class PaletteCoordinator {
         windowController.hide(restoreFocus: restoreFocus)
     }
 
+    /// Hides for a paste and names the app to activate; nil once our own window has taken key back.
+    func hidePaletteForPaste() -> NSRunningApplication? {
+        let app = windowController.pasteActivationApp
+        hidePalette(restoreFocus: app == nil)
+        return app
+    }
+
     /// A row dragged out and landed is a finished errand, so the palette leaves as after a paste.
     func dragLanded() {
         hidePalette(restoreFocus: false)

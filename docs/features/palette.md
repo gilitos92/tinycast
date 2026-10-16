@@ -636,7 +636,9 @@ Handing focus back goes through `NSRunningApplication.activateReclaimingKeyboard
 `activate()`. The panel took key without activating Tinycast, so the app behind it is still active,
 and re-activating an active app is a no-op: the keyboard stayed with the ordered-out panel and a paste's
 ⌘V went nowhere until the user clicked. The helper activates Tinycast first and yields back, which makes
-the hand-off a real activation change.
+the hand-off a real activation change. Pastes hide through `hidePaletteForPaste()`: summoned over one of
+our own windows, it makes that window key again and activates nothing, since activating the app behind a
+note would send the ⌘V there instead.
 
 The same show also mirrors that app into `PaletteState.pasteTarget` (a `PasteTarget`: localized
 name + bundle path), so Clipboard and Emoji can name it — the footer pill reads "Paste to Notes" and

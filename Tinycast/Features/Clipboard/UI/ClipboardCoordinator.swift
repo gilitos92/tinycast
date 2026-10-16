@@ -88,8 +88,7 @@ final class ClipboardCoordinator {
     }
 
     func paste(_ item: ClipboardItem) {
-        let previous = windowController.previousApp
-        paletteCoordinator.hidePalette(restoreFocus: false)
+        let previous = paletteCoordinator.hidePaletteForPaste()
         // A paste promotes the item, so follow it and keep the moved row highlighted.
         if Paster.paste(item, store: clipboardStore, previousApp: previous) {
             selectClip(item)
@@ -100,8 +99,7 @@ final class ClipboardCoordinator {
 
     /// A file's path stays valid text after the file goes, so this never reports it missing.
     func pasteAsPlainText(_ item: ClipboardItem) {
-        let previous = windowController.previousApp
-        paletteCoordinator.hidePalette(restoreFocus: false)
+        let previous = paletteCoordinator.hidePaletteForPaste()
         if Paster.pastePlainText(item, store: clipboardStore, previousApp: previous) {
             selectClip(item)
         }
