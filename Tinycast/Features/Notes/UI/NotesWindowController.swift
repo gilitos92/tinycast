@@ -75,6 +75,15 @@ final class NotesWindowController: NSObject, NSWindowDelegate {
         editor.format(action)
     }
 
+    func showFindBar() {
+        editor?.find(.showFindInterface)
+    }
+
+    func presentActionPanel(_ actionPanel: NoteActionPanelWindowController) {
+        guard let panel, panel.isVisible else { return }
+        actionPanel.show(over: panel)
+    }
+
     func presentHeadingMenu(_ menu: NoteHeadingMenuWindowController) {
         guard let panel, panel.isVisible else { return }
         menu.show(above: panel)
@@ -193,11 +202,16 @@ final class NotesWindowController: NSObject, NSWindowDelegate {
         }
         panel.onMouseDown = { [weak coordinator] in coordinator?.noteWindowMouseDown() }
         panel.onDeleteChord = { [weak coordinator] in coordinator?.handleDeleteShortcut() ?? false }
+        panel.onShortcut = { [weak coordinator] shortcut in
+            guard shortcut == NoteActionCatalog.deleteNote.shortcut else { return false }
+            return coordinator?.handleDeleteNoteShortcut() ?? false
+        }
         panel.commandChords = [
             "n": { [weak coordinator] in coordinator?.createNote() },
             "p": { [weak coordinator] in coordinator?.searchNotes() },
             "o": { [weak coordinator] in coordinator?.openNotesFolder() },
-            "f": { [weak self] in self?.editor?.find(.showFindInterface) },
+            "f": { [weak self] in self?.showFindBar() },
+            "k": { [weak coordinator] in coordinator?.toggleActionPanel() },
             "w": { [weak panel] in panel?.performClose(nil) }
         ]
         panel.optionCommandChords = [

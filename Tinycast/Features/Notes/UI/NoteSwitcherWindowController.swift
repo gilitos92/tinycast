@@ -54,6 +54,10 @@ final class NoteSwitcherWindowController: NSObject, NSWindowDelegate {
         let dismiss: () -> Void = { [weak coordinator] in coordinator?.closeSwitcher() }
         panel.onEscape = dismiss
         panel.onDeleteChord = { [weak coordinator] in coordinator?.handleDeleteShortcut() ?? false }
+        panel.onShortcut = { [weak coordinator] shortcut in
+            guard shortcut == NoteActionCatalog.deleteNote.shortcut else { return false }
+            return coordinator?.handleDeleteShortcut() ?? false
+        }
         // The note window is not key while this is up, so its dismissal chords have to work here.
         panel.commandChords = [
             "n": { [weak coordinator] in coordinator?.createNote() },
