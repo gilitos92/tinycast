@@ -12,6 +12,7 @@ final class EmojiIndex {
         let entry: EmojiEntry
         let score: Int
         let order: Int
+        let isLiteral: Bool
     }
 
     /// An entry's text folded once at load, so a keystroke folds only the query.
@@ -98,8 +99,13 @@ final class EmojiIndex {
                 guard let textScore = Self.textScore(query, terms: terms, folded: foldedEntries[order])
                 else { continue }
                 let score = textScore + (frecency[entry.glyph] ?? 0)
-                scored.append(ScoredEntry(entry: entry, score: score, order: order))
+                scored.append(
+                    ScoredEntry(
+                        entry: entry, score: score, order: order,
+                        isLiteral: textScore >= Self.literalScoreFloor))
             }
+            // Scattered letters are a fallback: "kiss" must not surface Saint Kitts & Nevis.
+            if scored.contains(where: \.isLiteral) { scored.removeAll { !$0.isLiteral } }
             return
                 scored
                 .sorted { $0.score != $1.score ? $0.score > $1.score : $0.order < $1.order }
@@ -113,6 +119,10 @@ final class EmojiIndex {
     private static let frecencyLimit = 100
     /// A complete leading name word: above an exact keyword, below the exact name.
     private static let leadingWordScore = 95_000
+    /// A complete later name word: below a leading one, still above an exact keyword.
+    private static let laterWordScore = 94_900
+    /// The floor of every literal hit; a scattered subsequence scores in the hundreds at most.
+    private static let literalScoreFloor = 40_000
     /// Scattered query words rank below every literal phrase, name-only words first.
     private static let nameWordsScore = 60_000
     private static let mixedWordsScore = 50_000
@@ -134,6 +144,10 @@ final class EmojiIndex {
             !next.isLetter && !next.isNumber
         {
             best = leadingWordScore - nameMatch.candidateLength
+        } else if let nameMatch, nameMatch.tier == .wordStart,
+            endsWord(at: nameMatch.offset + nameMatch.queryLength, in: folded.name.text)
+        {
+            best = laterWordScore - nameMatch.candidateLength
         }
         if !terms.isEmpty {
             let ordered = nameMatch?.tier == .subsequence ? nameMatch?.score ?? 0 : 0
@@ -147,6 +161,11 @@ final class EmojiIndex {
             if match.tier == .exact { break }
         }
         return best
+    }
+
+    private static func endsWord(at offset: Int, in text: String) -> Bool {
+        guard let next = text.dropFirst(offset).first else { return true }
+        return !next.isLetter && !next.isNumber
     }
 
     private static func containsWordStart(_ term: String, in candidate: String) -> Bool {

@@ -119,6 +119,8 @@ private extension MenuPanelCorner {
     func isPrimaryActionEnabled(at selection: Int) -> Bool
     /// False when ⌘K would open on nothing, which hides the Actions half of the footer group.
     func hasActions(at selection: Int) -> Bool
+    /// Names the selection beside the footer's menu button, for rows that show no title of their own.
+    func footerCaption(at selection: Int) -> String?
     /// True while the selected row edits with ↑/↓ itself, which leaves those keys to it.
     func ownsVerticalKeys(at selection: Int) -> Bool
     /// Where ⇥ goes inside the screen, or nil to leave the key to the palette's own ring.
@@ -155,6 +157,7 @@ extension PaletteScreen {
     func hasPrimaryAction(at selection: Int) -> Bool { true }
     func isPrimaryActionEnabled(at selection: Int) -> Bool { true }
     func hasActions(at selection: Int) -> Bool { true }
+    func footerCaption(at selection: Int) -> String? { nil }
     var hidesSearchField: Bool { false }
     var actsWithoutRows: Bool { false }
     var landingSelection: Int { 0 }

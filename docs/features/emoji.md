@@ -35,8 +35,15 @@ are pure.
   subsequence never spans two keywords.
 - **Every word of a multiword query must start a word** in the name or a keyword, in any order. A literal
   phrase outranks words found in the name, which outrank words assembled from name and keywords.
-- **A full name ranks first, then a complete leading name word, then an exact keyword**, then a partial
-  leading word: `birthday` keeps 🎂 first, and `pray` favours the annotation over "prayer beads".
+- **A full name ranks first, then a complete leading name word, then a complete later name word, then
+  an exact keyword**, then a partial leading word: `birthday` keeps 🎂 first, `pray` favours the
+  annotation over "prayer beads", and `kiss` lifts 😘 ("face blowing a kiss") above hearts that only
+  carry a `kisses` keyword.
+- **Scattered letters are a fallback.** Once any entry matches a query literally, subsequence-only hits
+  drop out, so `kiss` no longer surfaces Saint Kitts & Nevis; a query nothing matches literally, like
+  `thmbsup`, still finds 👍.
+- **The footer names the selected emoji** through `PaletteScreen.footerCaption`, beside the menu
+  button, since a grid cell has no room for a name.
 - **Colon-wrapped queries are unwrapped**, so `:+1:` reuses CLDR's `+1` annotation with no alias table.
 - **Other languages add keywords; English always stays.** `AppCore` loads one pack per language in
   `Locale.preferredLanguages`, matched by `Bundle.preferredLocalizations` (`zh-CN` reads `zh-Hans`), so

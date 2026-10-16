@@ -45,6 +45,10 @@ struct EmojiScreen: PaletteScreen {
         return rows.indices.contains(selection) ? rows[selection] : nil
     }
 
+    func footerCaption(at selection: Int) -> String? {
+        entry(at: selection)?.displayName
+    }
+
     func actions(at selection: Int) -> PopoverMenuContent? {
         guard let entry = entry(at: selection) else { return nil }
         let pins = visiblePins

@@ -322,7 +322,8 @@ struct RootPaletteView: View {
                             pillLabel: screen.primaryActionTitle, showActionGroup: showActionGroup,
                             formPrimaryShortcut: screen.hidesSearchField && screen.actsWithoutRows,
                             primaryActionEnabled: screen.isPrimaryActionEnabled(at: sel),
-                            showActions: screen.hasActions(at: sel))
+                            showActions: screen.hasActions(at: sel),
+                            caption: count > 0 ? screen.footerCaption(at: sel) : nil)
                     }
                 }
                 // No title bar, so this thin top margin is the only place left to grab the panel.
@@ -902,12 +903,22 @@ struct RootPaletteView: View {
 
     private func bottomBar(
         pillLabel: String, showActionGroup: Bool, formPrimaryShortcut: Bool,
-        primaryActionEnabled: Bool, showActions: Bool
+        primaryActionEnabled: Bool, showActions: Bool, caption: String?
     ) -> some View {
         // Floating controls, no bar; the edge dissolve ghosts the rows passing beneath.
         HStack(spacing: 0) {
-            appMenuButton
-                .modifier(ExtensionToastSlot(extensions: extensions, showing: vm.mode == .extensionCommand))
+            HStack(spacing: metrics.spacing.sm) {
+                appMenuButton
+                if let caption {
+                    Text(caption)
+                        .font(metrics.typography.bar)
+                        .foregroundStyle(Theme.Colors.textSecondary)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .padding(.trailing, metrics.spacing.sm)
+                }
+            }
+            .modifier(ExtensionToastSlot(extensions: extensions, showing: vm.mode == .extensionCommand))
             if showActionGroup {
                 actionGroup(
                     pillLabel: pillLabel, formPrimaryShortcut: formPrimaryShortcut,

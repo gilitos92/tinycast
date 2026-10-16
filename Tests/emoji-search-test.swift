@@ -106,6 +106,13 @@ struct EmojiSearchTests {
             !index.search("hello missing", frequent: frequent).contains { $0.glyph == "👋" },
             "every multiword term must match")
         expect(index.search("quuxxyz", frequent: frequent).isEmpty, "unmatched query")
+        let kiss = index.search("kiss", frequent: frequent).map(\.glyph)
+        expect(
+            kiss.prefix(12).contains("😘"), "a complete later name word ranks with exact keywords")
+        expect(!kiss.contains("🇰🇳"), "scattered letters drop out once a word matches")
+        expect(
+            index.search("thmbsup", frequent: frequent).contains { $0.glyph == "👍" },
+            "scattered letters still match when no word does")
         expect(
             index.search("  RED\t HEART\n", frequent: frequent)
                 == index.search("red heart", frequent: frequent),
