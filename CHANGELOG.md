@@ -6,6 +6,10 @@ changes are in its [releases](https://github.com/abue-ammar/tinycast/releases).
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-10-15
+
+Based on upstream v0.11.22-beta.121.
+
 ### Fixed
 
 - Signing in to an extension through Raycast's OAuth web redirect (the GitHub extension, for one)
