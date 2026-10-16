@@ -1,5 +1,11 @@
 # Tinycast
 
+> [!NOTE]
+> **This is a modified fork** of [abue-ammar/tinycast](https://github.com/abue-ammar/tinycast),
+> maintained by gilitos92 since 2026-10-15 and licensed, like the original, under the
+> [AGPL-3.0](LICENSE). See [FORK.md](FORK.md) for what was changed and [CHANGELOG.md](CHANGELOG.md)
+> for when. The rest of this README describes the original project.
+
 **A tiny, fully native macOS launcher. One hotkey, everything you reach for all day, under 100 MB of
 RAM.**
 
