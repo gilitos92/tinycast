@@ -1115,6 +1115,8 @@ export async function runFixtures() {
       check("asks for an S256 code", query.response_type === "code" && query.code_challenge_method === "S256", JSON.stringify(query));
       check("uses Raycast's web redirect", query.redirect_uri === "https://raycast.com/redirect?packageName=Extension", String(query.redirect_uri));
       check("the challenge hashes the verifier", result?.challengeMatches === true);
+      const state = (() => { try { return JSON.parse(Buffer.from(query.state, "base64url").toString()); } catch { return null; } })();
+      check("state is base64url JSON for Raycast's redirect page", state?.providerName === "GitHub" && typeof state?.id === "string", String(query.state));
       check("waits for the raycast scheme on a web redirect", signIns[0]?.[1] === "raycast", JSON.stringify(signIns[0]));
       check("waits for com.raycast on an app URI", signIns[1]?.[1] === "com.raycast", JSON.stringify(signIns[1]));
       check("returns the redirect's code", result?.authorizationCode === "code-1", String(result?.authorizationCode));
@@ -1133,7 +1135,7 @@ export async function runFixtures() {
           signIns.push([url, scheme]);
           return url.includes("deny")
             ? "com.raycast:/oauth?error=access_denied&error_description=The%20user%20denied%20access."
-            : "raycast://oauth?code=code-1&package_name=Extension";
+            : `raycast://oauth?code=code-1&package_name=Extension&state=${new URL(url).searchParams.get("state")}`;
         },
         "oauth.getTokens": ([provider]) => oauthTokens.get(provider) ?? null,
         "oauth.setTokens": ([provider, tokens]) => {

@@ -686,7 +686,8 @@ would launch Raycast itself.
 runs on top of it unchanged. The browser step is `ExtensionSignInSession`: providers have Raycast's
 fixed redirect URIs registered, which all end on `raycast://oauth` or `com.raycast:/oauth`, and
 `ASWebAuthenticationSession` intercepts that scheme itself, so an installed Raycast cannot take the
-redirect. Raycast's web redirect page drops `state`, so only a returned `state` is checked. Each
+redirect. Raycast's web redirect page crashes unless `state` is base64url JSON, so the nonce travels
+inside one; only a returned `state` is checked. Each
 provider's token set lives in the extension's data file, beside its preferences, keyed by
 `providerId`. Only a command the user opened can start a sign-in; a background refresh fails until
 then. While the browser is up the palette hides, but Pop to Root Search holds off, because resetting
