@@ -49,7 +49,7 @@ ditto -c -k --keepParent --sequesterRsrc "$APP" "$ZIP"
 mkdir "$OUT/stage"
 cp -R "$APP" "$OUT/stage/"
 ln -s /Applications "$OUT/stage/Applications"
-diskutil image create from "$OUT/stage" --format UDZO --volumeName "Tinycast" "$DMG" > /dev/null
+diskutil image create from "$OUT/stage" --format UDZO --volumeName "Tinycast" "$DMG" > /dev/null 2>&1
 
 NOTES="$OUT/notes.md"
 awk -v head="## [${VERSION}]" '
