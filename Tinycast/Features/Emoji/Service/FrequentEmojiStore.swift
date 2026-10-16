@@ -19,6 +19,7 @@ final class FrequentEmojiStore {
 
     /// Search re-reads `top()` across queries, so this sorts once per tally.
     @ObservationIgnored private var sortedMemo = Memo<Int, [String]>()
+    @ObservationIgnored private var recentMemo = Memo<Int, [String]>()
     private(set) var revision = 0
 
     init(fileURL: URL = AppPaths.applicationSupport().appendingPathComponent("emoji-frequency.json")) {
@@ -63,6 +64,13 @@ final class FrequentEmojiStore {
                 .map(\.glyph)
         }
         return Array(sorted.prefix(n))
+    }
+
+    /// Every remembered glyph, last used first.
+    func recent() -> [String] {
+        recentMemo.value(for: revision) {
+            records.sorted { $0.lastUsed > $1.lastUsed }.map(\.glyph)
+        }
     }
 
     /// A backup can repeat a glyph; only its newest tally is kept, so each takes one grid cell.

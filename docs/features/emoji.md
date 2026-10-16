@@ -55,8 +55,11 @@ are pure.
 - **Search text is folded once, at load.** `EmojiIndex` keeps a `FuzzyMatch.Candidate` for each name
   and keyword, so a keystroke folds only the query. Folding non-ASCII keywords per keystroke made one
   pack cost 5–7× the English-only search.
-- **Usage breaks ties, never tiers.** The top 100 glyphs from `FrequentEmojiStore.top` add a 100…1
-  bonus, and the store's identity and revision are in the search memo key.
+- **A used emoji that matches as a word leads, last used first.** A literal hit on a glyph in
+  `FrequentEmojiStore.recent()` scores above every text tier, so picking 😘 for `kiss` puts it first the
+  next time; a scattered-letter hit never gets the lift. Among the rest, the top 100 glyphs from
+  `FrequentEmojiStore.top` add a 100…1 tie-break bonus. The store's identity and revision are in the
+  search memo key.
 
 ## Rendering
 

@@ -113,6 +113,17 @@ struct EmojiSearchTests {
         expect(
             index.search("thmbsup", frequent: frequent).contains { $0.glyph == "👍" },
             "scattered letters still match when no word does")
+        let picks = FrequentEmojiStore(fileURL: directory.appendingPathComponent("picks.json"))
+        picks.record("😘")
+        expect(index.search("kiss", frequent: picks).first?.glyph == "😘", "a picked emoji leads next time")
+        picks.record("😗")
+        expect(
+            index.search("kiss", frequent: picks).prefix(2).map(\.glyph) == ["😗", "😘"],
+            "picked emoji lead in last-used order")
+        picks.record("🇰🇳")
+        expect(
+            !index.search("kiss", frequent: picks).contains { $0.glyph == "🇰🇳" },
+            "a picked emoji is not lifted by scattered letters")
         expect(
             index.search("  RED\t HEART\n", frequent: frequent)
                 == index.search("red heart", frequent: frequent),
@@ -169,8 +180,8 @@ struct EmojiSearchTests {
             fileURL: directory.appendingPathComponent("ranking-frequency.json"))
         rankingFrequency.record("B")
         expect(
-            ranking.search("alpha", frequent: rankingFrequency).first?.glyph == "A",
-            "usage cannot overtake a stronger text match")
+            ranking.search("alpha", frequent: rankingFrequency).first?.glyph == "B",
+            "a used emoji overtakes a stronger text match")
 
         await ranking.load("A|alpha|ob|0|red\nB|beta|ob|0|red")
         let first = Date(timeIntervalSince1970: 100)
@@ -181,8 +192,8 @@ struct EmojiSearchTests {
         ])
         expect(rankingFrequency.records.map(\.glyph) == ["B", "A"], "history uses recency, not counts")
         expect(
-            ranking.search("red", frequent: rankingFrequency).first?.glyph == "A",
-            "count breaks text ties before recency")
+            ranking.search("red", frequent: rankingFrequency).first?.glyph == "B",
+            "the last used emoji leads, whatever the counts")
         rankingFrequency.record("A")
         expect(rankingFrequency.records.map(\.glyph) == ["A", "B"], "reusing an emoji moves it to the front")
         expect(

@@ -94,11 +94,19 @@ final class EmojiIndex {
                 frequentGlyphs.enumerated().map {
                     ($0.element, Self.frecencyLimit - $0.offset)
                 }, uniquingKeysWith: max)
+            let recency = Dictionary(
+                frequent.recent().enumerated().map { ($0.element, $0.offset) },
+                uniquingKeysWith: min)
             var scored: [ScoredEntry] = []
             for (order, entry) in entries.enumerated() {
                 guard let textScore = Self.textScore(query, terms: terms, folded: foldedEntries[order])
                 else { continue }
-                let score = textScore + (frecency[entry.glyph] ?? 0)
+                let score =
+                    if textScore >= Self.literalScoreFloor, let rank = recency[entry.glyph] {
+                        Self.recentScore - rank
+                    } else {
+                        textScore + (frecency[entry.glyph] ?? 0)
+                    }
                 scored.append(
                     ScoredEntry(
                         entry: entry, score: score, order: order,
@@ -123,6 +131,8 @@ final class EmojiIndex {
     private static let laterWordScore = 94_900
     /// The floor of every literal hit; a scattered subsequence scores in the hundreds at most.
     private static let literalScoreFloor = 40_000
+    /// Above every text tier: a used emoji that matches as a word leads, last used first.
+    private static let recentScore = 1_000_000
     /// Scattered query words rank below every literal phrase, name-only words first.
     private static let nameWordsScore = 60_000
     private static let mixedWordsScore = 50_000
