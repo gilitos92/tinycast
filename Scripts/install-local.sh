@@ -4,7 +4,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 IDENTITY="${IDENTITY:-Tinycast Self-Signed}"
-DERIVED="build/DerivedData"
+# Outside the clone, which lives in iCloud Drive and must not sync half a gigabyte of build output.
+DERIVED="${DERIVED:-$HOME/Library/Developer/Xcode/DerivedData/Tinycast-fork}"
 # The newest upstream tag, so a cached upstream update check never looks newer than this build.
 BASE="$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || echo v0.0.0)"
 VERSION="${VERSION:-$(echo "${BASE#v}" | sed -E 's/-beta\.[0-9]+$//')}"

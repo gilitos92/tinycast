@@ -7,7 +7,8 @@ A personal fork of [abue-ammar/tinycast](https://github.com/abue-ammar/tinycast)
 - **Clipboard History pastes again.** Closing the palette re-activates the app behind it
   (`activateReclaimingKeyboard`), so its ⌘V lands instead of going nowhere until a click.
 - **Emoji search ranks by whole words.** A complete word in an emoji's name outranks keyword-only hits,
-  and scattered-letter matches drop out once a real word matches (`kiss` → 😘, no flags).
+  and scattered-letter matches drop out once a real word matches (`kiss` → 😘, no flags). An emoji you
+  picked before leads whenever it matches as a word, last used first.
 - **The emoji picker's footer names the selected emoji.**
 - **Search Menu Bar Items can pin items** per app: `⌘.` pins or unpins, `⌥⌘↑/↓` reorders, and pins lead
   the list in a Pinned section.
