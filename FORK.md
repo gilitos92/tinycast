@@ -15,12 +15,11 @@ A personal fork of [abue-ammar/tinycast](https://github.com/abue-ammar/tinycast)
   the list in a Pinned section.
 - **Extension OAuth sign-in completes.** Raycast's web redirect page needs `state` as base64url JSON,
   so `PKCEClient` sends it that way instead of random bytes.
-- **Every release is a local build.** The in-app updater reads this fork's GitHub releases, which are
-  never published, so it stays quiet and an upstream release never replaces this build. Updating means
-  running `Scripts/update-from-upstream.sh` (below).
-- **No CI, releases or community files.** This build is personal: `.github/` (release, website and bot
-  workflows, issue forms) and `.coderabbit.yaml` are removed, and `docs/release.md` describes upstream's
-  process only. Install with the script below.
+- **Releases are built here and published by hand.** The in-app updater reads this fork's GitHub
+  releases, so an upstream release never replaces this build. Pulling upstream's changes means running
+  `Scripts/update-from-upstream.sh` (below).
+- **No CI or community files.** `.github/` (release, website and bot workflows, issue forms) and
+  `.coderabbit.yaml` are removed, and `docs/release.md` describes upstream's process only.
 
 ## Install
 
@@ -41,15 +40,30 @@ re-adding Tinycast under System Settings › Privacy & Security › Accessibilit
 
 The fork keeps its own version line, independent of upstream's: `MARKETING_VERSION` in `project.yml`
 is the version the About window shows, and `install-local.sh` stamps it with the commit count as the
-build number. Every release is a local build; nothing is published to GitHub Releases.
+build number.
 
-Tags are `fork-vX.Y.Z`, never `vX.Y.Z`: this clone also fetches upstream's `v*` tags, and a shared name
-would collide. Each [CHANGELOG.md](CHANGELOG.md) entry names the upstream version it is based on.
+Local tags are `fork-vX.Y.Z`: this clone also fetches upstream's `v*` tags, and a shared name would
+collide. The published GitHub release is tagged `vX.Y.Z`, because that is the only shape the updater
+parses; GitHub creates that tag, and it stays clear of upstream while the fork's line runs ahead of
+upstream's 0.x. Each [CHANGELOG.md](CHANGELOG.md) entry names the upstream version it is based on.
 
 To release, follow the release workflow: on a `Release-X.Y.Z` branch from `development`, move the
 changelog's Unreleased entries under the new version, bump `MARKETING_VERSION` (then `xcodegen
 generate`), merge `--no-ff` into `main` and `development`, tag `fork-vX.Y.Z` on `main`, push both
-branches and the tag, and install from `main` with `./Scripts/install-local.sh`.
+branches and the tag, and install from `main` with `./Scripts/install-local.sh`. Then publish it:
+
+```sh
+./Scripts/publish-release.sh
+```
+
+It takes the version from `project.yml`, or as an argument, and refuses to run until
+`fork-v<version>` is pushed. It checks that tag out in a temporary worktree, so any branch works,
+builds it signed with `Tinycast Self-Signed` and runs `verify-signature.sh`. It then packs
+`Tinycast-<version>.zip` for the updater and `Tinycast-<version>.dmg` for people, and publishes both
+as release `v<version>` with that version's changelog section as the notes. The build is not notarized, so a downloaded copy
+needs Gatekeeper's one-time approval; the [README](README.md#install-this-fork) walks through it. The
+updater only installs a build signed by the identity the running copy carries, so every published
+release must be built on a Mac holding this same `Tinycast Self-Signed` key.
 
 ## Branches
 
@@ -94,7 +108,7 @@ there is expected and the fork's side must survive:
 | Emoji name | `Palette/PaletteScreen.swift` (`footerCaption`), `Palette/RootPaletteView.swift` (`bottomBar`), `Emoji/UI/EmojiScreen.swift` |
 | Menu pins | `MenuSearch/**`, `App/AppCore.swift` (`pinnedMenuItems`), `Palette/RootPaletteView.swift` (`movePinnedOrFavorite`) |
 | OAuth state | `Scripts/raycast-runtime/src/api/oauth.js` (rebuild the runtime after a conflict) |
-| Fork setup | `Updates/Model/ReleaseFeed.swift` (`repository`), `Scripts/install-local.sh`, `Scripts/update-from-upstream.sh`, `Scripts/run-tests.sh` (harness file lists) |
+| Fork setup | `Updates/Model/ReleaseFeed.swift` (`repository`), `Scripts/install-local.sh`, `Scripts/publish-release.sh`, `Scripts/update-from-upstream.sh`, `Scripts/run-tests.sh` (harness file lists) |
 
 Paths are under `Tinycast/Features/` unless they start with `Platform/`, `Palette/`, `App/` or
 `Scripts/`. If upstream later ships its own fix for one of these, prefer upstream's and drop the patch.

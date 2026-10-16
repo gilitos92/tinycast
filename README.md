@@ -4,7 +4,28 @@
 > **This is a modified fork** of [abue-ammar/tinycast](https://github.com/abue-ammar/tinycast),
 > maintained by gilitos92 since 2026-10-15 and licensed, like the original, under the
 > [AGPL-3.0](LICENSE). See [FORK.md](FORK.md) for what was changed and [CHANGELOG.md](CHANGELOG.md)
-> for when. The rest of this README describes the original project.
+> for when. Everything after [Install this fork](#install-this-fork) describes the original project.
+
+## Install this fork
+
+Tinycast needs macOS 26 or later on a Mac with Apple silicon.
+
+1. Download the latest `Tinycast-<version>.dmg` from
+   [Releases](https://github.com/gilitos92/tinycast/releases/latest).
+2. Open the DMG and drag **Tinycast** into **Applications**.
+3. Open Tinycast. macOS says it can't verify the app, because this fork isn't notarized by Apple.
+   Click **Done**.
+4. Open **System Settings › Privacy & Security**, scroll down to **Security**, and click
+   **Open Anyway** next to the message about Tinycast. Confirm with Touch ID or your password, then
+   click **Open Anyway** once more.
+
+Instead of steps 3 and 4, you can run this once in Terminal:
+
+```sh
+xattr -dr com.apple.quarantine /Applications/Tinycast.app
+```
+
+You only do this once. Tinycast then updates itself from this fork's releases.
 
 **A tiny, fully native macOS launcher. One hotkey, everything you reach for all day, under 100 MB of
 RAM.**
