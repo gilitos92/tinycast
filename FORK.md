@@ -29,11 +29,25 @@ Needs Xcode, XcodeGen (`brew install xcodegen`) and the `Tinycast Self-Signed` i
 ./Scripts/install-local.sh
 ```
 
-It builds a Release app outside this iCloud-synced folder, stamps it with the newest upstream version so
-a cached upstream update check never looks newer, quits Tinycast, replaces `/Applications/Tinycast.app`
+It builds a Release app outside this iCloud-synced folder, stamps it with the fork's version, quits
+Tinycast, replaces `/Applications/Tinycast.app`
 and relaunches it. Settings, history, notes and pins live in `~/Library` and survive. The signing
 identity stays the same, so Accessibility stays granted; recreating the identity means removing and
 re-adding Tinycast under System Settings › Privacy & Security › Accessibility once.
+
+## Versions and releases
+
+The fork keeps its own version line, independent of upstream's: `MARKETING_VERSION` in `project.yml`
+is the version the About window shows, and `install-local.sh` stamps it with the commit count as the
+build number. Every release is a local build; nothing is published to GitHub Releases.
+
+Tags are `fork-vX.Y.Z`, never `vX.Y.Z`: this clone also fetches upstream's `v*` tags, and a shared name
+would collide. Each [CHANGELOG.md](CHANGELOG.md) entry names the upstream version it is based on.
+
+To release, follow the release workflow: on a `Release-X.Y.Z` branch from `development`, move the
+changelog's Unreleased entries under the new version, bump `MARKETING_VERSION` (then `xcodegen
+generate`), merge `--no-ff` into `main` and `development`, tag `fork-vX.Y.Z` on `main`, push both
+branches and the tag, and install from `main` with `./Scripts/install-local.sh`.
 
 ## Branches
 

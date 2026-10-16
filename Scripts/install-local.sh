@@ -6,9 +6,8 @@ cd "$(dirname "$0")/.."
 IDENTITY="${IDENTITY:-Tinycast Self-Signed}"
 # Outside the clone, which lives in iCloud Drive and must not sync half a gigabyte of build output.
 DERIVED="${DERIVED:-$HOME/Library/Developer/Xcode/DerivedData/Tinycast-fork}"
-# The newest upstream tag, so a cached upstream update check never looks newer than this build.
-BASE="$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || echo v0.0.0)"
-VERSION="${VERSION:-$(echo "${BASE#v}" | sed -E 's/-beta\.[0-9]+$//')}"
+# The fork's own version, bumped in project.yml at each release; the build number counts commits.
+VERSION="${VERSION:-$(sed -nE 's/^ *MARKETING_VERSION: *"?([0-9.]+)"?.*/\1/p' project.yml | head -1)}"
 BUILD="$(git rev-list --count HEAD)"
 
 echo "▸ Building Tinycast ${VERSION} (${BUILD})"
