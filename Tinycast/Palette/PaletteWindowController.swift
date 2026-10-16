@@ -57,6 +57,11 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
         InjectionTarget.behindPalette(ownWindow: previousOwnWindow, app: previousApp)
     }
 
+    /// What a paste re-activates; nil over one of our own windows, which takes key back on hide.
+    var pasteActivationApp: NSRunningApplication? {
+        previousOwnWindow?.isVisible == true ? nil : previousApp
+    }
+
     func show() {
         Signposts.interval("PaletteWindowController.show") {
             isPoppedToRoot = false

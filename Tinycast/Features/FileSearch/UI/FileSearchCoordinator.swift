@@ -136,8 +136,7 @@ final class FileSearchCoordinator {
 
     /// Into whichever app the palette was summoned over, which is what the row's title names.
     func pasteFile(_ result: FileSearchResult) {
-        let previous = windowController.previousApp
-        paletteCoordinator.hidePalette(restoreFocus: false)
+        let previous = paletteCoordinator.hidePaletteForPaste()
         Paster.pasteFile(result.url, previousApp: previous)
     }
 
