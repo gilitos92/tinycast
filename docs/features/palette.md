@@ -632,6 +632,12 @@ non-activating panel holds the keyboard even while another app is active. So `hi
 over another app the keyboard returns to that app, and a paste or the next keystroke cannot land in an
 open note. Summoned from a note, the note takes key back, so a paste lands there.
 
+Handing focus back goes through `NSRunningApplication.activateReclaimingKeyboard()`, never a bare
+`activate()`. The panel took key without activating Tinycast, so the app behind it is still active,
+and re-activating an active app is a no-op: the keyboard stayed with the ordered-out panel and a paste's
+⌘V went nowhere until the user clicked. The helper activates Tinycast first and yields back, which makes
+the hand-off a real activation change.
+
 The same show also mirrors that app into `PaletteState.pasteTarget` (a `PasteTarget`: localized
 name + bundle path), so Clipboard and Emoji can name it — the footer pill reads "Paste to Notes" and
 the ⌘K paste rows carry the app's icon. Resolved once per summon, never per render, and deliberately

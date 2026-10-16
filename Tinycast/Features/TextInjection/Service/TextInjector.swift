@@ -867,7 +867,7 @@ final class TextInjector {
 
     private func activate(_ targetApp: NSRunningApplication?) {
         guard targetApp?.isTerminated == false else { return }
-        targetApp?.activate()
+        targetApp?.activateReclaimingKeyboard()
     }
 
     private func selection(in target: InjectionTarget?) -> String {

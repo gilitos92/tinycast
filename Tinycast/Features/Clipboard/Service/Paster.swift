@@ -18,7 +18,7 @@ enum Paster {
     ) -> Bool {
         guard write(item, store: store) else { return false }
         store.promote(item)
-        previousApp?.activate()
+        previousApp?.activateReclaimingKeyboard()
         DispatchQueue.main.asyncAfter(deadline: .now() + activationDelay) {
             postCommandV()
         }
@@ -57,7 +57,7 @@ enum Paster {
     @MainActor
     static func pasteString(_ text: String, previousApp: NSRunningApplication?) {
         writeString(text)
-        previousApp?.activate()
+        previousApp?.activateReclaimingKeyboard()
         DispatchQueue.main.asyncAfter(deadline: .now() + activationDelay) {
             postCommandV()
         }
@@ -66,7 +66,7 @@ enum Paster {
     @MainActor
     static func pasteFile(_ url: URL, previousApp: NSRunningApplication?) {
         PasteboardFiles.write(url, to: .general)
-        previousApp?.activate()
+        previousApp?.activateReclaimingKeyboard()
         DispatchQueue.main.asyncAfter(deadline: .now() + activationDelay) {
             postCommandV()
         }

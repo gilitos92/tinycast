@@ -219,7 +219,7 @@ final class ExtensionHostBridge: ExtensionHostAPI {
                 if method == "paste" { context?.closeMainWindow(clearRootSearch: false) }
                 writeFileToPasteboard(path, concealed: method == "copy" && concealed)
                 guard method == "paste" else { return nil }
-                target?.activate()
+                target?.activateReclaimingKeyboard()
                 Task { @MainActor in
                     try? await Task.sleep(for: .milliseconds(350))
                     guard !Task.isCancelled else { return }

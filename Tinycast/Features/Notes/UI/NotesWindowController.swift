@@ -40,7 +40,7 @@ final class NotesWindowController: NSObject, NSWindowDelegate {
             NSApp.activate(ignoringOtherApps: true)
             previousOwnWindow.makeKeyAndOrderFront(nil)
         } else {
-            previousApp?.activate()
+            previousApp?.activateReclaimingKeyboard()
         }
     }
 

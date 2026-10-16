@@ -31,7 +31,7 @@ enum InjectionTarget {
         switch self {
         case .external(let app):
             guard !app.isTerminated else { return }
-            app.activate()
+            app.activateReclaimingKeyboard()
         case .ownEditor(let editor):
             editor.window?.makeFirstResponder(editor)
         }

@@ -87,7 +87,7 @@ final class MenuSearchCoordinator {
             return
         }
         paletteCoordinator.hidePalette(restoreFocus: false)
-        app.activate()
+        app.activateReclaimingKeyboard()
         let application = AXMenuAccess.application(for: app.processIdentifier)
         guard
             let leaf = AXMenuAccess.resolveLeaf(

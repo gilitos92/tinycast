@@ -112,7 +112,7 @@ FILE_INDEX="$FS/Service/FileIndex.swift $FS/Service/FileIndexSnapshot.swift $FS/
 run file-search-test       $FS/Model/*.swift
 run file-index-test        $FS/Model/*.swift $FILE_INDEX
 run file-search-session-test $FS/Model/*.swift $FS/Service/FileSearchSession.swift $FILE_INDEX
-run menu-search-test       $L/SearchRelevance.swift \
+run menu-search-test       $L/SearchRelevance.swift Tinycast/Platform/AppPaths.swift \
                            Tinycast/Features/MenuSearch/Model/*.swift \
                            Tinycast/Features/MenuSearch/Service/*.swift
 run window-switch-test     $L/SearchRelevance.swift \
@@ -182,6 +182,7 @@ run clipboard-text-test    Tinycast/Features/Clipboard/Model/*.swift Tinycast/Pl
                            Tinycast/Features/Clipboard/Service/ClipboardTextWorker.swift \
                            Tinycast/Platform/ProcessExit.swift
 run pasteboard-test        Tinycast/Platform/PasteboardFiles.swift \
+                           Tinycast/Platform/KeyboardHandoff.swift \
                            Tinycast/Features/Clipboard/Model/ClipboardStore.swift \
                            Tinycast/Platform/Images/ImageDerivative.swift \
                            Tinycast/Features/Clipboard/Model/ClipboardFilter.swift \
@@ -315,6 +316,7 @@ run dictation-field-test   Tinycast/Features/Dictation/Model/DictationModel.swif
                            Tinycast/Features/Snippets/Model/*.swift \
                            Tinycast/Platform/AccessibilityText.swift \
                            Tinycast/Platform/PasteboardFiles.swift \
+                           Tinycast/Platform/KeyboardHandoff.swift \
                            Tinycast/Platform/Appearance.swift Tinycast/DesignSystem/Theme.swift
 run dictation-volume-test  Tinycast/Features/Dictation/Model/DictationVolumeSnapshot.swift \
                            Tinycast/Features/Dictation/Service/DictationAudioDucker.swift \
@@ -479,6 +481,7 @@ run quicklink-coordinator-test Tinycast/Features/Quicklinks/Model/Quicklink.swif
                            Tinycast/Features/Snippets/Model/Snippet.swift \
                            Tinycast/Features/Snippets/Model/SnippetTemplateEngine.swift
 run slow snippets-test     Tinycast/Platform/NotificationToken.swift \
+                           Tinycast/Platform/KeyboardHandoff.swift \
                            Tinycast/Platform/HealthTicker.swift \
                            Tinycast/Platform/AccessibilityText.swift \
                            Tinycast/Features/Snippets/Model/*.swift \

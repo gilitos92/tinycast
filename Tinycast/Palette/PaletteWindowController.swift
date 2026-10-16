@@ -174,7 +174,7 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
         if let own = previousOwnWindow, own.isVisible {
             own.makeKeyAndOrderFront(nil)
         } else {
-            previousApp?.activate()
+            previousApp?.activateReclaimingKeyboard()
         }
     }
 
