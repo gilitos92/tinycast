@@ -97,6 +97,15 @@ chip, or not at all.
 The list decodes exactly one `NSImage` — the frozen app's icon — and every row paints it, so a
 4,000-row snapshot never costs more than one bitmap.
 
+## Pins
+
+`⌘.` (or ⌘K › Pin Menu Item) pins the selected row for the frozen app. `PinnedMenuItemStore` keeps
+each app's pins as `MenuSearchItem.id`s keyed by bundle ID in `menu-search-pinned.json`, in the order
+the user set; `⌥⌘↑/↓` reorders them. While browsing, `MenuSearchSession` moves the pins the snapshot
+holds into a leading `Pinned` section through `MenuSearchPins.split`, so each row still appears once
+and the selection index stays `session.filtered`. A pin whose submenu the cold walk could not read is
+skipped, not forgotten. A query ranks pins with every other row and only marks them with a pin glyph.
+
 ## Where it is reachable from
 
 The launcher, as `CommandID.searchMenuItems`, so it takes aliases and a global shortcut like any

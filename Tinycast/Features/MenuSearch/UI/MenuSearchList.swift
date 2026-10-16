@@ -7,6 +7,9 @@ struct MenuSearchList: View {
     let targetName: String
     /// Ranked rows arrive in score order, so they read as one Results run instead of menus.
     let isSearching: Bool
+    /// Leading rows that are pins, drawn as their own section while browsing.
+    let pinnedCount: Int
+    let pinnedIDs: Set<MenuSearchItem.ID>
     let iconURL: URL?
     let iconStamp: Int
     let selectedID: MenuSearchItem.ID?
@@ -31,6 +34,10 @@ struct MenuSearchList: View {
         }
         var sections: [Section] = []
         var start = items.startIndex
+        if pinnedCount > 0 {
+            start = min(pinnedCount, items.count)
+            sections.append(Section(id: 0, title: "Pinned", items: items[..<start]))
+        }
         while start < items.endIndex {
             let menu = items[start].menu
             var end = items.index(after: start)
@@ -59,7 +66,8 @@ struct MenuSearchList: View {
                         ForEach(section.items) { item in
                             MenuSearchRow(
                                 item: item, path: isSearching ? item.menuPath : item.submenuPath,
-                                icon: icon, selected: item.id == selectedID
+                                icon: icon, isPinned: pinnedIDs.contains(item.id),
+                                selected: item.id == selectedID
                             )
                             .selectionFrame(item.id == selectedID)
                             .contentShape(Rectangle())
@@ -96,6 +104,7 @@ private struct MenuSearchRow: View {
     let item: MenuSearchItem
     let path: String
     let icon: NSImage?
+    let isPinned: Bool
     let selected: Bool
     @State private var hovered = false
 
@@ -128,6 +137,12 @@ private struct MenuSearchRow: View {
                     .truncationMode(.middle)
             }
             Spacer(minLength: metrics.spacing.md)
+            if isPinned {
+                Image(systemName: "pin.fill")
+                    .font(metrics.typography.rowTrailing)
+                    .foregroundStyle(.secondary)
+                    .accessibilityLabel("Pinned")
+            }
             let caps = item.shortcut?.keycaps ?? []
             if !caps.isEmpty {
                 HStack(spacing: metrics.spacing.xxs) {

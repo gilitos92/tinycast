@@ -57,6 +57,7 @@ final class AppCore {
     let emojiIndex = EmojiIndex()
     let frequentEmoji = FrequentEmojiStore()
     let pinnedEmoji = PinnedEmojiStore()
+    let pinnedMenuItems = PinnedMenuItemStore()
     let runningApps = RunningAppsMonitor()
     let palette = PaletteState()
     let fileIndexer = FileIndexer()
@@ -206,8 +207,8 @@ final class AppCore {
         palette: palette, paletteCoordinator: paletteCoordinator,
         windowController: windowController, core: self)
     @ObservationIgnored private(set) lazy var menuSearchCoordinator = MenuSearchCoordinator(
-        settings: settings, appIndex: appIndex, session: menuSearch, palette: palette,
-        paletteCoordinator: paletteCoordinator, core: self)
+        settings: settings, appIndex: appIndex, session: menuSearch, pins: pinnedMenuItems,
+        palette: palette, paletteCoordinator: paletteCoordinator, core: self)
     @ObservationIgnored private(set) lazy var windowSwitchCoordinator = WindowSwitchCoordinator(
         settings: settings, appIndex: appIndex, session: windowSwitch, palette: palette,
         paletteCoordinator: paletteCoordinator, core: self)
@@ -282,6 +283,9 @@ final class AppCore {
             observeEffectiveAppearance()
             pinnedEmoji.onPersistenceFailure = { [weak self] in
                 self?.showMessage("Couldn't save Emoji & Symbols pins", tone: .danger)
+            }
+            pinnedMenuItems.onPersistenceFailure = { [weak self] in
+                self?.showMessage("Couldn't save menu item pins", tone: .danger)
             }
 
             appIndex.start(settings: settings)

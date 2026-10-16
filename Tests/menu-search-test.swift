@@ -60,6 +60,34 @@ struct MenuSearchTests {
         return [tree("", children: leaf)]
     }
 
+    static func sessionPins() {
+        let session = MenuSearchSession(walkOperation: { _, _ in [] })
+        let open = item("Open"), save = item("Save"), copy = item("Copy", parents: ["Edit"])
+        session.setPinned([copy.id, "File\u{1F}Gone"])
+        session.present(target: .searchable(name: "App"), snapshot: [open, save, copy])
+        expect(session.filtered == [copy, open, save], "pins lead the browse list, once each")
+        expect(session.pinnedCount == 1, "a pin the snapshot lacks is skipped")
+        session.filter("save")
+        expect(session.pinnedCount == 0, "a query ranks pins with everything else")
+        session.reset()
+        expect(session.pinnedIDs.isEmpty, "reset forgets the open app's pins")
+    }
+
+    static func pinStore() {
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("menu-pins-\(UUID().uuidString).json")
+        defer { try? FileManager.default.removeItem(at: url) }
+        let store = PinnedMenuItemStore(fileURL: url)
+        store.toggle("a", for: "app")
+        store.toggle("b", for: "app")
+        store.toggle("c", for: "app")
+        store.move("c", by: -1, among: ["a", "c"], for: "app")
+        expect(store.pins(for: "app") == ["c", "b", "a"], "a move swaps with the visible neighbour")
+        store.toggle("b", for: "app")
+        expect(PinnedMenuItemStore(fileURL: url).pins(for: "app") == ["c", "a"], "pins persist")
+        expect(store.pins(for: "other").isEmpty, "pins are per app")
+    }
+
     static func main() async {
         eligibility()
         pathModel()
@@ -79,6 +107,8 @@ struct MenuSearchTests {
         shortcutDecoding()
         await sessionWalk()
         await sessionWalkSuperseded()
+        sessionPins()
+        pinStore()
 
         print(failures == 0 ? "Menu search tests passed" : "\(failures) menu search tests failed")
         exit(failures == 0 ? 0 : 1)

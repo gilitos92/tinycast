@@ -5,6 +5,7 @@ final class MenuSearchCoordinator {
     private let settings: AppSettings
     private let appIndex: AppIndex
     private let session: MenuSearchSession
+    private let pins: PinnedMenuItemStore
     private let palette: PaletteState
     private let paletteCoordinator: PaletteCoordinator
     private unowned let core: AppCore
@@ -16,11 +17,13 @@ final class MenuSearchCoordinator {
 
     init(
         settings: AppSettings, appIndex: AppIndex, session: MenuSearchSession,
-        palette: PaletteState, paletteCoordinator: PaletteCoordinator, core: AppCore
+        pins: PinnedMenuItemStore, palette: PaletteState, paletteCoordinator: PaletteCoordinator,
+        core: AppCore
     ) {
         self.settings = settings
         self.appIndex = appIndex
         self.session = session
+        self.pins = pins
         self.palette = palette
         self.paletteCoordinator = paletteCoordinator
         self.core = core
@@ -50,6 +53,7 @@ final class MenuSearchCoordinator {
         }
         let app = paletteCoordinator.targetApp
         frozenApp = app
+        session.setPinned(pins.pins(for: app?.bundleIdentifier))
         if let url = app?.bundleURL {
             frozenIconURL = url
             frozenIconStamp = FileIconStamp.value(for: url)
@@ -98,6 +102,38 @@ final class MenuSearchCoordinator {
             Task { await self.reportPressFailure(item: item) }
             return
         }
+    }
+
+    func isPinned(_ item: MenuSearchItem) -> Bool {
+        session.pinnedIDs.contains(item.id)
+    }
+
+    /// The position among the pins the open menu shows, which is what ⌥⌘↑/↓ walks.
+    func pinPosition(of item: MenuSearchItem) -> Int? {
+        session.isSearching ? nil : session.filtered.prefix(session.pinnedCount).firstIndex(of: item)
+    }
+
+    var visiblePinCount: Int { session.pinnedCount }
+
+    func togglePin(_ item: MenuSearchItem) {
+        guard let bundleID = frozenApp?.bundleIdentifier else { return }
+        pins.toggle(item.id, for: bundleID)
+        session.setPinned(pins.pins(for: bundleID))
+        follow(item)
+    }
+
+    func movePin(_ item: MenuSearchItem, by delta: Int) {
+        guard let bundleID = frozenApp?.bundleIdentifier, pinPosition(of: item) != nil else { return }
+        let visible = session.filtered.prefix(session.pinnedCount).map(\.id)
+        pins.move(item.id, by: delta, among: visible, for: bundleID)
+        session.setPinned(pins.pins(for: bundleID))
+        follow(item)
+    }
+
+    /// Pinning moves the row, so the highlight goes with it instead of landing on a neighbour.
+    private func follow(_ item: MenuSearchItem) {
+        guard let index = session.filtered.firstIndex(of: item) else { return }
+        palette.selection = index
     }
 
     // MARK: - Reporting

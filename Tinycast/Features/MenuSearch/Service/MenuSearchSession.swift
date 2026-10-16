@@ -18,6 +18,10 @@ final class MenuSearchSession {
     private(set) var filtered: [MenuSearchItem] = []
     /// Whether a query narrows the rows, so the list groups by menu only while browsing.
     private(set) var isSearching = false
+    /// The open app's pins, in the order the user set; the rows lead the list while browsing.
+    private(set) var pinnedIDs: [MenuSearchItem.ID] = []
+    /// How many leading `filtered` rows are pins, so the list can draw them as their own section.
+    private(set) var pinnedCount = 0
 
     private var query = ""
     private var revision = 0
@@ -84,7 +88,14 @@ final class MenuSearchSession {
         filtered = []
         query = ""
         isSearching = false
+        pinnedIDs = []
+        pinnedCount = 0
         state = .idle
+    }
+
+    func setPinned(_ ids: [MenuSearchItem.ID]) {
+        pinnedIDs = ids
+        applyQuery()
     }
 
     func filter(_ query: String) {
@@ -96,9 +107,12 @@ final class MenuSearchSession {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         isSearching = !trimmed.isEmpty
         guard isSearching else {
-            filtered = snapshot
+            let split = MenuSearchPins.split(snapshot, pinned: pinnedIDs)
+            filtered = split.pinned + split.rest
+            pinnedCount = split.pinned.count
             return
         }
+        pinnedCount = 0
         filtered = MenuSearchQuery.rank(snapshot, for: trimmed)
     }
 }

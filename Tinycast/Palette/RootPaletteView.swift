@@ -1324,6 +1324,10 @@ struct RootPaletteView: View {
             if launcher.moveFavorite(delta, at: selection(in: launcher)), menuOpen { closeMenus() }
             return .handled
         }
+        if let menuSearch = screen as? MenuSearchScreen {
+            menuSearch.movePin(delta, at: selection(in: menuSearch))
+            return .handled
+        }
         guard let emoji = screen as? EmojiScreen else { return nil }
         emoji.movePin(delta, at: selection(in: emoji))
         return .handled
