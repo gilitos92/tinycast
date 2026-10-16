@@ -730,6 +730,16 @@ struct NotesEditorTests {
                 with: keyDown("B", keyCode: kVK_ANSI_B, modifiers: [.command, .shift], in: editor.window))
                 && editor.textView.string == "> code")
         undo.undo()
+        editor.textView.setSelectedRange(NSRange(location: 0, length: 4))
+        check(
+            "⌘K is left to the window's Actions panel",
+            !editor.textView.performKeyEquivalent(with: keyDown("k", keyCode: kVK_ANSI_K, in: editor.window))
+                && editor.textView.string == "code")
+        check(
+            "⌘L links the selection, as in Raycast",
+            editor.textView.performKeyEquivalent(with: keyDown("l", keyCode: kVK_ANSI_L, in: editor.window))
+                && editor.textView.string.hasPrefix("[code]("))
+        undo.undo()
 
         editor.coordinator.setRendersMarkdown(false)
         let literal = editor.textView.string

@@ -6,16 +6,13 @@ struct NoteHeadingMenuView: View {
 
     private struct Row {
         let level: Int
-        let title: String
-        let shortcut: String
+        let item: NoteActionItem
     }
 
-    private static let rows = [
-        Row(level: 1, title: "Heading 1", shortcut: "⌥⌘1"),
-        Row(level: 2, title: "Heading 2", shortcut: "⌥⌘2"),
-        Row(level: 3, title: "Heading 3", shortcut: "⌥⌘3"),
-        Row(level: 0, title: "Text", shortcut: "⌥⌘0")
-    ]
+    private static let rows = NoteActionCatalog.headings.compactMap { item -> Row? in
+        guard case .format(.setHeading(let level)) = item.action else { return nil }
+        return Row(level: level, item: item)
+    }
 
     private var surface: RoundedRectangle {
         RoundedRectangle(cornerRadius: Theme.Radius.menuPanel, style: .continuous)
@@ -25,7 +22,7 @@ struct NoteHeadingMenuView: View {
         VStack(spacing: Theme.Size.menuRowSpacing) {
             ForEach(Self.rows, id: \.level) { row in
                 NoteHeadingMenuRow(
-                    title: row.title, shortcut: row.shortcut,
+                    title: row.item.title, shortcut: row.item.shortcut?.label ?? "",
                     isCurrent: notes.formatting.headingLevel == row.level
                 ) {
                     notes.chooseHeading(row.level)

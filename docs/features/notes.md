@@ -112,17 +112,20 @@ failed flush retains the draft for retry.
 - **Create Note** creates and selects one unique Untitled note, including from an empty channel.
 - **Search Notes** shows the same panel with the switcher open and its search field focused.
 
-Command-N creates, Command-P opens or refocuses the switcher, Command-O opens the Notes folder, and
-Command-F opens AppKit's find bar in the active note. Escape closes the find bar or switcher before
-hiding; Command-W and the red traffic light both hide directly. Hiding
+Command-N creates, Command-P opens or refocuses the switcher, Command-O opens the Notes folder,
+Command-F opens AppKit's find bar in the active note, and Command-K opens the Actions panel.
+Control-X moves the open note to Trash, after the same confirmation as the switcher's Trash. Escape
+closes the Actions panel, find bar or switcher before hiding; Command-W and the red traffic light both hide directly. Hiding
 restores the prior external application or Tinycast window and flushes without delaying the order-out —
 but only while that app is still the frontmost one, so closing a window the user has already left behind
 leaves them in whatever app they moved to.
 Command-Q is bound to nothing app-wide, so no chord over Notes can quit Tinycast.
 
-Both windows are one `NotesPanel`, a non-activating floating panel that owns the Escape rule and reads
-⌘⌫. They differ only in style mask and in the `commandChords` their controller installs: the note window
-claims ⌘N, ⌘P, ⌘O, ⌘F and ⌘W, and the switcher reads ⌘N plus ⌘W and ⌘P as dismissals.
+Every Notes window is one `NotesPanel`, a non-activating floating panel that owns the Escape rule and
+reads ⌘⌫. They differ only in style mask and in the chords their controller installs: the note window
+claims ⌘N, ⌘P, ⌘O, ⌘F, ⌘K and ⌘W, and the switcher reads ⌘N plus ⌘W and ⌘P as dismissals. `onShortcut`
+sees a modified key before any view does, which is how ⌃X reaches the note and switcher windows past a
+focused field, and how the Actions panel takes every chord it lists.
 
 AppKit draws the note window's chrome. Its 52-point title bar holds the traffic lights, the centred
 active title, and one frosted capsule of Create, Browse, and Open Folder. The title is drawn, not
@@ -139,10 +142,34 @@ metadata by recency; a nonempty query searches titles and literal bodies after a
 debounce. Results are capped at 200, and generation checks prevent superseded search or selection work
 from publishing.
 
-Arrow keys and Return do not intercept an inline rename. Command-Delete moves the selected row to Trash
-only while the switcher is not renaming; in the editor and title field it remains a native text command.
+Arrow keys and Return do not intercept an inline rename. Command-Delete and Control-X move the selected
+row to Trash only while the switcher is not renaming; in the editor and title field it remains a native text command.
 After confirmation, Trash chooses its successor from the current visible ordering. Each row exposes
 VoiceOver actions to activate, rename, and move the actual note title to Trash.
+
+## Actions panel
+
+⌘K opens Raycast's action panel for the note window: a searchable list of everything the window can
+do, each row with its shortcut. `Model/NoteActionCatalog` is the only list. It names each action, its
+symbol and its `NoteShortcut`, and `items(in:)` picks the rows for the current state:
+
+- Create Note, Browse Notes, Find in Note and Open Notes Folder.
+- **Format**: Heading 1 to 3, Text, Bold, Italic, Strikethrough, Inline Code, Link, Code Block, Quote,
+  Numbered, Bullet and Task List, and Expand or Collapse Formatting Bar. Only while Render Markdown is
+  on, and the bar row only while Show Formatting Bar is.
+- Move Window to Top Right and Close Window.
+- Delete Note (⌃X), last and in red.
+
+With no note open, only Create, Browse, Open Notes Folder and the window rows remain. The editor's
+chords, the formatting bar's tooltips and the heading menu all read the same catalog, so a listed
+shortcut is always the one that works.
+
+The panel is a borderless child window hung from the note window's bottom-right corner, growing up,
+so a 180pt note can still hold it. Its search field sits at the bottom, as in Raycast; typing filters
+by fuzzy title match and keeps display order. ↑ and ↓ move the selection, Return runs it, and Escape,
+⌘K or a click elsewhere closes it. Every chord a row lists also works with the panel open and runs
+that row. Formatting, Find and the window rows return focus to the editor; the others hand key to
+the window they open.
 
 ## Editor
 
@@ -240,13 +267,14 @@ reaches autosave.
 | ⇧⌘X | strikethrough |
 | ⌥⌘C | code block |
 | ⇧⌘B | quote |
-| ⌘K | link |
+| ⌘L | link |
 | ⇧⌘7, ⇧⌘8, ⇧⌘9 | numbered, bullet, task list |
 | ⌥⌘1, ⌥⌘2, ⌥⌘3 | heading 1, 2, 3 |
 | ⌥⌘0 | plain paragraph |
 
-Digits match by key code. The text view sees these chords before `NotesPanel` claims its own, and none
-collide. In a note, ⌘E replaces AppKit's Use Selection for Find.
+Digits match by key code. The text view reads these chords from `NoteActionCatalog.formatItems` and
+sees them before `NotesPanel` claims its own, and none collide. ⌘K is left to the Actions panel, so
+Link is ⌘L, as in Raycast. In a note, ⌘E replaces AppKit's Use Selection for Find.
 
 AppKit still owns typing, selection, Cut, Copy, Paste, Select All, Find, marked text, emoji, combining
 characters and undo grouping. The editor handles ⌘Z and ⇧⌘Z while focused, including in the
@@ -322,7 +350,8 @@ file was removed, loading chooses a remaining note, or the empty state when none
 ## Verification
 
 `Tests/notes-test.swift` compiles the shipped Notes model and service sources with the real fuzzy
-matcher. It covers repository safety, unique-name claiming, derived titles, search, selection,
+matcher. It covers repository safety, unique-name claiming, derived titles, search, selection, the Actions
+catalog,
 autosave, external reloads, draft preservation, empty collections, switcher interaction, and
 cancellation, plus the Markdown parser, every edit plan, the formatting each selection reports and the
 reveal policy.

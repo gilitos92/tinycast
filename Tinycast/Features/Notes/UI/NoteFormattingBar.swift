@@ -4,49 +4,32 @@ struct NoteFormattingBar: View {
     @Environment(NotesCoordinator.self) private var notes
 
     private struct Control: Sendable {
-        let symbol: String
-        let title: String
-        let shortcut: String
-        let action: NoteEditAction
+        let item: NoteActionItem
         let isLit: @Sendable (NoteFormatting) -> Bool
+
+        init(_ item: NoteActionItem, isLit: @escaping @Sendable (NoteFormatting) -> Bool) {
+            self.item = item
+            self.isLit = isLit
+        }
     }
 
     private static let styles = [
-        Control(symbol: "bold", title: "Bold", shortcut: "⌘B", action: .toggleInline(.bold)) {
-            $0.inlineStyles.contains(.bold)
-        },
-        Control(symbol: "italic", title: "Italic", shortcut: "⌘I", action: .toggleInline(.italic)) {
-            $0.inlineStyles.contains(.italic)
-        },
-        Control(
-            symbol: "strikethrough", title: "Strikethrough", shortcut: "⇧⌘X",
-            action: .toggleInline(.strikethrough)
-        ) { $0.inlineStyles.contains(.strikethrough) },
-        Control(
-            symbol: "chevron.left.forwardslash.chevron.right", title: "Inline Code", shortcut: "⌘E",
-            action: .toggleInline(.code)
-        ) { $0.inlineStyles.contains(.code) },
-        Control(symbol: "link", title: "Link", shortcut: "⌘K", action: .toggleLink) { $0.isLink }
+        Control(NoteActionCatalog.bold) { $0.inlineStyles.contains(.bold) },
+        Control(NoteActionCatalog.italic) { $0.inlineStyles.contains(.italic) },
+        Control(NoteActionCatalog.strikethrough) { $0.inlineStyles.contains(.strikethrough) },
+        Control(NoteActionCatalog.inlineCode) { $0.inlineStyles.contains(.code) },
+        Control(NoteActionCatalog.link) { $0.isLink }
     ]
 
     private static let blocks = [
-        Control(symbol: "curlybraces", title: "Code Block", shortcut: "⌥⌘C", action: .toggleCodeBlock) {
-            $0.isCodeBlock
-        },
-        Control(symbol: "text.quote", title: "Quote", shortcut: "⇧⌘B", action: .toggleQuote) { $0.isQuote }
+        Control(NoteActionCatalog.codeBlock) { $0.isCodeBlock },
+        Control(NoteActionCatalog.quote) { $0.isQuote }
     ]
 
     private static let lists = [
-        Control(symbol: "list.number", title: "Numbered List", shortcut: "⇧⌘7", action: .toggleList(.ordered))
-        {
-            $0.list == .ordered
-        },
-        Control(symbol: "list.bullet", title: "Bullet List", shortcut: "⇧⌘8", action: .toggleList(.bullet)) {
-            $0.list == .bullet
-        },
-        Control(symbol: "checklist", title: "Task List", shortcut: "⇧⌘9", action: .toggleList(.task)) {
-            $0.list == .task
-        }
+        Control(NoteActionCatalog.numberedList) { $0.list == .ordered },
+        Control(NoteActionCatalog.bulletList) { $0.list == .bullet },
+        Control(NoteActionCatalog.taskList) { $0.list == .task }
     ]
 
     var body: some View {
@@ -79,15 +62,16 @@ struct NoteFormattingBar: View {
 
     private func group(_ controls: [Control], _ formatting: NoteFormatting) -> some View {
         HStack(spacing: Theme.Spacing.xxs) {
-            ForEach(controls, id: \.title) { control in
+            ForEach(controls, id: \.item.title) { control in
+                let item = control.item
                 let lit = control.isLit(formatting)
-                BarButton(isSelected: lit, isCompact: true, action: { notes.format(control.action) }) {
-                    NoteBarGlyph(name: control.symbol)
+                BarButton(isSelected: lit, isCompact: true, action: { notes.perform(item.action) }) {
+                    NoteBarGlyph(name: item.symbol)
                 }
                 .focusable(false)
-                .accessibilityLabel(control.title)
+                .accessibilityLabel(item.title)
                 .accessibilityAddTraits(lit ? .isSelected : [])
-                .tooltip("\(control.title)  \(control.shortcut)")
+                .tooltip("\(item.title)  \(item.shortcut?.label ?? "")")
             }
         }
     }

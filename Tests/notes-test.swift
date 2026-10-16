@@ -15,6 +15,7 @@ struct NotesTests {
         testRevealPolicy()
         try testUnnamedNotesTitleThemselves()
         testSwitcherInteraction()
+        testActionCatalog()
         testWindowPlacement()
         try await testStoreCollectionAndAutosave()
         try await testStoreRefreshesExternalEdits()
@@ -208,6 +209,59 @@ struct NotesTests {
         let renamed = try repository.rename(id: unnamed.id, title: "Shopping")
         let afterRename = try require((try repository.list()).first { $0.id == renamed })
         check("naming a note retires its derived title", afterRename.firstLine == nil)
+    }
+
+    private static func testActionCatalog() {
+        let full = NoteActionCatalog.Context(
+            hasActiveNote: true, rendersMarkdown: true, showsFormattingBar: true,
+            isFormattingBarExpanded: false)
+        let items = NoteActionCatalog.items(in: full)
+        let shortcuts = items.compactMap(\.shortcut)
+        check("no two actions share a chord", Set(shortcuts).count == shortcuts.count)
+        check(
+            "⌘K is left to the panel itself",
+            !shortcuts.contains(NoteActionCatalog.toggleActionPanel))
+        check(
+            "⌃X deletes the open note",
+            NoteActionCatalog.item(for: NoteShortcut(.control, .letter("x")), in: items)?.action
+                == .deleteNote)
+        check(
+            "⌘L makes a link, as in Raycast",
+            NoteActionCatalog.item(for: NoteShortcut(.command, .letter("l")), in: items)?.action
+                == .format(.toggleLink))
+        check("delete reads its own keycaps", NoteActionCatalog.deleteNote.shortcut?.label == "⌃X")
+        check(
+            "keycaps follow the menu modifier order",
+            NoteShortcut([.command, .shift, .option, .control], .digit(1)).glyphs
+                == ["⌃", "⌥", "⇧", "⌘", "1"])
+        check(
+            "every format chord is listed in the panel",
+            NoteActionCatalog.formatItems.allSatisfy { format in items.contains(format) })
+        check(
+            "the formatting bar row names what it will do",
+            items.contains { $0.title == "Expand Formatting Bar" })
+
+        var empty = full
+        empty.hasActiveNote = false
+        let emptyItems = NoteActionCatalog.items(in: empty)
+        check(
+            "with no note, only collection and window actions remain",
+            emptyItems.map(\.action)
+                == [.createNote, .browseNotes, .openNotesFolder, .moveToTopRight, .closeWindow])
+
+        var literal = full
+        literal.rendersMarkdown = false
+        check(
+            "the literal editor lists no formatting",
+            !NoteActionCatalog.items(in: literal).contains { $0.section == .format })
+
+        let filtered = NoteActionCatalog.matching(items, query: "  delete ")
+        check("search filters by title", filtered.map(\.action) == [.deleteNote])
+        check("an empty search lists everything", NoteActionCatalog.matching(items, query: " ") == items)
+        check(
+            "search keeps display order",
+            NoteActionCatalog.matching(items, query: "list").map(\.title)
+                == ["Numbered List", "Bullet List", "Task List"])
     }
 
     private static func testSwitcherInteraction() {

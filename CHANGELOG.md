@@ -6,6 +6,16 @@ changes are in its [releases](https://github.com/abue-ammar/tinycast/releases).
 
 ## [Unreleased]
 
+### Added
+
+- Notes has Raycast's action panel: ⌘K opens a searchable list of everything the note window can
+  do, each with its shortcut.
+- ⌃X moves the open note to Trash, or the selected note in the note list, after a confirmation.
+
+### Changed
+
+- Link in Notes moved from ⌘K to ⌘L, matching Raycast.
+
 ## [1.0.2] - 2026-10-15
 
 Based on upstream v0.11.22-beta.121.

@@ -159,51 +159,12 @@ final class NoteTextView: NSTextView, InjectableTextView {
         return true
     }
 
-    /// The digit key codes, stated here so a local chord needs no Carbon.
-    private enum DigitKey {
-        static let zero: UInt16 = 0x1D
-        static let one: UInt16 = 0x12
-        static let two: UInt16 = 0x13
-        static let three: UInt16 = 0x14
-        static let seven: UInt16 = 0x1A
-        static let eight: UInt16 = 0x1C
-        static let nine: UInt16 = 0x19
-    }
-
-    /// Digits match by key code, since shifted and optioned digits vary by keyboard layout.
     private static func chord(for event: NSEvent) -> NoteEditAction? {
-        let modifiers = event.modifierFlags.intersection([.command, .shift, .option, .control])
-        let key = event.charactersIgnoringModifiers?.lowercased()
-        switch modifiers {
-        case [.command]:
-            switch key {
-            case "b": return .toggleInline(.bold)
-            case "i": return .toggleInline(.italic)
-            case "e": return .toggleInline(.code)
-            case "k": return .toggleLink
-            default: return nil
-            }
-        case [.command, .shift]:
-            if key == "x" { return .toggleInline(.strikethrough) }
-            if key == "b" { return .toggleQuote }
-            switch event.keyCode {
-            case DigitKey.seven: return .toggleList(.ordered)
-            case DigitKey.eight: return .toggleList(.bullet)
-            case DigitKey.nine: return .toggleList(.task)
-            default: return nil
-            }
-        case [.command, .option]:
-            if key == "c" { return .toggleCodeBlock }
-            switch event.keyCode {
-            case DigitKey.one: return .setHeading(level: 1)
-            case DigitKey.two: return .setHeading(level: 2)
-            case DigitKey.three: return .setHeading(level: 3)
-            case DigitKey.zero: return .setHeading(level: 0)
-            default: return nil
-            }
-        default:
-            return nil
-        }
+        guard let shortcut = NoteShortcut(event: event),
+            case .format(let action)? = NoteActionCatalog.item(
+                for: shortcut, in: NoteActionCatalog.formatItems)?.action
+        else { return nil }
+        return action
     }
 
     // MARK: - Mouse
@@ -320,5 +281,30 @@ final class NoteTextView: NSTextView, InjectableTextView {
     override func viewDidChangeEffectiveAppearance() {
         super.viewDidChangeEffectiveAppearance()
         editing?.appearanceChanged()
+    }
+}
+
+extension NoteShortcut {
+    /// The digit key codes, stated here so a local chord needs no Carbon.
+    private static let digitKeyCodes: [UInt16: Int] = [
+        0x1D: 0, 0x12: 1, 0x13: 2, 0x14: 3, 0x15: 4, 0x17: 5, 0x16: 6, 0x1A: 7, 0x1C: 8, 0x19: 9
+    ]
+
+    /// Digits match by key code, since shifted and optioned digits vary by keyboard layout.
+    init?(event: NSEvent) {
+        let flags = event.modifierFlags
+        var modifiers: Modifiers = []
+        if flags.contains(.control) { modifiers.insert(.control) }
+        if flags.contains(.option) { modifiers.insert(.option) }
+        if flags.contains(.shift) { modifiers.insert(.shift) }
+        if flags.contains(.command) { modifiers.insert(.command) }
+        guard !modifiers.isEmpty else { return nil }
+        if let digit = Self.digitKeyCodes[event.keyCode] {
+            self.init(modifiers, .digit(digit))
+        } else if let letter = event.charactersIgnoringModifiers?.lowercased().first {
+            self.init(modifiers, .letter(letter))
+        } else {
+            return nil
+        }
     }
 }

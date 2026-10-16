@@ -19,6 +19,8 @@ final class NotesCoordinator {
         coordinator: self)
     @ObservationIgnored private lazy var headingMenuController = NoteHeadingMenuWindowController(
         coordinator: self)
+    @ObservationIgnored private lazy var actionPanelController = NoteActionPanelWindowController(
+        coordinator: self)
     @ObservationIgnored private var loadTask: Task<Void, Never>?
     @ObservationIgnored private var issueTask: Task<Void, Never>?
     @ObservationIgnored private var operationTask: Task<Void, Never>?
@@ -33,6 +35,12 @@ final class NotesCoordinator {
     private(set) var formatting = NoteFormatting.plain
     private(set) var isFormattingBarExpanded: Bool
     private(set) var isHeadingMenuPresented = false
+    private(set) var isActionPanelPresented = false
+    private(set) var actionPanelSelection = 0
+    private(set) var actionPanelFocusRevision = 0
+    var actionPanelQuery = "" {
+        didSet { actionPanelSelection = 0 }
+    }
     /// A press closes the menu before its button fires, so the button must not reopen it.
     @ObservationIgnored private var headingMenuWasOpenAtPress = false
     /// The heading button in the panel's flipped content space, reported by the bar as it lays out.
@@ -94,6 +102,18 @@ final class NotesCoordinator {
             set: { [weak self] in self?.switcherRename.updateDraft($0) })
     }
 
+    var actionPanelContext: NoteActionCatalog.Context {
+        NoteActionCatalog.Context(
+            hasActiveNote: hasActiveNote,
+            rendersMarkdown: rendersMarkdown,
+            showsFormattingBar: showsFormattingBar,
+            isFormattingBarExpanded: isFormattingBarExpanded)
+    }
+
+    var visibleActionItems: [NoteActionItem] {
+        NoteActionCatalog.matching(NoteActionCatalog.items(in: actionPanelContext), query: actionPanelQuery)
+    }
+
     func applyEnabled() {
         enablementGeneration &+= 1
         let generation = enablementGeneration
@@ -105,6 +125,7 @@ final class NotesCoordinator {
         loadTask = nil
         operationTask?.cancel()
         closeHeadingMenu()
+        closeActionPanel(focusEditor: false)
         closeSwitcher(focusEditor: false)
         windowController.hide(restoreFocus: false)
         Task { [weak self] in
@@ -139,6 +160,7 @@ final class NotesCoordinator {
     func openSwitcher() {
         guard settings.notesEnabled, store.isLoaded else { return }
         closeHeadingMenu()
+        closeActionPanel(focusEditor: false)
         if isSwitcherPresented {
             switcherFocusRevision &+= 1
             return
@@ -161,6 +183,7 @@ final class NotesCoordinator {
 
     func hide() {
         closeHeadingMenu()
+        closeActionPanel(focusEditor: false)
         presentationGeneration &+= 1
         pendingPresentation = nil
         closeSwitcher(focusEditor: false)
@@ -171,6 +194,8 @@ final class NotesCoordinator {
     func handleEscape() {
         if isHeadingMenuPresented {
             closeHeadingMenu()
+        } else if isActionPanelPresented {
+            closeActionPanel()
         } else if isSwitcherPresented {
             closeSwitcher()
         } else {
@@ -272,6 +297,84 @@ final class NotesCoordinator {
         return true
     }
 
+    /// ⌃X: the switcher's selected row while it is up, otherwise the open note.
+    func handleDeleteNoteShortcut() -> Bool {
+        if isSwitcherPresented { return handleDeleteShortcut() }
+        guard let id = store.activeID else { return false }
+        closeActionPanel(focusEditor: false)
+        trash(id)
+        return true
+    }
+
+    func toggleActionPanel() {
+        guard settings.notesEnabled, store.isLoaded else { return }
+        guard !isActionPanelPresented else { return closeActionPanel() }
+        closeHeadingMenu()
+        closeSwitcher(focusEditor: false)
+        actionPanelQuery = ""
+        isActionPanelPresented = true
+        actionPanelFocusRevision &+= 1
+        windowController.presentActionPanel(actionPanelController)
+    }
+
+    func closeActionPanel(focusEditor: Bool = true) {
+        guard isActionPanelPresented else { return }
+        isActionPanelPresented = false
+        actionPanelController.hide()
+        actionPanelQuery = ""
+        if focusEditor { windowController.focusEditor() }
+    }
+
+    func moveActionPanelSelection(by offset: Int) {
+        let count = visibleActionItems.count
+        guard count > 0 else { return }
+        actionPanelSelection = (actionPanelSelection + offset + count) % count
+    }
+
+    func selectActionPanelItem(at index: Int) {
+        guard visibleActionItems.indices.contains(index) else { return }
+        actionPanelSelection = index
+    }
+
+    func performSelectedAction() {
+        let items = visibleActionItems
+        guard items.indices.contains(actionPanelSelection) else { return }
+        perform(items[actionPanelSelection].action)
+    }
+
+    /// The panel takes every chord it lists, so pressing one there is the same as choosing its row.
+    func handleActionPanelShortcut(_ shortcut: NoteShortcut) -> Bool {
+        if shortcut == NoteActionCatalog.toggleActionPanel {
+            closeActionPanel()
+            return true
+        }
+        let items = NoteActionCatalog.items(in: actionPanelContext)
+        guard let item = NoteActionCatalog.item(for: shortcut, in: items) else { return false }
+        perform(item.action)
+        return true
+    }
+
+    func perform(_ action: NoteAction) {
+        // The rest key a window of their own, which a deferred editor refocus would steal back.
+        let returnsToEditor =
+            switch action {
+            case .findInNote, .format, .toggleFormattingBar, .moveToTopRight: true
+            default: false
+            }
+        closeActionPanel(focusEditor: returnsToEditor)
+        switch action {
+        case .createNote: createNote()
+        case .browseNotes: searchNotes()
+        case .findInNote: windowController.showFindBar()
+        case .openNotesFolder: openNotesFolder()
+        case .format(let edit): format(edit)
+        case .toggleFormattingBar: toggleFormattingBar()
+        case .moveToTopRight: moveToTopRight()
+        case .closeWindow: hide()
+        case .deleteNote: _ = handleDeleteNoteShortcut()
+        }
+    }
+
     func trash(_ id: NoteID) {
         guard let title = store.summaries.first(where: { $0.id == id })?.displayTitle else { return }
         runOperation { [weak self] generation in
@@ -327,6 +430,7 @@ final class NotesCoordinator {
 
     func updateSource(_ source: String) {
         closeHeadingMenu()
+        closeActionPanel(focusEditor: false)
         store.updateSource(source)
     }
 
@@ -395,6 +499,7 @@ final class NotesCoordinator {
     private func request(_ presentation: Presentation) {
         guard settings.notesEnabled else { return }
         closeHeadingMenu()
+        closeActionPanel(focusEditor: false)
         pendingPresentation = presentation
         guard loadTask == nil else { return }
         let generation = enablementGeneration

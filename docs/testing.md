@@ -351,6 +351,7 @@ swiftc -O -swift-version 6 Tinycast/Platform/{Signposts,Appearance,NotificationT
     Tinycast/Features/TextInjection/Service/InjectableTextView.swift \
     $N/Model/{NoteDocument,NoteMarkdown,NoteMarkdownParser,NoteInlineScanner}.swift \
     $N/Model/{NoteEditPlan,NoteEditAction,NoteFormatting,NoteMarkdownEditing,NoteRevealPolicy}.swift \
+    $N/Model/NoteAction.swift Tinycast/Features/Launcher/Model/SearchRelevance.swift \
     $N/UI/{NoteMarkdownTypography,NoteBlockDecoration,NoteMarkdownStyler,NoteMarkdownRenderer}.swift \
     $N/UI/{NoteCheckboxGeometry,NoteBlockLayoutFragment,NoteLayoutFragmentProvider}.swift \
     $N/UI/{NoteTextViewEditing,NoteTextView,NoteEditorView}.swift \
@@ -685,6 +686,14 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
   its inset in both states, the heading menu still opens in full above the capsule, and widening the
   window brings the count back
 - ⌥⌘C and ⇧⌘B toggle a code block and a quote; with Render Markdown off they do nothing special
+- ⌘L links the selection; ⌘K opens Actions at the note's bottom-right with its search field focused,
+  even in a 180pt note, and ⌘K, Escape or a click elsewhere closes it
+- Actions lists every row in `notes.md`, each with its shortcut; Format disappears with Render Markdown
+  off, and an empty collection leaves Create, Browse, Open Notes Folder and the window rows
+- In Actions, typing filters, ↑/↓ and hover move the selection, Return runs it, and pressing a listed
+  chord (⌘B, ⌥⌘1, ⌃X, ⌘W…) runs that row; formatting applies to the caret's selection in the editor
+- ⌃X in the editor asks to move the note to Trash and does so on confirm; in the switcher it trashes
+  the selected row, and while renaming it does nothing
 - Settings > Notes > Show Formatting Bar is disabled while Render Markdown is off, Settings search for
   "formatting" lands on it, and a backup round trip restores it
 - With VoiceOver, the bar reads as "Formatting" with each button named, lit ones as selected, the round

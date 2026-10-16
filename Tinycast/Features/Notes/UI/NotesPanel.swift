@@ -12,6 +12,8 @@ final class NotesPanel: NSPanel {
     var optionCommandChords: [String: () -> Void] = [:]
     /// False for the heading menu, so the editor keeps its caret, reveal and chords beneath it.
     var acceptsKey = true
+    /// Offered every modified key before any view, so a focused field cannot swallow the chord.
+    var onShortcut: ((NoteShortcut) -> Bool)?
     var onMouseDown: (() -> Void)?
 
     private let acceptsMain: Bool
@@ -58,6 +60,11 @@ final class NotesPanel: NSPanel {
 
     override func sendEvent(_ event: NSEvent) {
         if event.type == .leftMouseDown || event.type == .rightMouseDown { onMouseDown?() }
+        if event.type == .keyDown, !event.isARepeat, let onShortcut,
+            let shortcut = NoteShortcut(event: event), onShortcut(shortcut)
+        {
+            return
+        }
         // The search and rename fields own Escape while they are editing.
         guard event.type == .keyDown, Int(event.keyCode) == kVK_Escape, !event.isARepeat,
             (firstResponder as? NSTextView)?.isFieldEditor != true

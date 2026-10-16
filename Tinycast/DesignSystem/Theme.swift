@@ -75,6 +75,8 @@ enum Theme {
         static let noteSwitcher = CGSize(width: 300, height: 240)
         static let noteSwitcherEmptyHeight: CGFloat = 96
         static let noteSwitcherDrop: CGFloat = 56
+        /// The ⌘K panel; the height is a ceiling, and the window shrinks to its rows below it.
+        static let noteActionPanel = CGSize(width: 320, height: 360)
         /// Fixed like every menu's width; the height is exactly four heading rows.
         static let noteHeadingMenu = CGSize(
             width: 220, height: menuRowHeight * 4 + menuRowSpacing * 3 + Spacing.sm * 2)
