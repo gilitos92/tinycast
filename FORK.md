@@ -5,34 +5,84 @@ A personal fork of [abue-ammar/tinycast](https://github.com/abue-ammar/tinycast)
 ## What differs from upstream
 
 - **Clipboard History pastes again.** Closing the palette re-activates the app behind it
-  (`activateReclaimingKeyboard`), so its ⌘V lands instead of going nowhere until a click.
+  (`activateReclaimingKeyboard`), so its ⌘V lands instead of going nowhere until a click. Opened over a
+  Tinycast note, a paste goes to the note.
 - **Emoji search ranks by whole words.** A complete word in an emoji's name outranks keyword-only hits,
   and scattered-letter matches drop out once a real word matches (`kiss` → 😘, no flags). An emoji you
   picked before leads whenever it matches as a word, last used first.
 - **The emoji picker's footer names the selected emoji.**
 - **Search Menu Bar Items can pin items** per app: `⌘.` pins or unpins, `⌥⌘↑/↓` reorders, and pins lead
   the list in a Pinned section.
-- **The in-app updater reads this fork's releases**, so an upstream release never replaces this build.
+- **Every release is a local build.** The in-app updater reads this fork's GitHub releases, which are
+  never published, so it stays quiet and an upstream release never replaces this build. Updating means
+  running `Scripts/update-from-upstream.sh` (below).
 - **No CI, releases or community files.** This build is personal: `.github/` (release, website and bot
   workflows, issue forms) and `.coderabbit.yaml` are removed, and `docs/release.md` describes upstream's
   process only. Install with the script below.
 
-## Install or update
+## Install
 
-Needs Xcode and the `Tinycast Self-Signed` identity ([docs/signing.md](docs/signing.md) §1; with
-OpenSSL 3, add `-legacy` to the `openssl pkcs12` command).
+Needs Xcode, XcodeGen (`brew install xcodegen`) and the `Tinycast Self-Signed` identity
+([docs/signing.md](docs/signing.md) §1; with OpenSSL 3, add `-legacy` to the `openssl pkcs12` command).
 
 ```sh
 ./Scripts/install-local.sh
 ```
 
-## Pull in upstream changes
+It builds a Release app outside this iCloud-synced folder, stamps it with the newest upstream version so
+a cached upstream update check never looks newer, quits Tinycast, replaces `/Applications/Tinycast.app`
+and relaunches it. Settings, history, notes and pins live in `~/Library` and survive. The signing
+identity stays the same, so Accessibility stays granted; recreating the identity means removing and
+re-adding Tinycast under System Settings › Privacy & Security › Accessibility once.
 
-Work happens on `development`; `main` only moves when `development` is merged into it.
+## Branches
+
+- `development` is where every change lands, fork patches and upstream merges alike.
+- `main` only moves by merging `development` into it with `--no-ff`, once a build has been used a while.
+- `upstream/main` is abue-ammar/tinycast; nothing is ever pushed there.
+
+## Update from upstream
 
 ```sh
-git fetch upstream --tags
-git merge --no-ff upstream/main
-# If upstream touched a removed file, keep it removed: git rm -r .github .coderabbit.yaml
-./Scripts/run-tests.sh && ./Scripts/install-local.sh
+git switch development
+./Scripts/update-from-upstream.sh
 ```
+
+The script:
+
+1. Refuses to run off `development` or with uncommitted changes.
+2. Fetches `upstream` and stops if there is nothing new.
+3. Merges `upstream/main` with `--no-ff`. Upstream edits to files the fork deleted (`.github/`,
+   `.coderabbit.yaml`) are dropped automatically.
+4. Regenerates `Tinycast.xcodeproj` with XcodeGen, so files upstream added or removed are built.
+5. Runs `./Scripts/run-tests.sh`, then `./Scripts/install-local.sh`, then pushes `development`.
+
+### When the merge stops on a conflict
+
+Any other conflict means upstream changed code a fork patch also changed. The script lists the files
+and stops. Resolve each one keeping both intents, then:
+
+```sh
+git add <files>
+git commit --no-edit
+./Scripts/update-from-upstream.sh --finish
+```
+
+`--finish` skips the merge and runs steps 4–5. The fork patches live in these files, so a conflict
+there is expected and the fork's side must survive:
+
+| Patch | Files |
+| --- | --- |
+| Keyboard hand-back | `Platform/KeyboardHandoff.swift`, `Clipboard/Service/Paster.swift`, `Palette/PaletteWindowController.swift`, `Palette/PaletteCoordinator.swift`, every `activateReclaimingKeyboard()` caller |
+| Emoji ranking | `Emoji/Service/EmojiIndex.swift`, `Emoji/Service/FrequentEmojiStore.swift` |
+| Emoji name | `Palette/PaletteScreen.swift` (`footerCaption`), `Palette/RootPaletteView.swift` (`bottomBar`), `Emoji/UI/EmojiScreen.swift` |
+| Menu pins | `MenuSearch/**`, `App/AppCore.swift` (`pinnedMenuItems`), `Palette/RootPaletteView.swift` (`movePinnedOrFavorite`) |
+| Fork setup | `Updates/Model/ReleaseFeed.swift` (`repository`), `Scripts/install-local.sh`, `Scripts/update-from-upstream.sh`, `Scripts/run-tests.sh` (harness file lists) |
+
+Paths are under `Tinycast/Features/` unless they start with `Platform/`, `Palette/`, `App/` or
+`Scripts/`. If upstream later ships its own fix for one of these, prefer upstream's and drop the patch.
+
+### Check that it worked
+
+The tests cover emoji ranking and menu pins. Paste focus is only checked by hand: copy something, open a
+text field in any app, paste from Clipboard History, then repeat from inside a Tinycast note.
