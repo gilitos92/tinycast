@@ -349,6 +349,13 @@ we did not write is `.rejected`, because events would then edit a document we ca
 The fallback deletes the keyword first, waits for deletion to settle, then inserts the expansion.
 Short single-line expansions of at most 100 characters use Unicode keyboard events.
 
+**An app that is still active is never re-activated before delivery.** Re-activating it ends an open
+Finder rename, and the expansion then lands on the folder as a `.textClipping`. A keyword typed there
+needs nothing more, since that app holds the keyboard. An interactive delivery from the palette leaves
+the app active but without a key window: it drops typed keys yet still answers ⌘V from its Edit menu.
+So its fallback pastes even short text, and the keyboard goes back through
+`returnKeyboardUnlessClaimed()` only after the text is in, before any cursor movement.
+
 **A Unicode keystroke carries at most four UTF-16 units.** Blink stores one key event's text in a
 fixed `WebKeyboardEvent::kTextLengthCap` array, so a Chromium target — Brave, Chrome, Electron, VS
 Code, Slack — silently drops everything past the fourth unit of a single event. `UnicodeTypingChunk`

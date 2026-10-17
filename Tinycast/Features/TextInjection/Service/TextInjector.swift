@@ -286,7 +286,10 @@ final class TextInjector {
         onFailed: @escaping @MainActor () -> Void = {}
     ) {
         let targetApp = target?.externalApp
-        activate(targetApp)
+        // Re-activating an active app ends a Finder rename; it gets the keys back after delivery.
+        let targetIsActive = targetApp?.isActive == true
+        let reclaimsKeyboardAfter = automaticGeneration == nil && targetIsActive
+        if !targetIsActive { activate(targetApp) }
         if let automaticGeneration {
             guard expansionIsAllowed(generation: automaticGeneration, target: target) else { return }
         } else {
@@ -317,6 +320,8 @@ final class TextInjector {
                 expectedKeyword: expectedKeyword,
                 keywordLength: keywordLength,
                 automaticGeneration: automaticGeneration,
+                activatesTarget: !targetIsActive,
+                reclaimsKeyboardAfter: reclaimsKeyboardAfter,
                 completion: completion)
         }
     }
@@ -369,13 +374,20 @@ final class TextInjector {
         expectedKeyword: String?,
         keywordLength: Int,
         automaticGeneration: AutomaticGeneration?,
+        activatesTarget: Bool,
+        reclaimsKeyboardAfter: Bool,
         completion: DeliveryCompletion
     ) async {
-        defer { completion.settle() }
+        var owesKeyboard = reclaimsKeyboardAfter
+        defer {
+            if owesKeyboard { targetApp?.returnKeyboardUnlessClaimed() }
+            completion.settle()
+        }
         guard finishPendingPasteboardOwnership(),
             await activateAndWaitForTarget(
                 targetApp,
-                automaticGeneration: automaticGeneration),
+                automaticGeneration: automaticGeneration,
+                activating: activatesTarget),
             deliveryIsAllowed(
                 automaticGeneration: automaticGeneration,
                 targetApp: targetApp,
@@ -399,12 +411,21 @@ final class TextInjector {
                 injected.text,
                 keywordLength: keywordLength,
                 targetApp: targetApp,
-                automaticGeneration: automaticGeneration)
+                automaticGeneration: automaticGeneration,
+                pastesShortText: reclaimsKeyboardAfter)
         else { return }
 
         guard let offset = injected.cursorOffsetFromEnd, offset > 0 else {
             completion.confirm()
             return
+        }
+        if owesKeyboard {
+            owesKeyboard = false
+            targetApp?.returnKeyboardUnlessClaimed()
+            guard
+                await activateAndWaitForTarget(
+                    targetApp, automaticGeneration: automaticGeneration, activating: false)
+            else { return }
         }
         for index in 0..<offset {
             guard
@@ -427,10 +448,13 @@ final class TextInjector {
         _ text: String,
         keywordLength: Int,
         targetApp: NSRunningApplication?,
-        automaticGeneration: AutomaticGeneration?
+        automaticGeneration: AutomaticGeneration?,
+        pastesShortText: Bool
     ) async -> Bool {
+        // A target behind our panel has no key window: it drops typed keys but still answers ⌘V.
         let isShortSingleLine =
-            text.count <= 100
+            !pastesShortText
+            && text.count <= 100
             && !text.contains("\n")
             && !text.contains("\r")
         if isShortSingleLine {
@@ -600,7 +624,8 @@ final class TextInjector {
 
     private func activateAndWaitForTarget(
         _ targetApp: NSRunningApplication?,
-        automaticGeneration: AutomaticGeneration?
+        automaticGeneration: AutomaticGeneration?,
+        activating: Bool = true
     ) async -> Bool {
         guard let targetApp else {
             return deliveryIsAllowed(
@@ -608,7 +633,7 @@ final class TextInjector {
                 targetApp: nil,
                 promptForInteractiveAccessibility: false)
         }
-        activate(targetApp)
+        if activating { activate(targetApp) }
         for _ in 0..<50 {
             if targetApp.isActive,
                 NSWorkspace.shared.frontmostApplication?.processIdentifier
