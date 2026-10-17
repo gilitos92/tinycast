@@ -86,8 +86,7 @@ enum Paster {
     @MainActor
     static func handBackKeyboard(to app: NSRunningApplication) {
         DispatchQueue.main.asyncAfter(deadline: .now() + directPostDelay + handBackDelay) {
-            guard app.isActive, NSApp.keyWindow == nil else { return }
-            app.activateReclaimingKeyboard()
+            app.returnKeyboardUnlessClaimed()
         }
     }
 
