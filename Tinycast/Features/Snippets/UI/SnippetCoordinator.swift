@@ -369,6 +369,7 @@ final class SnippetCoordinator {
                     target: target)
                 return
             }
+            if automaticGeneration != nil { await injector.returnKeyboardAfterPrompt(to: target) }
 
             let result = SnippetTemplateEngine.expand(
                 record,

@@ -897,6 +897,12 @@ final class TextInjector {
         targetApp?.returnKeyboardUnlessClaimed()
     }
 
+    /// The argument dialog held key, so even a keyword's target has lost the keyboard to it.
+    func returnKeyboardAfterPrompt(to target: InjectionTarget?) async {
+        guard let app = target?.externalApp else { return }
+        await returnKeyboard(to: app)
+    }
+
     private func activate(_ targetApp: NSRunningApplication?) {
         guard targetApp?.isTerminated == false else { return }
         targetApp?.activateReclaimingKeyboard()
