@@ -289,6 +289,7 @@ final class TextInjector {
         expectedKeyword: String?,
         keywordLength: Int,
         automaticGeneration: AutomaticGeneration?,
+        keyboardBorrowed: Bool = false,
         isValid: @escaping @MainActor () -> Bool = { true },
         onDelivered: @escaping @MainActor () -> Void = {},
         onFailed: @escaping @MainActor () -> Void = {}
@@ -323,6 +324,7 @@ final class TextInjector {
                 return
             }
             var owesKeyboard = reclaimsKeyboardAfter
+            if keyboardBorrowed, targetIsActive { await self.returnKeyboard(to: targetApp) }
             await self.performDelivery(
                 injected,
                 targetApp: targetApp,
@@ -900,12 +902,6 @@ final class TextInjector {
     private func returnKeyboard(to targetApp: NSRunningApplication?) async {
         guard await wait(for: Self.handBackSettle) else { return }
         targetApp?.returnKeyboardUnlessClaimed()
-    }
-
-    /// The argument dialog held key, so even a keyword's target has lost the keyboard to it.
-    func returnKeyboardAfterPrompt(to target: InjectionTarget?) async {
-        guard let app = target?.externalApp else { return }
-        await returnKeyboard(to: app)
     }
 
     private func activate(_ targetApp: NSRunningApplication?) {

@@ -373,7 +373,6 @@ final class SnippetCoordinator {
                     target: target)
                 return
             }
-            if automaticGeneration != nil { await injector.returnKeyboardAfterPrompt(to: target) }
 
             let result = SnippetTemplateEngine.expand(
                 record,
@@ -386,7 +385,9 @@ final class SnippetCoordinator {
                 expectedKeyword: expectedKeyword,
                 keywordLength: keywordLength,
                 automaticGeneration: automaticGeneration,
-                confirmation: confirmation)
+                confirmation: confirmation,
+                // The dialog held key, so even a keyword's target has lost the keyboard to it.
+                keyboardBorrowed: automaticGeneration != nil)
         }
     }
 
@@ -396,7 +397,8 @@ final class SnippetCoordinator {
         expectedKeyword: String?,
         keywordLength: Int,
         automaticGeneration: UInt?,
-        confirmation: String?
+        confirmation: String?,
+        keyboardBorrowed: Bool = false
     ) {
         injector.deliver(
             InjectedText(result.text, cursorOffsetFromEnd: result.cursorOffsetFromEnd),
@@ -404,6 +406,7 @@ final class SnippetCoordinator {
             expectedKeyword: expectedKeyword,
             keywordLength: keywordLength,
             automaticGeneration: automaticGeneration,
+            keyboardBorrowed: keyboardBorrowed,
             onDelivered: { [weak self] in
                 guard let self, let confirmation else { return }
                 self.showMessage(confirmation, .success)
