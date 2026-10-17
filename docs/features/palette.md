@@ -640,6 +640,11 @@ the hand-off a real activation change. Pastes hide through `hidePaletteForPaste(
 our own windows, it makes that window key again and activates nothing, since activating the app behind a
 note would send the ⌘V there instead.
 
+A paste into an app that is still active sends ⌘V **before** the hand-back, through
+`Paster.pastePasteboard(into:)`. Without a key window the app still answers ⌘V from its Edit menu and
+only drops plain keystrokes. The hand-back reorders key, though, and Finder confirms an open rename on
+that change: pasting after it renamed the file early and pasted a `.textClipping` into the folder.
+
 The same show also mirrors that app into `PaletteState.pasteTarget` (a `PasteTarget`: localized
 name + bundle path), so Clipboard and Emoji can name it — the footer pill reads "Paste to Notes" and
 the ⌘K paste rows carry the app's icon. Resolved once per summon, never per render, and deliberately
