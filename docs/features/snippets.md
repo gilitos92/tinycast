@@ -356,7 +356,8 @@ the app active but without a key window: it drops typed keys yet still answers â
 So its fallback pastes even short text, and the keyboard goes back through
 `returnKeyboardUnlessClaimed()` only after the text is in, before any cursor movement. That hand-back
 waits `handBackSettle` (0.15 s) first: returned at once, Finder still confirmed the rename it had
-just been given text for.
+just been given text for. The wait runs inside the delivery queue, so the next delivery cannot land
+in it.
 
 **A Unicode keystroke carries at most four UTF-16 units.** Blink stores one key event's text in a
 fixed `WebKeyboardEvent::kTextLengthCap` array, so a Chromium target â€” Brave, Chrome, Electron, VS

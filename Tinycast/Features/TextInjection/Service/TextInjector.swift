@@ -272,7 +272,7 @@ final class TextInjector {
     private var isBorrowingCopy = false
 
     /// Finder confirms a rename when the keyboard returns before it has settled the inserted text.
-    private static let handBackSettle: TimeInterval = 0.15
+    private static let handBackSettle = Duration.milliseconds(150)
 
     /// A copy lands well inside a second; past that the app was never going to answer.
     private static let copyPollAttempts = 40
@@ -317,6 +317,7 @@ final class TextInjector {
                     completion: completion)
                 return
             }
+            var owesKeyboard = reclaimsKeyboardAfter
             await self.performDelivery(
                 injected,
                 targetApp: targetApp,
@@ -324,8 +325,9 @@ final class TextInjector {
                 keywordLength: keywordLength,
                 automaticGeneration: automaticGeneration,
                 activatesTarget: !targetIsActive,
-                reclaimsKeyboardAfter: reclaimsKeyboardAfter,
+                owesKeyboard: &owesKeyboard,
                 completion: completion)
+            if owesKeyboard { await self.returnKeyboard(to: targetApp) }
         }
     }
 
@@ -378,18 +380,10 @@ final class TextInjector {
         keywordLength: Int,
         automaticGeneration: AutomaticGeneration?,
         activatesTarget: Bool,
-        reclaimsKeyboardAfter: Bool,
+        owesKeyboard: inout Bool,
         completion: DeliveryCompletion
     ) async {
-        var owesKeyboard = reclaimsKeyboardAfter
-        defer {
-            if owesKeyboard, let targetApp {
-                DispatchQueue.main.asyncAfter(deadline: .now() + Self.handBackSettle) {
-                    targetApp.returnKeyboardUnlessClaimed()
-                }
-            }
-            completion.settle()
-        }
+        defer { completion.settle() }
         guard finishPendingPasteboardOwnership(),
             await activateAndWaitForTarget(
                 targetApp,
@@ -419,7 +413,7 @@ final class TextInjector {
                 keywordLength: keywordLength,
                 targetApp: targetApp,
                 automaticGeneration: automaticGeneration,
-                pastesShortText: reclaimsKeyboardAfter)
+                pastesShortText: owesKeyboard)
         else { return }
 
         guard let offset = injected.cursorOffsetFromEnd, offset > 0 else {
@@ -428,8 +422,7 @@ final class TextInjector {
         }
         if owesKeyboard {
             owesKeyboard = false
-            guard await wait(for: .seconds(Self.handBackSettle)) else { return }
-            targetApp?.returnKeyboardUnlessClaimed()
+            await returnKeyboard(to: targetApp)
             guard
                 await activateAndWaitForTarget(
                     targetApp, automaticGeneration: automaticGeneration, activating: false)
@@ -896,6 +889,12 @@ final class TextInjector {
                 &settable) == .success
         else { return false }
         return settable.boolValue
+    }
+
+    /// Awaited inside the delivery queue, so the next delivery cannot land inside this settle.
+    private func returnKeyboard(to targetApp: NSRunningApplication?) async {
+        guard await wait(for: Self.handBackSettle) else { return }
+        targetApp?.returnKeyboardUnlessClaimed()
     }
 
     private func activate(_ targetApp: NSRunningApplication?) {
