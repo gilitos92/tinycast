@@ -420,7 +420,7 @@ final class TextInjector {
                 keywordLength: keywordLength,
                 targetApp: targetApp,
                 automaticGeneration: automaticGeneration,
-                pastesShortText: owesKeyboard)
+                targetDropsTypedKeys: owesKeyboard)
         else { return }
 
         guard let offset = injected.cursorOffsetFromEnd, offset > 0 else {
@@ -457,11 +457,11 @@ final class TextInjector {
         keywordLength: Int,
         targetApp: NSRunningApplication?,
         automaticGeneration: AutomaticGeneration?,
-        pastesShortText: Bool
+        targetDropsTypedKeys: Bool
     ) async -> Bool {
         // A target behind our panel has no key window: it drops typed keys but still answers ⌘V.
         let isShortSingleLine =
-            !pastesShortText
+            !targetDropsTypedKeys
             && text.count <= 100
             && !text.contains("\n")
             && !text.contains("\r")
@@ -474,6 +474,7 @@ final class TextInjector {
         }
 
         guard let lease = beginTemporaryPasteboardLease(text) else {
+            guard !targetDropsTypedKeys else { return false }
             return await deliverUsingUnicodeEvents(
                 text,
                 keywordLength: keywordLength,
