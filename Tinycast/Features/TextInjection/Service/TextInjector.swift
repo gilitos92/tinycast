@@ -900,7 +900,8 @@ final class TextInjector {
 
     /// Awaited inside the delivery queue, so the next delivery cannot land inside this settle.
     private func returnKeyboard(to targetApp: NSRunningApplication?) async {
-        guard await wait(for: Self.handBackSettle) else { return }
+        // Typing cancels a keyword's delivery, and that typing is exactly what needs the keyboard.
+        _ = await wait(for: Self.handBackSettle)
         targetApp?.returnKeyboardUnlessClaimed()
     }
 
