@@ -12,4 +12,11 @@ extension NSRunningApplication {
         }
         _ = activate(from: .current)
     }
+
+    /// The deferred hand-back after a delivery; a window of ours holding key again keeps it instead.
+    @MainActor
+    func returnKeyboardUnlessClaimed() {
+        guard isActive, NSApp.keyWindow == nil else { return }
+        activateReclaimingKeyboard()
+    }
 }

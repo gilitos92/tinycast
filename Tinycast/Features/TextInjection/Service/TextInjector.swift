@@ -222,10 +222,15 @@ final class TextInjector {
     }
 
     /// A `changeCount` that never moves means nothing was selected, not that the old clipboard won.
-    func copySelection(from targetApp: NSRunningApplication?) async -> String? {
+    /// A delivery that follows can hand the keyboard back itself, so activation can wait for it.
+    func copySelection(
+        from targetApp: NSRunningApplication?, deferringKeyboard: Bool = false
+    ) async -> String? {
         await deliveryQueue.drain()
         guard finishPendingPasteboardOwnership(),
-            await activateAndWaitForTarget(targetApp, automaticGeneration: nil),
+            await activateAndWaitForTarget(
+                targetApp, automaticGeneration: nil,
+                activating: !(deferringKeyboard && targetApp?.isActive == true)),
             deliveryIsAllowed(
                 automaticGeneration: nil, targetApp: targetApp,
                 promptForInteractiveAccessibility: true)
@@ -271,6 +276,9 @@ final class TextInjector {
 
     private var isBorrowingCopy = false
 
+    /// Finder confirms a rename when the keyboard returns before it has settled the inserted text.
+    private static let handBackSettle = Duration.milliseconds(150)
+
     /// A copy lands well inside a second; past that the app was never going to answer.
     private static let copyPollAttempts = 40
     private static let copyPollInterval = Duration.milliseconds(25)
@@ -281,12 +289,16 @@ final class TextInjector {
         expectedKeyword: String?,
         keywordLength: Int,
         automaticGeneration: AutomaticGeneration?,
+        keyboardBorrowed: Bool = false,
         isValid: @escaping @MainActor () -> Bool = { true },
         onDelivered: @escaping @MainActor () -> Void = {},
         onFailed: @escaping @MainActor () -> Void = {}
     ) {
         let targetApp = target?.externalApp
-        activate(targetApp)
+        // Re-activating an active app ends a Finder rename; it gets the keys back after delivery.
+        let targetIsActive = targetApp?.isActive == true
+        let reclaimsKeyboardAfter = automaticGeneration == nil && targetIsActive
+        if !targetIsActive { activate(targetApp) }
         if let automaticGeneration {
             guard expansionIsAllowed(generation: automaticGeneration, target: target) else { return }
         } else {
@@ -311,13 +323,18 @@ final class TextInjector {
                     completion: completion)
                 return
             }
+            var owesKeyboard = reclaimsKeyboardAfter
+            if keyboardBorrowed, targetIsActive { await self.returnKeyboard(to: targetApp) }
             await self.performDelivery(
                 injected,
                 targetApp: targetApp,
                 expectedKeyword: expectedKeyword,
                 keywordLength: keywordLength,
                 automaticGeneration: automaticGeneration,
+                activatesTarget: !targetIsActive,
+                owesKeyboard: &owesKeyboard,
                 completion: completion)
+            if owesKeyboard { await self.returnKeyboard(to: targetApp) }
         }
     }
 
@@ -369,13 +386,16 @@ final class TextInjector {
         expectedKeyword: String?,
         keywordLength: Int,
         automaticGeneration: AutomaticGeneration?,
+        activatesTarget: Bool,
+        owesKeyboard: inout Bool,
         completion: DeliveryCompletion
     ) async {
         defer { completion.settle() }
         guard finishPendingPasteboardOwnership(),
             await activateAndWaitForTarget(
                 targetApp,
-                automaticGeneration: automaticGeneration),
+                automaticGeneration: automaticGeneration,
+                activating: activatesTarget),
             deliveryIsAllowed(
                 automaticGeneration: automaticGeneration,
                 targetApp: targetApp,
@@ -399,12 +419,21 @@ final class TextInjector {
                 injected.text,
                 keywordLength: keywordLength,
                 targetApp: targetApp,
-                automaticGeneration: automaticGeneration)
+                automaticGeneration: automaticGeneration,
+                targetDropsTypedKeys: owesKeyboard)
         else { return }
 
         guard let offset = injected.cursorOffsetFromEnd, offset > 0 else {
             completion.confirm()
             return
+        }
+        if owesKeyboard {
+            owesKeyboard = false
+            await returnKeyboard(to: targetApp)
+            guard
+                await activateAndWaitForTarget(
+                    targetApp, automaticGeneration: automaticGeneration, activating: false)
+            else { return }
         }
         for index in 0..<offset {
             guard
@@ -427,10 +456,13 @@ final class TextInjector {
         _ text: String,
         keywordLength: Int,
         targetApp: NSRunningApplication?,
-        automaticGeneration: AutomaticGeneration?
+        automaticGeneration: AutomaticGeneration?,
+        targetDropsTypedKeys: Bool
     ) async -> Bool {
+        // A target behind our panel has no key window: it drops typed keys but still answers ⌘V.
         let isShortSingleLine =
-            text.count <= 100
+            !targetDropsTypedKeys
+            && text.count <= 100
             && !text.contains("\n")
             && !text.contains("\r")
         if isShortSingleLine {
@@ -442,6 +474,7 @@ final class TextInjector {
         }
 
         guard let lease = beginTemporaryPasteboardLease(text) else {
+            guard !targetDropsTypedKeys else { return false }
             return await deliverUsingUnicodeEvents(
                 text,
                 keywordLength: keywordLength,
@@ -600,7 +633,8 @@ final class TextInjector {
 
     private func activateAndWaitForTarget(
         _ targetApp: NSRunningApplication?,
-        automaticGeneration: AutomaticGeneration?
+        automaticGeneration: AutomaticGeneration?,
+        activating: Bool = true
     ) async -> Bool {
         guard let targetApp else {
             return deliveryIsAllowed(
@@ -608,7 +642,7 @@ final class TextInjector {
                 targetApp: nil,
                 promptForInteractiveAccessibility: false)
         }
-        activate(targetApp)
+        if activating { activate(targetApp) }
         for _ in 0..<50 {
             if targetApp.isActive,
                 NSWorkspace.shared.frontmostApplication?.processIdentifier
@@ -863,6 +897,13 @@ final class TextInjector {
                 &settable) == .success
         else { return false }
         return settable.boolValue
+    }
+
+    /// Awaited inside the delivery queue, so the next delivery cannot land inside this settle.
+    private func returnKeyboard(to targetApp: NSRunningApplication?) async {
+        // Uncancellable: typing that cancels a keyword's delivery still needs the keyboard back.
+        await Task { try? await Task.sleep(for: Self.handBackSettle) }.value
+        targetApp?.returnKeyboardUnlessClaimed()
     }
 
     private func activate(_ targetApp: NSRunningApplication?) {
