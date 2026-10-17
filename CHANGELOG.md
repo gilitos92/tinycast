@@ -6,6 +6,11 @@ changes are in its [releases](https://github.com/abue-ammar/tinycast/releases).
 
 ## [Unreleased]
 
+### Fixed
+
+- Pasting from Clipboard History or the emoji picker while renaming a file in Finder puts the text in
+  the name. Before, Finder finished the rename early and saved the paste as a `.textClipping` file.
+
 ## [1.1.1] - 2026-10-16
 
 Based on upstream v0.11.22-beta.121.
