@@ -120,10 +120,12 @@ final class ClipboardCoordinator {
         // A copy made just before the press must reach history, or the walk starts one entry late.
         clipboardManager.prepareForTinycastPasteboardMutation()
         var sequence = continuingPasteSequence(at: now)
+        var keyboardOwner: NSRunningApplication?
         while let item = sequence.next(in: clipboardStore.items) {
-            if paletteCoordinator.isVisible { paletteCoordinator.hidePalette() }
+            if paletteCoordinator.isVisible { keyboardOwner = paletteCoordinator.hidePaletteForPaste() }
             // An image or file gone from disk writes nothing, so the press moves on to the next.
             guard Paster.pasteInPlace(item, store: clipboardStore, into: target) else { continue }
+            if let keyboardOwner { Paster.handBackKeyboard(to: keyboardOwner) }
             sequence.recordPaste(changeCount: NSPasteboard.general.changeCount, at: now)
             pasteSequence = sequence
             return
