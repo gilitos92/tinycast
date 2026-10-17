@@ -291,9 +291,13 @@ final class SnippetCoordinator {
         }
         Task {
             var context = context
-            context.selection = await injector.copySelection(from: app) ?? ""
+            context.selection =
+                await injector.copySelection(from: app, deferringKeyboard: true) ?? ""
             let records = store.snippets
-            guard let record = records.first(where: { $0.id == id }) else { return }
+            guard let record = records.first(where: { $0.id == id }) else {
+                target?.restoreFocus()
+                return
+            }
             finishExpansion(
                 record,
                 records: records,

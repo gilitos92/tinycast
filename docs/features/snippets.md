@@ -357,8 +357,9 @@ So its fallback pastes even short text, and the keyboard goes back through
 `returnKeyboardUnlessClaimed()` only after the text is in, before any cursor movement. That hand-back
 waits `handBackSettle` (0.15 s) first: returned at once, Finder still confirmed the rename it had
 just been given text for. The wait runs inside the delivery queue, so the next delivery cannot land
-in it. An argument prompt holds key even for a keyword, so
-`returnKeyboardAfterPrompt(to:)` hands it back before delivery.
+in it. Two cases borrow the keyboard on the way: an argument prompt holds key even for a keyword, so
+`returnKeyboardAfterPrompt(to:)` hands it back before delivery, and a `{selection}` read with
+`deferringKeyboard` copies without activating and leaves the hand-back to the delivery after it.
 
 **A Unicode keystroke carries at most four UTF-16 units.** Blink stores one key event's text in a
 fixed `WebKeyboardEvent::kTextLengthCap` array, so a Chromium target — Brave, Chrome, Electron, VS

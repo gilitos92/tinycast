@@ -222,10 +222,15 @@ final class TextInjector {
     }
 
     /// A `changeCount` that never moves means nothing was selected, not that the old clipboard won.
-    func copySelection(from targetApp: NSRunningApplication?) async -> String? {
+    /// A delivery that follows can hand the keyboard back itself, so activation can wait for it.
+    func copySelection(
+        from targetApp: NSRunningApplication?, deferringKeyboard: Bool = false
+    ) async -> String? {
         await deliveryQueue.drain()
         guard finishPendingPasteboardOwnership(),
-            await activateAndWaitForTarget(targetApp, automaticGeneration: nil),
+            await activateAndWaitForTarget(
+                targetApp, automaticGeneration: nil,
+                activating: !(deferringKeyboard && targetApp?.isActive == true)),
             deliveryIsAllowed(
                 automaticGeneration: nil, targetApp: targetApp,
                 promptForInteractiveAccessibility: true)
