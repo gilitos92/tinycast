@@ -11,6 +11,9 @@ enum Paster {
     /// Shorter: no activation to wait on, only the pasteboard write reaching the target's process.
     private static let directPostDelay: TimeInterval = 0.05
 
+    /// Lets the target take the ⌘V before the hand-back moves its key window.
+    private static let handBackDelay: TimeInterval = 0.1
+
     /// Write the item and paste it into `previousApp`, activating it so ⌘V lands there.
     @MainActor @discardableResult
     static func paste(
@@ -18,10 +21,7 @@ enum Paster {
     ) -> Bool {
         guard write(item, store: store) else { return false }
         store.promote(item)
-        previousApp?.activateReclaimingKeyboard()
-        DispatchQueue.main.asyncAfter(deadline: .now() + activationDelay) {
-            postCommandV()
-        }
+        pastePasteboard(into: previousApp)
         return true
     }
 
@@ -57,18 +57,37 @@ enum Paster {
     @MainActor
     static func pasteString(_ text: String, previousApp: NSRunningApplication?) {
         writeString(text)
-        previousApp?.activateReclaimingKeyboard()
-        DispatchQueue.main.asyncAfter(deadline: .now() + activationDelay) {
-            postCommandV()
-        }
+        pastePasteboard(into: previousApp)
     }
 
     @MainActor
     static func pasteFile(_ url: URL, previousApp: NSRunningApplication?) {
         PasteboardFiles.write(url, to: .general)
-        previousApp?.activateReclaimingKeyboard()
-        DispatchQueue.main.asyncAfter(deadline: .now() + activationDelay) {
-            postCommandV()
+        pastePasteboard(into: previousApp)
+    }
+
+    /// An app still active behind the palette takes ⌘V first; the hand-back ends a Finder rename.
+    @MainActor
+    static func pastePasteboard(into previousApp: NSRunningApplication?) {
+        guard let previousApp, previousApp.isActive else {
+            previousApp?.activateReclaimingKeyboard()
+            DispatchQueue.main.asyncAfter(deadline: .now() + activationDelay) {
+                postCommandV()
+            }
+            return
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + directPostDelay) {
+            postCommandV(toPid: previousApp.processIdentifier)
+        }
+        handBackKeyboard(to: previousApp)
+    }
+
+    /// Waits out a direct ⌘V; a re-shown palette or a switch to another app keeps the keyboard.
+    @MainActor
+    static func handBackKeyboard(to app: NSRunningApplication) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + directPostDelay + handBackDelay) {
+            guard app.isActive, NSApp.keyWindow == nil else { return }
+            app.activateReclaimingKeyboard()
         }
     }
 

@@ -219,12 +219,7 @@ final class ExtensionHostBridge: ExtensionHostAPI {
                 if method == "paste" { context?.closeMainWindow(clearRootSearch: false) }
                 writeFileToPasteboard(path, concealed: method == "copy" && concealed)
                 guard method == "paste" else { return nil }
-                target?.activateReclaimingKeyboard()
-                Task { @MainActor in
-                    try? await Task.sleep(for: .milliseconds(350))
-                    guard !Task.isCancelled else { return }
-                    Paster.postCommandV()
-                }
+                Paster.pastePasteboard(into: target)
                 return nil
             }
             guard let text = clipboardText(from: content) else { return nil }
