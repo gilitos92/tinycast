@@ -66,7 +66,7 @@ enum Paster {
         pastePasteboard(into: previousApp)
     }
 
-    /// An app still active behind the palette takes ⌘V before the hand-back, which ends a Finder rename.
+    /// An app still active behind the palette takes ⌘V first; the hand-back ends a Finder rename.
     @MainActor
     static func pastePasteboard(into previousApp: NSRunningApplication?) {
         guard let previousApp, previousApp.isActive else {
@@ -78,9 +78,16 @@ enum Paster {
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + directPostDelay) {
             postCommandV(toPid: previousApp.processIdentifier)
-            DispatchQueue.main.asyncAfter(deadline: .now() + handBackDelay) {
-                previousApp.activateReclaimingKeyboard()
-            }
+        }
+        handBackKeyboard(to: previousApp)
+    }
+
+    /// Waits out a direct ⌘V; a re-shown palette or a switch to another app keeps the keyboard.
+    @MainActor
+    static func handBackKeyboard(to app: NSRunningApplication) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + directPostDelay + handBackDelay) {
+            guard app.isActive, NSApp.keyWindow == nil else { return }
+            app.activateReclaimingKeyboard()
         }
     }
 

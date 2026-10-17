@@ -644,6 +644,8 @@ A paste into an app that is still active sends ⌘V **before** the hand-back, th
 `Paster.pastePasteboard(into:)`. Without a key window the app still answers ⌘V from its Edit menu and
 only drops plain keystrokes. The hand-back reorders key, though, and Finder confirms an open rename on
 that change: pasting after it renamed the file early and pasted a `.textClipping` into the folder.
+`Paster.handBackKeyboard(to:)` runs the delayed hand-back, and skips it when the app is no longer
+active or one of our windows holds key again, so a palette re-shown in that gap keeps the keyboard.
 
 The same show also mirrors that app into `PaletteState.pasteTarget` (a `PasteTarget`: localized
 name + bundle path), so Clipboard and Emoji can name it — the footer pill reads "Paste to Notes" and
