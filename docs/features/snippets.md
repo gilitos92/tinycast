@@ -354,7 +354,9 @@ Finder rename, and the expansion then lands on the folder as a `.textClipping`. 
 needs nothing more, since that app holds the keyboard. An interactive delivery from the palette leaves
 the app active but without a key window: it drops typed keys yet still answers ⌘V from its Edit menu.
 So its fallback pastes even short text, and the keyboard goes back through
-`returnKeyboardUnlessClaimed()` only after the text is in, before any cursor movement.
+`returnKeyboardUnlessClaimed()` only after the text is in, before any cursor movement. That hand-back
+waits `handBackSettle` (0.15 s) first: returned at once, Finder still confirmed the rename it had
+just been given text for.
 
 **A Unicode keystroke carries at most four UTF-16 units.** Blink stores one key event's text in a
 fixed `WebKeyboardEvent::kTextLengthCap` array, so a Chromium target — Brave, Chrome, Electron, VS

@@ -271,6 +271,9 @@ final class TextInjector {
 
     private var isBorrowingCopy = false
 
+    /// Finder confirms a rename when the keyboard returns before it has settled the inserted text.
+    private static let handBackSettle: TimeInterval = 0.15
+
     /// A copy lands well inside a second; past that the app was never going to answer.
     private static let copyPollAttempts = 40
     private static let copyPollInterval = Duration.milliseconds(25)
@@ -380,7 +383,11 @@ final class TextInjector {
     ) async {
         var owesKeyboard = reclaimsKeyboardAfter
         defer {
-            if owesKeyboard { targetApp?.returnKeyboardUnlessClaimed() }
+            if owesKeyboard, let targetApp {
+                DispatchQueue.main.asyncAfter(deadline: .now() + Self.handBackSettle) {
+                    targetApp.returnKeyboardUnlessClaimed()
+                }
+            }
             completion.settle()
         }
         guard finishPendingPasteboardOwnership(),
@@ -421,6 +428,7 @@ final class TextInjector {
         }
         if owesKeyboard {
             owesKeyboard = false
+            guard await wait(for: .seconds(Self.handBackSettle)) else { return }
             targetApp?.returnKeyboardUnlessClaimed()
             guard
                 await activateAndWaitForTarget(
