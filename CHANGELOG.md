@@ -6,6 +6,11 @@ changes are in its [releases](https://github.com/abue-ammar/tinycast/releases).
 
 ## [Unreleased]
 
+### Fixed
+
+- Snippets from the palette or a hotkey, keyword expansion, and dictation no longer end a Finder
+  rename. Before, the rename finished early and the text was saved as a `.textClipping` file.
+
 ## [1.1.2] - 2026-10-17
 
 Based on upstream v0.11.22-beta.121.

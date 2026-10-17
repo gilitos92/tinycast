@@ -9,7 +9,8 @@ A personal fork of [abue-ammar/tinycast](https://github.com/abue-ammar/tinycast)
   Tinycast note, a paste goes to the note.
 - **Pasting into a Finder rename works.** An app still active behind the palette takes ⌘V before the
   hand-back (`Paster.pastePasteboard(into:)`), so Finder no longer confirms the rename first and drops a
-  `.textClipping` into the folder.
+  `.textClipping` into the folder. Snippets and dictation (`TextInjector`) never re-activate an app
+  that is still active either, and hand the keyboard back only after the text is in.
 - **Emoji search ranks by whole words.** A complete word in an emoji's name outranks keyword-only hits,
   and scattered-letter matches drop out once a real word matches (`kiss` → 😘, no flags). An emoji you
   picked before leads whenever it matches as a word, last used first.
@@ -106,7 +107,7 @@ there is expected and the fork's side must survive:
 
 | Patch | Files |
 | --- | --- |
-| Keyboard hand-back | `Platform/KeyboardHandoff.swift`, `Clipboard/Service/Paster.swift`, `Palette/PaletteWindowController.swift`, `Palette/PaletteCoordinator.swift`, `Extensions/Service/ExtensionHostBridge.swift`, every `activateReclaimingKeyboard()` caller |
+| Keyboard hand-back | `Platform/KeyboardHandoff.swift`, `Clipboard/Service/Paster.swift`, `Palette/PaletteWindowController.swift`, `Palette/PaletteCoordinator.swift`, `Extensions/Service/ExtensionHostBridge.swift`, `TextInjection/Service/TextInjector.swift`, every `activateReclaimingKeyboard()` caller |
 | Emoji ranking | `Emoji/Service/EmojiIndex.swift`, `Emoji/Service/FrequentEmojiStore.swift` |
 | Emoji name | `Palette/PaletteScreen.swift` (`footerCaption`), `Palette/RootPaletteView.swift` (`bottomBar`), `Emoji/UI/EmojiScreen.swift` |
 | Menu pins | `MenuSearch/**`, `App/AppCore.swift` (`pinnedMenuItems`), `Palette/RootPaletteView.swift` (`movePinnedOrFavorite`) |
@@ -120,4 +121,5 @@ Paths are under `Tinycast/Features/` unless they start with `Platform/`, `Palett
 
 The tests cover emoji ranking and menu pins. Paste focus is only checked by hand: copy something, open a
 text field in any app, paste from Clipboard History, then repeat from inside a Tinycast note. Last,
-start renaming a file in Finder and paste an emoji: it must land in the name, which stays editable.
+start renaming a file in Finder and paste an emoji, then a snippet from the palette: each must land in
+the name, which stays editable.
