@@ -267,8 +267,10 @@ final class ClipboardCoordinator {
         quickLook.show(item)
     }
 
-    /// Quick Look briefly takes key before handing it back; any other window taking it hides.
-    var quickLookHoldsKey: Bool { quickLook.isShowing && quickLook.holdsKey }
+    var isQuickLookShowing: Bool { quickLook.isShowing }
+
+    /// Quick Look briefly takes key before handing it back; another app taking it hides.
+    var quickLookKeepsFocus: Bool { quickLook.keepsFocus }
 
     func followQuickLook(_ item: ClipboardItem?) {
         quickLook.follow(item)
