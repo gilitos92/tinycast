@@ -14,8 +14,7 @@ final class ClipboardCoordinator {
     /// One Copy Text at a time: a newer trigger cancels the helper an older one is waiting on.
     private var textTask: Task<Void, Never>?
     private var pasteSequence: PasteSequence?
-    private lazy var quickLook = ClipboardQuickLookController(
-        store: clipboardStore, bundleID: Bundle.main.bundleIdentifier ?? "com.tinycast.app")
+    private let quickLook: ClipboardQuickLookController
 
     init(
         clipboardStore: ClipboardStore,
@@ -35,6 +34,8 @@ final class ClipboardCoordinator {
         self.windowController = windowController
         self.paletteCoordinator = paletteCoordinator
         self.core = core
+        quickLook = ClipboardQuickLookController(
+            store: clipboardStore, bundleID: Bundle.main.bundleIdentifier ?? "com.tinycast.app")
     }
 
     /// Off means the poller stops, the database closes and nothing new is ever recorded.

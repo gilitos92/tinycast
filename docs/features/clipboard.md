@@ -501,9 +501,10 @@ and hands key straight back to the palette. `windowDidResignKey` skips the hide 
 `.dialog`, since the palette sits above every other app's panels.
 
 **Text has no file, so Quick Look reads a copy.** A text entry is written off-main to
-`$TMPDIR/<bundle ID>/QuickLook/<id>.txt`, and the folder is deleted when the panel closes. An image
-shows its stored PNG and a file entry its original path. Every item carries the row's own title, so a
-text copy never shows as a UUID.
+`$TMPDIR/<bundle ID>/QuickLook/<id>.txt`, and the folder is deleted when the panel closes and
+again at launch, for a crash. Writes and deletes run one after another, so a late write never
+outlives its cleanup. An image shows its stored PNG and a file entry its original path. Every item
+carries the row's own title, so a text copy never shows as a UUID.
 
 Escape and opening any menu close it through `PaletteScreen.dismissOverlay()`, and
 `paletteDidHide()` and the screen's `onDisappear` close it with the palette.

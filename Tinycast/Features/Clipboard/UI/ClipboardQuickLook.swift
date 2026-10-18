@@ -12,6 +12,8 @@ final class ClipboardQuickLookController: NSObject, PaletteQuickLookSource,
     private var preview: ClipPreviewItem?
     private var shownID: ClipboardItem.ID?
     private var writeTask: Task<Void, Never>?
+    /// Every write and delete waits on the one before, so a late write never outlives its cleanup.
+    private var diskTail: Task<Void, Never>?
     private var keyObserver: NotificationToken?
     private(set) var isShowing = false
     /// Quick Look makes itself key, and a text preview would then eat the arrows and Escape.
@@ -23,6 +25,9 @@ final class ClipboardQuickLookController: NSObject, PaletteQuickLookSource,
         textDirectory = FileManager.default.temporaryDirectory
             .appending(path: bundleID, directoryHint: .isDirectory)
             .appending(path: "QuickLook", directoryHint: .isDirectory)
+        // Whatever a crash left behind is gone before the first preview of this launch.
+        let directory = textDirectory
+        diskTail = Task { await Self.remove(directory) }
     }
 
     func show(_ item: ClipboardItem) {
@@ -71,7 +76,11 @@ final class ClipboardQuickLookController: NSObject, PaletteQuickLookSource,
         preview = nil
         shownID = nil
         let directory = textDirectory
-        Task.detached(priority: .utility) { try? FileManager.default.removeItem(at: directory) }
+        let previous = diskTail
+        diskTail = Task {
+            await previous?.value
+            await Self.remove(directory)
+        }
         onEnd?()
     }
 
@@ -86,11 +95,16 @@ final class ClipboardQuickLookController: NSObject, PaletteQuickLookSource,
         }
         let file = textDirectory.appending(path: "\(item.id.uuidString).txt")
         let text = item.text ?? ""
-        writeTask = Task {
+        let previous = diskTail
+        let task = Task {
+            await previous?.value
+            guard !Task.isCancelled else { return }
             let written = await Self.write(text, to: file)
             guard !Task.isCancelled, isShowing, shownID == item.id else { return }
             present(ClipPreviewItem(url: written ? file : nil, title: title))
         }
+        writeTask = task
+        diskTail = task
     }
 
     @concurrent private static func write(_ text: String, to file: URL) async -> Bool {
@@ -102,6 +116,10 @@ final class ClipboardQuickLookController: NSObject, PaletteQuickLookSource,
         } catch {
             return false
         }
+    }
+
+    @concurrent private static func remove(_ directory: URL) async {
+        try? FileManager.default.removeItem(at: directory)
     }
 
     private func present(_ item: ClipPreviewItem) {
