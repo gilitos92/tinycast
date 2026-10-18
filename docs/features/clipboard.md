@@ -496,9 +496,10 @@ conforms with a `@MainActor` isolated conformance and sets itself on the panel.
 
 **The palette keeps the keyboard.** Quick Look makes itself key on showing, and a text preview would
 then eat the arrows, ⌘Y and Escape. The controller observes the panel's `didBecomeKeyNotification`
-and hands key straight back to the palette. `windowDidResignKey` skips the hide only while
-`quickLookHoldsKey`, so clicking any other app still dismisses both. The panel is raised to
-`.dialog`, since the palette sits above every other app's panels.
+and hands key straight back to the palette. Key can rest on no window for a moment in between, so
+`windowDidResignKey` decides on the next turn: the palette stays while `quickLookKeepsFocus`, and
+clicking any other app still dismisses both. The panel is raised to `.dialog`, since the palette
+sits above every other app's panels.
 
 **Text has no file, so Quick Look reads a copy.** A text entry is written off-main to
 `$TMPDIR/<bundle ID>/QuickLook/<id>.txt`. Only the shown entry has a copy: the folder is emptied

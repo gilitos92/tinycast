@@ -47,8 +47,10 @@ final class ClipboardQuickLookController: NSObject, PaletteQuickLookSource,
         panel.orderFront(nil)
     }
 
-    /// The panel's own `isKeyWindow` still reads false while the palette's resign is delivered.
-    var holdsKey: Bool { NSApp.keyWindow is QLPreviewPanel }
+    /// Key can sit on no window between the palette and the panel; only another app ends it.
+    var keepsFocus: Bool {
+        isShowing && NSApp.isActive && (NSApp.keyWindow == nil || NSApp.keyWindow is QLPreviewPanel)
+    }
 
     func follow(_ item: ClipboardItem?) {
         guard isShowing else { return }
