@@ -89,15 +89,22 @@ final class ClipboardQuickLookController: NSObject, PaletteQuickLookSource,
         writeTask?.cancel()
         writeTask = nil
         let title = ClipboardActionsMenu.headerText(item)
+        let directory = textDirectory
+        let previous = diskTail
         guard item.kind == .text else {
+            diskTail = Task {
+                await previous?.value
+                await Self.remove(directory)
+            }
             let url = store.imageURL(for: item) ?? store.fileURL(for: item)
             return present(ClipPreviewItem(url: url, title: title))
         }
-        let file = textDirectory.appending(path: "\(item.id.uuidString).txt")
+        let file = directory.appending(path: "\(item.id.uuidString).txt")
         let text = item.text ?? ""
-        let previous = diskTail
         let task = Task {
             await previous?.value
+            // One copy at a time, so an entry moved off or deleted leaves no text behind.
+            await Self.remove(directory)
             guard !Task.isCancelled else { return }
             let written = await Self.write(text, to: file)
             guard !Task.isCancelled, isShowing, shownID == item.id else { return }
