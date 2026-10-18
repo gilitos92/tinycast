@@ -483,6 +483,32 @@ so. The session outliving the panel is safe for the reason the player teardown a
 `orderOut` leaves the SwiftUI tree mounted, and the pasteboard holds the payload from the moment the
 session begins.
 
+## Quick Look
+
+⌘Y, or **Quick Look** in a row's ⌘K menu, opens the selected entry in the system Quick Look panel,
+the one Finder and Raycast use, and ⌘Y again or Escape closes it. The arrow keys keep moving through
+the history, and the panel follows the selection.
+
+**The palette drives the panel through the responder chain.** `PalettePanel` answers
+`acceptsPreviewPanelControl` while it has a `quickLookSource`, and `ClipboardQuickLookController` is
+that source. Quick Look's data source protocol is not main-actor annotated, so the controller
+conforms with a `@MainActor` isolated conformance and sets itself on the panel.
+
+**The palette keeps the keyboard.** Quick Look makes itself key on showing, and a text preview would
+then eat the arrows, ⌘Y and Escape. The controller observes the panel's `didBecomeKeyNotification`
+and hands key straight back to the palette. `windowDidResignKey` skips the hide only while
+`quickLookHoldsKey`, so clicking any other app still dismisses both. The panel is raised to
+`.dialog`, since the palette sits above every other app's panels.
+
+**Text has no file, so Quick Look reads a copy.** A text entry is written off-main to
+`$TMPDIR/<bundle ID>/QuickLook/<id>.txt`. Only the shown entry has a copy: the folder is emptied
+before each load, when the panel closes and at launch, for a crash. Writes and deletes run one after
+another, so a late write never outlives its cleanup. An image shows its stored PNG and a file entry
+its original path. Every item carries the row's own title, so a text copy never shows as a UUID.
+
+Escape and opening any menu close it through `PaletteScreen.dismissOverlay()`, and
+`paletteDidHide()` and the screen's `onDisappear` close it with the palette.
+
 ## Paste Sequentially
 
 A command, so it is bound in Settings ▸ Clipboard like any other. Each press pastes the next older

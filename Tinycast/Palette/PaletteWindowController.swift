@@ -162,6 +162,7 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
         core.inputSourceSwitcher.endSession()
         core.calendarCoordinator.paletteDidHide()
         core.roomCoordinator.paletteDidHide()
+        core.clipboardCoordinator.paletteDidHide()
         core.palette.noteVisible(false)
         core.clipboardStore.setTextSearchActive(false)
         // Drop the anchor, so the next summon re-resolves for the screen in use then.
@@ -238,7 +239,7 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
     /// Not for a dialog or a modal: hiding tears down a running command.
     func windowDidResignKey(_ notification: Notification) {
         guard isVisible, !core.isShowingDialog else { return }
-        if core.palette.menuOpen { return }
+        if core.palette.menuOpen || core.clipboardCoordinator.quickLookHoldsKey { return }
         // A file panel sets its own level under ours, so sink rather than dismiss.
         if NSApp.modalWindow != nil {
             panel?.level = .normal
