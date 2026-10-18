@@ -6,6 +6,11 @@ changes are in its [releases](https://github.com/abue-ammar/tinycast/releases).
 
 ## [Unreleased]
 
+### Fixed
+
+- Opening Quick Look in Clipboard History with ⌘Y no longer closes the palette and the preview with
+  it.
+
 ## [1.2.0] - 2026-10-17
 
 Based on upstream v0.11.22-beta.121.

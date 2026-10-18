@@ -239,12 +239,23 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
     /// Not for a dialog or a modal: hiding tears down a running command.
     func windowDidResignKey(_ notification: Notification) {
         guard isVisible, !core.isShowingDialog else { return }
-        if core.palette.menuOpen || core.clipboardCoordinator.quickLookHoldsKey { return }
+        if core.palette.menuOpen { return }
+        if core.clipboardCoordinator.isQuickLookShowing {
+            // Quick Look takes key a beat after showing, so judge where key settles.
+            DispatchQueue.main.async { [weak self] in self?.hideUnlessQuickLookKeepsFocus() }
+            return
+        }
         // A file panel sets its own level under ours, so sink rather than dismiss.
         if NSApp.modalWindow != nil {
             panel?.level = .normal
             return
         }
+        core.paletteCoordinator.hidePalette(restoreFocus: false)
+    }
+
+    private func hideUnlessQuickLookKeepsFocus() {
+        guard isVisible, panel?.isKeyWindow != true else { return }
+        if core.clipboardCoordinator.quickLookKeepsFocus { return }
         core.paletteCoordinator.hidePalette(restoreFocus: false)
     }
 
