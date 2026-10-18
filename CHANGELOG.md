@@ -6,6 +6,10 @@ changes are in its [releases](https://github.com/abue-ammar/tinycast/releases).
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-10-17
+
+Based on upstream v0.11.22-beta.121.
+
 ### Added
 
 - Clipboard History has Quick Look. Press ⌘Y, or pick Quick Look in the Actions menu, to see the
