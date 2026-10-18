@@ -15,6 +15,8 @@ A personal fork of [abue-ammar/tinycast](https://github.com/abue-ammar/tinycast)
   and scattered-letter matches drop out once a real word matches (`kiss` → 😘, no flags). An emoji you
   picked before leads whenever it matches as a word, last used first.
 - **The emoji picker's footer names the selected emoji.**
+- **Clipboard History has Quick Look.** `⌘Y` opens the selected entry in the system Quick Look
+  panel, and the arrow keys move through the history while it stays open.
 - **Search Menu Bar Items can pin items** per app: `⌘.` pins or unpins, `⌥⌘↑/↓` reorders, and pins lead
   the list in a Pinned section.
 - **Extension OAuth sign-in completes.** Raycast's web redirect page needs `state` as base64url JSON,

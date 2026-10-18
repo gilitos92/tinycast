@@ -143,6 +143,8 @@ private extension MenuPanelCorner {
     func pasteKeepingWindowOpen(at selection: Int) -> Bool
     /// False when the screen has no answer to the chord, leaving the key unhandled.
     func perform(_ shortcut: PaletteShortcut, at selection: Int) -> Bool
+    /// A surface the screen floats over the palette yields to Escape and to a menu opening.
+    func dismissOverlay() -> Bool
     /// The selection an arrow key lands on, or nil to leave the key to the palette's own default.
     func move(_ delta: Int, axis: PaletteAxis, from selection: Int) -> Int?
     /// Controls the row wants beside the search field; `focus` is lent, never owned.
@@ -180,6 +182,7 @@ extension PaletteScreen {
     func tertiary(at selection: Int) -> Bool { false }
     func pasteKeepingWindowOpen(at selection: Int) -> Bool { false }
     func perform(_ shortcut: PaletteShortcut, at selection: Int) -> Bool { false }
+    func dismissOverlay() -> Bool { false }
     func move(_ delta: Int, axis: PaletteAxis, from selection: Int) -> Int? { nil }
     func headerAccessory(
         at selection: Int, focus: FocusState<String?>.Binding

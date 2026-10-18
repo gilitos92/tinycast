@@ -45,6 +45,10 @@ struct ClipboardScreen: PaletteScreen {
             return true
         case .pin: return pin(at: selection)
         case .favoriteSlot(let index): return activatePinned(at: index)
+        case .quickLook:
+            guard let item = item(at: selection) else { return false }
+            core.clipboardCoordinator.toggleQuickLook(item)
+            return true
         case .copyText:
             guard let item = item(at: selection), item.offersTextExtraction else { return false }
             core.clipboardCoordinator.copyImageText(item)
@@ -86,6 +90,10 @@ struct ClipboardScreen: PaletteScreen {
         return true
     }
 
+    func dismissOverlay() -> Bool {
+        core.clipboardCoordinator.closeQuickLook()
+    }
+
     /// ⌘⌫ / ⌃X — the screen owns the chord whether or not a row sits under the selection.
     private func delete(at selection: Int) {
         guard let item = item(at: selection) else { return }
@@ -117,6 +125,10 @@ struct ClipboardScreen: PaletteScreen {
                     old, new in
                     follow(from: old, to: new)
                 }
+                .onChange(of: item(at: selection)) { _, new in
+                    core.clipboardCoordinator.followQuickLook(new)
+                }
+                .onDisappear { _ = core.clipboardCoordinator.closeQuickLook() }
         )
     }
 
@@ -183,17 +195,23 @@ enum ClipboardActionsMenu {
             ) {
                 core.clipboardCoordinator.pasteKeepingWindowOpen(item)
             })
+        items.append(
+            PopoverMenuItem(
+                title: "Quick Look", systemImage: "eye", startsSection: true, shortcut: "⌘Y"
+            ) {
+                core.clipboardCoordinator.toggleQuickLook(item)
+            })
         if item.isPinned {
             items.append(
                 PopoverMenuItem(
-                    title: "Unpin Entry", systemImage: "pin.slash", startsSection: true, shortcut: "⌘."
+                    title: "Unpin Entry", systemImage: "pin.slash", shortcut: "⌘."
                 ) {
                     core.clipboardCoordinator.togglePinnedClip(item)
                 })
         } else {
             items.append(
                 PopoverMenuItem(
-                    title: "Pin Entry", systemImage: "pin", startsSection: true, shortcut: "⌘."
+                    title: "Pin Entry", systemImage: "pin", shortcut: "⌘."
                 ) {
                     core.clipboardCoordinator.togglePinnedClip(item)
                 })
@@ -253,7 +271,7 @@ enum ClipboardActionsMenu {
         }
     }
 
-    private static func headerText(_ item: ClipboardItem) -> String {
+    static func headerText(_ item: ClipboardItem) -> String {
         switch item.kind {
         case .text:
             // Collapse whitespace so a multi-line copy stays a clean one-line title.

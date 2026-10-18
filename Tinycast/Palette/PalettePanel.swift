@@ -1,5 +1,6 @@
 import AppKit
 import Carbon.HIToolbox
+import QuickLookUI
 import SwiftUI
 
 final class PalettePanel: NSPanel {
@@ -290,4 +291,31 @@ final class PalettePanel: NSPanel {
     override var canBecomeKey: Bool { true }
     // The parent stays main while a menu is key, so its Liquid Glass remains active.
     override var canBecomeMain: Bool { true }
+
+    /// Quick Look finds its driver by walking the key window's responder chain to here.
+    weak var quickLookSource: (any PaletteQuickLookSource)?
+
+    // Quick Look's informal protocol is nonisolated, but AppKit only ever calls it on main.
+    override func acceptsPreviewPanelControl(_ panel: QLPreviewPanel!) -> Bool {
+        MainActor.assumeIsolated { quickLookSource != nil }
+    }
+
+    override func beginPreviewPanelControl(_ panel: QLPreviewPanel!) {
+        MainActor.assumeIsolated { quickLookSource?.beginControl(of: panel) }
+    }
+
+    override func endPreviewPanelControl(_ panel: QLPreviewPanel!) {
+        MainActor.assumeIsolated {
+            panel.dataSource = nil
+            quickLookSource?.quickLookDidEnd()
+        }
+    }
+}
+
+/// Whatever the palette shows in Quick Look; told when the panel closes on its own.
+@MainActor
+protocol PaletteQuickLookSource: AnyObject {
+    /// Sets itself as the data source, which only its own isolated conformance can do.
+    func beginControl(of panel: QLPreviewPanel)
+    func quickLookDidEnd()
 }

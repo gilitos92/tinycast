@@ -215,6 +215,7 @@ never what the row means.
 
 **There is no Quick Look action.** The pane already previews the selection, and ↵ opens the file in
 its default app. A system `QLPreviewPanel` would take key, and the palette hides on `windowDidResignKey`.
+Clipboard History's ⌘Y works around that; see [clipboard.md](clipboard.md#quick-look).
 
 | Row | Chord | What it does |
 | --- | --- | --- |

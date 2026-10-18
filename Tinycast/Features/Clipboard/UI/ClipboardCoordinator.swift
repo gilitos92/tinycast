@@ -14,6 +14,7 @@ final class ClipboardCoordinator {
     /// One Copy Text at a time: a newer trigger cancels the helper an older one is waiting on.
     private var textTask: Task<Void, Never>?
     private var pasteSequence: PasteSequence?
+    private let quickLook: ClipboardQuickLookController
 
     init(
         clipboardStore: ClipboardStore,
@@ -33,6 +34,8 @@ final class ClipboardCoordinator {
         self.windowController = windowController
         self.paletteCoordinator = paletteCoordinator
         self.core = core
+        quickLook = ClipboardQuickLookController(
+            store: clipboardStore, bundleID: Bundle.main.bundleIdentifier ?? "com.tinycast.app")
     }
 
     /// Off means the poller stops, the database closes and nothing new is ever recorded.
@@ -247,6 +250,39 @@ final class ClipboardCoordinator {
             return nil
         }
         return url
+    }
+
+    /// ⌘Y opens the selected clip in Quick Look, and a second press closes it.
+    func toggleQuickLook(_ item: ClipboardItem) {
+        if quickLook.isShowing { return quickLook.hide() }
+        guard let panel = windowController.anchorView?.window as? PalettePanel else { return }
+        panel.quickLookSource = quickLook
+        quickLook.onTookKey = { [weak panel] in panel?.makeKey() }
+        quickLook.onEnd = { [weak self, weak panel] in
+            panel?.quickLookSource = nil
+            // Quick Look held key; the palette takes it back unless it hid meanwhile.
+            guard let self, palette.isVisible, let panel, !panel.isKeyWindow else { return }
+            panel.makeKey()
+        }
+        quickLook.show(item)
+    }
+
+    /// Quick Look briefly takes key before handing it back; any other window taking it hides.
+    var quickLookHoldsKey: Bool { quickLook.isShowing && quickLook.holdsKey }
+
+    func followQuickLook(_ item: ClipboardItem?) {
+        quickLook.follow(item)
+    }
+
+    /// False when Quick Look was not up, so Escape and the menu carry on as they would have.
+    func closeQuickLook() -> Bool {
+        guard quickLook.isShowing else { return false }
+        quickLook.hide()
+        return true
+    }
+
+    func paletteDidHide() {
+        quickLook.hide()
     }
 
     /// Pin or unpin an entry; the selection and scroll follow the row as it moves.
