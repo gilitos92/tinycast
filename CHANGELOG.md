@@ -6,6 +6,12 @@ changes are in its [releases](https://github.com/abue-ammar/tinycast/releases).
 
 ## [Unreleased]
 
+### Added
+
+- Clipboard History has Quick Look. Press ⌘Y, or pick Quick Look in the Actions menu, to see the
+  selected entry in the system Quick Look panel. The arrow keys move through the history while it
+  stays open, and ⌘Y or Escape closes it.
+
 ## [1.1.3] - 2026-10-17
 
 Based on upstream v0.11.22-beta.121.

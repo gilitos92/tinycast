@@ -564,6 +564,7 @@ struct RootPaletteView: View {
                 if menuPanel.isClosing { return .handled }
                 // An open control list owns Escape before the palette beneath it.
                 if vm.isControlListOpen { return .ignored }
+                if !menuOpen, screen.dismissOverlay() { return .handled }
                 switch PaletteEscapeAction.resolve(
                     menuOpen: menuOpen, menuQuery: vm.menuQuery,
                     argumentFocused: argumentFocused != nil, query: vm.query, mode: vm.mode,
@@ -1099,6 +1100,7 @@ struct RootPaletteView: View {
 
     /// Every open path lands here, so the highlight is always stated rather than left behind.
     private func open(_ menu: OpenMenu, highlighting row: Int) {
+        _ = screen.dismissOverlay()
         vm.menuQuery = ""
         menuSelection = row
         vm.noteMenuPresentation()
