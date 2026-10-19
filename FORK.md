@@ -15,6 +15,8 @@ A personal fork of [abue-ammar/tinycast](https://github.com/abue-ammar/tinycast)
   and scattered-letter matches drop out once a real word matches (`kiss` → 😘, no flags). An emoji you
   picked before leads whenever it matches as a word, last used first.
 - **The emoji picker's footer names the selected emoji.**
+- **Emoji can be renamed.** `⌘E` gives an emoji a custom name (`EmojiNameStore`), shown in the footer
+  and searched beside the catalog name.
 - **Clipboard History has Quick Look.** `⌘Y` opens the selected entry in the system Quick Look
   panel, and the arrow keys move through the history while it stays open.
 - **Search Menu Bar Items can pin items** per app: `⌘.` pins or unpins, `⌥⌘↑/↓` reorders, and pins lead
@@ -111,7 +113,7 @@ there is expected and the fork's side must survive:
 | --- | --- |
 | Keyboard hand-back | `Platform/KeyboardHandoff.swift`, `Clipboard/Service/Paster.swift`, `Palette/PaletteWindowController.swift`, `Palette/PaletteCoordinator.swift`, `Extensions/Service/ExtensionHostBridge.swift`, `TextInjection/Service/TextInjector.swift`, every `activateReclaimingKeyboard()` caller |
 | Emoji ranking | `Emoji/Service/EmojiIndex.swift`, `Emoji/Service/FrequentEmojiStore.swift` |
-| Emoji name | `Palette/PaletteScreen.swift` (`footerCaption`), `Palette/RootPaletteView.swift` (`bottomBar`), `Emoji/UI/EmojiScreen.swift` |
+| Emoji name | `Palette/PaletteScreen.swift` (`footerCaption`), `Palette/RootPaletteView.swift` (`bottomBar`), `Emoji/UI/EmojiScreen.swift`, `Emoji/Service/EmojiNameStore.swift`, `Windows/Dialog/DialogTextInput.swift` |
 | Menu pins | `MenuSearch/**`, `App/AppCore.swift` (`pinnedMenuItems`), `Palette/RootPaletteView.swift` (`movePinnedOrFavorite`) |
 | OAuth state | `Scripts/raycast-runtime/src/api/oauth.js` (rebuild the runtime after a conflict) |
 | Fork setup | `Updates/Model/ReleaseFeed.swift` (`repository`), `Scripts/install-local.sh`, `Scripts/publish-release.sh`, `Scripts/update-from-upstream.sh`, `Scripts/run-tests.sh` (harness file lists) |

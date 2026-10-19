@@ -546,7 +546,10 @@ sole owner rule) and is the only presenter, so every confirmation in the app loo
   `PanelTransition` behavior.
 - **Non-activating**, like the palette: the dialog takes key focus for its own keys without pulling app
   focus off whatever the user was in. It sits at `.dialog`, above the palette's `.palette`, and is
-  centred on the **cursor's** display with the same slight optical lift the palette uses.
+  centred on the **cursor's** display with the same slight optical lift the palette uses. When it
+  closes over a visible palette, `AppCore` calls `PaletteWindowController.reclaimKey`: AppKit gives a
+  closing non-activating panel's key to no one, and losing key already cleared the palette's first
+  responder, so it takes key back and bumps `focusToken` to refocus the search field.
 - **`VolumeSlider`** uses SwiftUI's native `Slider`, paired with a monospaced-digit percentage in the
   same `volumeReadout 38` slot the HUD uses, so the row does not resize between `0%` and `100%`.
   Pointer interaction stays native; the arrows still walk the 5% grid through `DialogPanel`.

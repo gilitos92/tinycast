@@ -245,6 +245,7 @@ final class AppCore {
         onPresentationChanged: { [weak self] isPresenting in
             guard let self else { return }
             isShowingDialog = isPresenting
+            if !isPresenting { windowController.reclaimKey() }
         })
     private let healthTicker = HealthTicker()
 
