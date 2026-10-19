@@ -546,7 +546,12 @@ sole owner rule) and is the only presenter, so every confirmation in the app loo
   `PanelTransition` behavior.
 - **Non-activating**, like the palette: the dialog takes key focus for its own keys without pulling app
   focus off whatever the user was in. It sits at `.dialog`, above the palette's `.palette`, and is
-  centred on the **cursor's** display with the same slight optical lift the palette uses.
+  centred on the **cursor's** display with the same slight optical lift the palette uses. When it
+  closes over a visible palette while still key, `AppCore` calls `PaletteWindowController.reclaimKey`:
+  AppKit gives a closing non-activating panel's key to no one, and losing key already cleared the
+  palette's first responder, so it takes key back and bumps `focusToken` to refocus the search field.
+  A dialog dismissed by clicking away hands nothing back, since key already went where the user
+  clicked. While an input method is composing, ↵ and Esc go to it, not to the dialog.
 - **`VolumeSlider`** uses SwiftUI's native `Slider`, paired with a monospaced-digit percentage in the
   same `volumeReadout 38` slot the HUD uses, so the row does not resize between `0%` and `100%`.
   Pointer interaction stays native; the arrows still walk the 5% grid through `DialogPanel`.
@@ -657,8 +662,8 @@ it would couple two unrelated surfaces.
 ## Dialog accessories
 
 A dialog carries at most one control beyond its buttons, and `DialogAccessory` makes that structural
-rather than a convention — `.volume` for the Set Volume prompt and `.snippetArguments` for a snippet's
-`{argument}` values. Text fields take `dialogTextField()`; inline enumerated arguments are `DialogChip`s.
+rather than a convention — `.volume` for the Set Volume prompt, `.snippetArguments` for a snippet's
+`{argument}` values and `.textInput` for a single typed answer, such as an emoji's custom name. Text fields take `dialogTextField()`; inline enumerated arguments are `DialogChip`s.
 `DialogPanel.handlesArrowKeys` is set from `DialogAccessory.claimsArrowKeys`, so the slider steps on
 ←/→ while snippet argument text fields keep their caret. Create Event uses the launcher form instead.
 

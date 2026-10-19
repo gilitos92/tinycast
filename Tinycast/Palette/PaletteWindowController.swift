@@ -106,6 +106,13 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
         }
     }
 
+    /// Losing key to a dialog drops the search field's focus, so key alone would type nowhere.
+    func reclaimKey() {
+        guard let panel, panel.isVisible, !panel.isKeyWindow else { return }
+        panel.makeKeyAndOrderFront(nil)
+        core.palette.focusToken = UUID()
+    }
+
     // Isolated so teardown may touch the main-actor monitor; the block is already weak.
     isolated deinit {
         if let pasteMonitor { NSEvent.removeMonitor(pasteMonitor) }

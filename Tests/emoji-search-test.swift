@@ -46,6 +46,30 @@ struct EmojiSearchTests {
         unwritable.toggle("A")
         expect(reportedPersistenceFailure, "pin persistence failures are reported")
 
+        // Custom names are trimmed, blank resets, and survive a reload and a backup replacement.
+        let namesURL = directory.appendingPathComponent("names.json")
+        let names = EmojiNameStore(fileURL: namesURL)
+        names.setName("  lol \n", for: "😂")
+        expect(names.name(for: "😂") == "lol", "a custom name is trimmed")
+        names.setName(String(repeating: "x", count: 500), for: "🎉")
+        expect(names.name(for: "🎉")?.count == EmojiNameStore.maxLength, "a custom name is capped")
+        names.setName("   ", for: "🎉")
+        expect(names.name(for: "🎉") == nil, "a blank name resets to the catalog name")
+        expect(EmojiNameStore(fileURL: namesURL).names == ["😂": "lol"], "names survive a reload")
+        names.replace(["🚀": "ship it", "": "x", "👍": " "])
+        expect(names.names == ["🚀": "ship it"], "backup replacement drops blanks")
+        expect(
+            index.search("ship it", frequent: frequent, customNames: names.names).first?.glyph == "🚀",
+            "a custom name is searched as a name")
+        expect(
+            index.search("lol", frequent: frequent, customNames: ["😂": "lol"]).first?.glyph == "😂",
+            "an exact custom name ranks first")
+        expect(
+            index.search("joy", frequent: frequent, customNames: ["😂": "lol"]).contains {
+                $0.glyph == "😂"
+            },
+            "the catalog name stays searchable after a rename")
+
         for (query, glyph, maxRank) in [
             ("pray", "🙏", 5),
             (":+1:", "👍", 1),

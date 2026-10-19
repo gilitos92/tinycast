@@ -6,6 +6,17 @@ changes are in its [releases](https://github.com/abue-ammar/tinycast/releases).
 
 ## [Unreleased]
 
+### Added
+
+- The emoji picker can rename an emoji or symbol. Rename Emoji… (⌘E, or in the Actions menu) sets a
+  name of your own, shown in the footer and searched beside the original name. Reset Name, or an empty
+  name, brings the original back. Names travel with the configuration backup.
+
+### Fixed
+
+- Typing right after closing a dialog over the palette goes to the search field again, instead of
+  nowhere.
+
 ## [1.2.1] - 2026-10-17
 
 Based on upstream v0.11.22-beta.121.

@@ -6,12 +6,18 @@ import SwiftUI
 final class DialogController: NSObject, NSWindowDelegate {
     private let settings: AppSettings
     private let onPresentationChanged: (Bool) -> Void
+    /// Only when it closed still key: a click away already gave key to what the user chose.
+    private let onClosedWhileKey: () -> Void
     private var panel: DialogPanel?
     private var continuation: CheckedContinuation<Int, Never>?
 
-    init(settings: AppSettings, onPresentationChanged: @escaping (Bool) -> Void) {
+    init(
+        settings: AppSettings, onPresentationChanged: @escaping (Bool) -> Void,
+        onClosedWhileKey: @escaping () -> Void
+    ) {
         self.settings = settings
         self.onPresentationChanged = onPresentationChanged
+        self.onClosedWhileKey = onClosedWhileKey
     }
 
     func confirm(
@@ -92,6 +98,23 @@ final class DialogController: NSObject, NSWindowDelegate {
         return state.values
     }
 
+    /// Nil when cancelled; an empty string is a real answer the caller interprets.
+    func requestText(
+        title: String, message: String?, symbol: String?, text: String, placeholder: String,
+        confirmTitle: String, maxLength: Int
+    ) async -> String? {
+        let input = DialogTextInputState(text: text, placeholder: placeholder, maxLength: maxLength)
+        let request = DialogRequest(
+            title: title, message: message, symbol: symbol, tone: .neutral,
+            actions: [
+                DialogAction(title: confirmTitle),
+                DialogAction(title: "Cancel", role: .cancel)
+            ],
+            defaultIndex: 0, cancelIndex: 1, accessory: .textInput(input))
+        guard await present(request) == 0 else { return nil }
+        return input.text
+    }
+
     private func present(_ request: DialogRequest) async -> Int {
         // Keyed on the continuation, so a panel still fading can't swallow the next.
         guard continuation == nil else { return request.cancelIndex }
@@ -100,7 +123,7 @@ final class DialogController: NSObject, NSWindowDelegate {
             onPresentationChanged(true)
             let width =
                 switch request.accessory {
-                case nil, .volume: metrics.size.dialogCompactWidth
+                case nil, .volume, .textInput: metrics.size.dialogCompactWidth
                 case .snippetArguments: metrics.size.dialogWidth
                 }
             let content = hostingView(
@@ -160,6 +183,7 @@ final class DialogController: NSObject, NSWindowDelegate {
         panel = nil
         closing?.delegate = nil
         closing?.onKey = nil
+        if closing?.isKeyWindow == true { onClosedWhileKey() }
         continuation.resume(returning: index)
         closing?.fadeOut(duration: Theme.Duration.dialogExit)
     }
