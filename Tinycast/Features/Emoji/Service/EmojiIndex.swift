@@ -22,9 +22,13 @@ final class EmojiIndex {
         let keywordList: [FuzzyMatch.Candidate]
 
         init(_ entry: EmojiEntry) {
-            name = FuzzyMatch.Candidate(entry.name)
-            keywords = FuzzyMatch.Candidate(entry.keywords)
-            keywordList = entry.keywords.split(separator: ",").map { FuzzyMatch.Candidate(String($0)) }
+            self.init(name: entry.name, keywords: entry.keywords)
+        }
+
+        init(name: String, keywords: String) {
+            self.name = FuzzyMatch.Candidate(name)
+            self.keywords = FuzzyMatch.Candidate(keywords)
+            keywordList = keywords.split(separator: ",").map { FuzzyMatch.Candidate(String($0)) }
         }
     }
 
@@ -33,6 +37,7 @@ final class EmojiIndex {
         let revision: Int
         let frequentID: ObjectIdentifier
         let frequentRevision: Int
+        let customNames: [String: String]
         let limit: Int
     }
 
@@ -74,8 +79,11 @@ final class EmojiIndex {
 
     func entry(for glyph: String) -> EmojiEntry? { byGlyph[glyph] }
 
-    /// Ranked fuzzy matches over names and keywords; an empty query returns nothing.
-    func search(_ query: String, frequent: FrequentEmojiStore, limit: Int = 320) -> [EmojiEntry] {
+    /// Ranked fuzzy matches; a custom name scores as a name beside the catalog's. Empty finds none.
+    func search(
+        _ query: String, frequent: FrequentEmojiStore, customNames: [String: String] = [:],
+        limit: Int = 320
+    ) -> [EmojiEntry] {
         let trimmed = FuzzyMatch.normalized(query).trimmingCharacters(in: .whitespacesAndNewlines)
         let unwrapped =
             trimmed.count > 2 && trimmed.first == ":" && trimmed.last == ":"
@@ -85,7 +93,7 @@ final class EmojiIndex {
         guard !q.isEmpty, limit > 0 else { return [] }
         let key = SearchKey(
             query: q, revision: revision, frequentID: ObjectIdentifier(frequent),
-            frequentRevision: frequent.revision, limit: limit)
+            frequentRevision: frequent.revision, customNames: customNames, limit: limit)
         return searchMemo.value(for: key) {
             let query = FuzzyMatch.Query(q)
             let terms = words.count > 1 ? words : []
@@ -99,7 +107,12 @@ final class EmojiIndex {
                 uniquingKeysWith: min)
             var scored: [ScoredEntry] = []
             for (order, entry) in entries.enumerated() {
-                guard let textScore = Self.textScore(query, terms: terms, folded: foldedEntries[order])
+                let catalogScore = Self.textScore(query, terms: terms, folded: foldedEntries[order])
+                let customScore = customNames[entry.glyph].flatMap {
+                    Self.textScore(
+                        query, terms: terms, folded: FoldedEntry(name: $0, keywords: entry.keywords))
+                }
+                guard let textScore = [catalogScore, customScore].compactMap(\.self).max()
                 else { continue }
                 let score =
                     if textScore >= Self.literalScoreFloor, let rank = recency[entry.glyph] {

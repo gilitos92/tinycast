@@ -657,8 +657,8 @@ it would couple two unrelated surfaces.
 ## Dialog accessories
 
 A dialog carries at most one control beyond its buttons, and `DialogAccessory` makes that structural
-rather than a convention — `.volume` for the Set Volume prompt and `.snippetArguments` for a snippet's
-`{argument}` values. Text fields take `dialogTextField()`; inline enumerated arguments are `DialogChip`s.
+rather than a convention — `.volume` for the Set Volume prompt, `.snippetArguments` for a snippet's
+`{argument}` values and `.textInput` for a single typed answer, such as an emoji's custom name. Text fields take `dialogTextField()`; inline enumerated arguments are `DialogChip`s.
 `DialogPanel.handlesArrowKeys` is set from `DialogAccessory.claimsArrowKeys`, so the slider steps on
 ←/→ while snippet argument text fields keep their caret. Create Event uses the launcher form instead.
 

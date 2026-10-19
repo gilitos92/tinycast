@@ -22,10 +22,11 @@ A palette sub-screen (reached like Clipboard / Calculator History) presenting a 
 | `Service/EmojiIndex.swift`                          | Search index over the catalog               |
 | `Service/FrequentEmojiStore.swift`                  | Persisted emoji history and usage counts    |
 | `Service/PinnedEmojiStore.swift`                    | Persisted pins, in the order the user set   |
+| `Service/EmojiNameStore.swift`                      | Persisted custom names, keyed by base glyph |
 | `UI/EmojiGridView.swift`                            | The SwiftUI grid                            |
 | `UI/EmojiScreen.swift`, `UI/EmojiCoordinator.swift` | The palette screen and its action surface   |
 
-The index and the store are **effects**, so they live under `Service/` — only the three files above them
+The index and the stores are **effects**, so they live under `Service/` — only the three files above them
 are pure.
 
 ## Search
@@ -43,7 +44,11 @@ are pure.
   drop out, so `kiss` no longer surfaces Saint Kitts & Nevis; a query nothing matches literally, like
   `thmbsup`, still finds 👍.
 - **The footer names the selected emoji** through `PaletteScreen.footerCaption`, beside the menu
-  button, since a grid cell has no room for a name.
+  button, since a grid cell has no room for a name. A custom name replaces the catalog name there and
+  in the Actions header, through `EmojiCoordinator.displayName(of:)`.
+- **A custom name is searched as a name, beside the catalog's.** Each entry scores the better of its
+  catalog name and its custom name, both against the same keywords, so renaming 😂 "lol" makes `lol`
+  an exact name hit while `joy` still finds it. The names dictionary is part of the search memo key.
 - **Colon-wrapped queries are unwrapped**, so `:+1:` reuses CLDR's `+1` annotation with no alias table.
 - **Other languages add keywords; English always stays.** `AppCore` loads one pack per language in
   `Locale.preferredLanguages`, matched by `Bundle.preferredLocalizations` (`zh-CN` reads `zh-Hans`), so
@@ -101,3 +106,11 @@ picker; zoom, from Actions or its chords, writes only `PaletteState.emojiGridCol
 does not silently change the preference. Actual Size (`⌘0`) clears that override; `⌘+` and `⌘-`
 remove or add one column. Removing the selected item from the leading Pinned section keeps the
 selection on the neighbour that takes its place instead of following the item into the catalog.
+
+## Custom names
+
+**Rename Emoji…** (⌘E, or Actions) asks for a name through a `DialogController` text dialog;
+**Reset Name**, or confirming an empty field, restores the catalog name. Names live in
+`emoji-names.json` under Application Support, keyed by base glyph so a skin tone keeps its name, are
+trimmed and capped at `EmojiNameStore.maxLength`, and are carried by the configuration backup beside
+the pins.

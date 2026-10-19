@@ -57,6 +57,7 @@ final class AppCore {
     let emojiIndex = EmojiIndex()
     let frequentEmoji = FrequentEmojiStore()
     let pinnedEmoji = PinnedEmojiStore()
+    let emojiNames = EmojiNameStore()
     let pinnedMenuItems = PinnedMenuItemStore()
     let runningApps = RunningAppsMonitor()
     let palette = PaletteState()
@@ -195,8 +196,8 @@ final class AppCore {
         appIndex: appIndex, palette: palette, windowController: windowController,
         paletteCoordinator: paletteCoordinator, core: self)
     @ObservationIgnored private(set) lazy var emojiCoordinator = EmojiCoordinator(
-        frequentEmoji: frequentEmoji, settings: settings, windowController: windowController,
-        paletteCoordinator: paletteCoordinator)
+        frequentEmoji: frequentEmoji, names: emojiNames, settings: settings,
+        windowController: windowController, paletteCoordinator: paletteCoordinator, core: self)
     @ObservationIgnored private(set) lazy var calculatorCoordinator = CalculatorCoordinator(
         calcHistory: calcHistory, paletteCoordinator: paletteCoordinator, core: self)
     @ObservationIgnored private(set) lazy var calendarCoordinator = CalendarCoordinator(
@@ -283,6 +284,9 @@ final class AppCore {
             observeEffectiveAppearance()
             pinnedEmoji.onPersistenceFailure = { [weak self] in
                 self?.showMessage("Couldn't save Emoji & Symbols pins", tone: .danger)
+            }
+            emojiNames.onPersistenceFailure = { [weak self] in
+                self?.showMessage("Couldn't save Emoji & Symbols names", tone: .danger)
             }
             pinnedMenuItems.onPersistenceFailure = { [weak self] in
                 self?.showMessage("Couldn't save menu item pins", tone: .danger)
@@ -934,5 +938,14 @@ final class AppCore {
         snippetName: String, arguments: [SnippetTemplateEngine.MissingArgument]
     ) async -> [String: String]? {
         await dialogs.fillSnippetArguments(snippetName: snippetName, arguments: arguments)
+    }
+
+    func requestText(
+        title: String, message: String?, symbol: String?, text: String, placeholder: String,
+        confirmTitle: String, maxLength: Int
+    ) async -> String? {
+        await dialogs.requestText(
+            title: title, message: message, symbol: symbol, text: text, placeholder: placeholder,
+            confirmTitle: confirmTitle, maxLength: maxLength)
     }
 }

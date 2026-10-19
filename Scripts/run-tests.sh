@@ -215,6 +215,7 @@ run emoji-search-test      Tinycast/Features/Emoji/Model/EmojiCatalog.swift \
                            Tinycast/Features/Emoji/Service/EmojiIndex.swift \
                            Tinycast/Features/Emoji/Service/FrequentEmojiStore.swift \
                            Tinycast/Features/Emoji/Service/PinnedEmojiStore.swift \
+                           Tinycast/Features/Emoji/Service/EmojiNameStore.swift \
                            Tinycast/Features/Launcher/Model/SearchRelevance.swift \
                            Tinycast/Platform/AppPaths.swift Tinycast/Platform/Memo.swift
 run index emoji-search-performance \
