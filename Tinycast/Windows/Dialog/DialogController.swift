@@ -6,12 +6,18 @@ import SwiftUI
 final class DialogController: NSObject, NSWindowDelegate {
     private let settings: AppSettings
     private let onPresentationChanged: (Bool) -> Void
+    /// Only when it closed still key: a click away already gave key to what the user chose.
+    private let onClosedWhileKey: () -> Void
     private var panel: DialogPanel?
     private var continuation: CheckedContinuation<Int, Never>?
 
-    init(settings: AppSettings, onPresentationChanged: @escaping (Bool) -> Void) {
+    init(
+        settings: AppSettings, onPresentationChanged: @escaping (Bool) -> Void,
+        onClosedWhileKey: @escaping () -> Void
+    ) {
         self.settings = settings
         self.onPresentationChanged = onPresentationChanged
+        self.onClosedWhileKey = onClosedWhileKey
     }
 
     func confirm(
@@ -177,6 +183,7 @@ final class DialogController: NSObject, NSWindowDelegate {
         panel = nil
         closing?.delegate = nil
         closing?.onKey = nil
+        if closing?.isKeyWindow == true { onClosedWhileKey() }
         continuation.resume(returning: index)
         closing?.fadeOut(duration: Theme.Duration.dialogExit)
     }

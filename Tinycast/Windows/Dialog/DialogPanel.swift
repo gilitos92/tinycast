@@ -41,7 +41,7 @@ final class DialogPanel: NSPanel {
     }
 
     override func sendEvent(_ event: NSEvent) {
-        guard event.type == .keyDown, let onKey else {
+        guard event.type == .keyDown, let onKey, !isComposingText else {
             super.sendEvent(event)
             return
         }
@@ -59,6 +59,11 @@ final class DialogPanel: NSPanel {
         default:
             super.sendEvent(event)
         }
+    }
+
+    /// ↵ and Esc belong to an input method while it is still composing, not to the dialog.
+    private var isComposingText: Bool {
+        (firstResponder as? NSTextView)?.hasMarkedText() ?? false
     }
 
     override var canBecomeKey: Bool { true }
