@@ -6,6 +6,10 @@ changes are in its [releases](https://github.com/abue-ammar/tinycast/releases).
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-10-19
+
+Based on upstream v0.11.22-beta.121.
+
 ### Added
 
 - The emoji picker can rename an emoji or symbol. Rename Emoji… (⌘E, or in the Actions menu) sets a
@@ -16,6 +20,8 @@ changes are in its [releases](https://github.com/abue-ammar/tinycast/releases).
 
 - Typing right after closing a dialog over the palette goes to the search field again, instead of
   nowhere.
+- While a Japanese or Chinese input method is composing in a dialog, Return and Escape go to the input
+  method instead of confirming or cancelling the dialog.
 
 ## [1.2.1] - 2026-10-17
 
