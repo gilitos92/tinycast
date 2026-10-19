@@ -5,6 +5,7 @@ struct EmojiScreen: PaletteScreen {
     let index: EmojiIndex
     let frequent: FrequentEmojiStore
     let pinned: PinnedEmojiStore
+    let names: EmojiNameStore
     let core: AppCore
     let vm: PaletteState
     let tone: EmojiSkinTone
@@ -31,7 +32,7 @@ struct EmojiScreen: PaletteScreen {
 
     private var sections: [EmojiGridSection] {
         EmojiGrid.sections(
-            query: vm.query, index: index, frequent: frequent, pinned: pinned,
+            query: vm.query, index: index, frequent: frequent, pinned: pinned, names: names,
             filter: vm.emojiCategoryFilter, columns: columns)
     }
 
@@ -46,7 +47,7 @@ struct EmojiScreen: PaletteScreen {
     }
 
     func footerCaption(at selection: Int) -> String? {
-        entry(at: selection)?.displayName
+        entry(at: selection).map(core.emojiCoordinator.displayName(of:))
     }
 
     func actions(at selection: Int) -> PopoverMenuContent? {
@@ -54,6 +55,7 @@ struct EmojiScreen: PaletteScreen {
         let pins = visiblePins
         return EmojiActionsMenu.content(
             entry: entry, core: core, target: vm.pasteTarget,
+            hasCustomName: names.name(for: entry.glyph) != nil,
             pinPosition: pins.firstIndex(of: entry.glyph), pinCount: pins.count,
             canZoom: { columns.applying($0, default: defaultColumns) != nil },
             togglePin: { togglePin(entry) },
@@ -80,8 +82,12 @@ struct EmojiScreen: PaletteScreen {
     }
 
     func perform(_ shortcut: PaletteShortcut, at selection: Int) -> Bool {
-        guard shortcut == .pin, let entry = entry(at: selection) else { return false }
-        togglePin(entry)
+        guard let entry = entry(at: selection) else { return false }
+        switch shortcut {
+        case .pin: togglePin(entry)
+        case .edit: Task { await core.emojiCoordinator.rename(entry) }
+        default: return false
+        }
         return true
     }
 
@@ -183,7 +189,8 @@ struct EmojiScreen: PaletteScreen {
 @MainActor
 enum EmojiActionsMenu {
     static func content(
-        entry: EmojiEntry, core: AppCore, target: PasteTarget?, pinPosition: Int?, pinCount: Int,
+        entry: EmojiEntry, core: AppCore, target: PasteTarget?, hasCustomName: Bool,
+        pinPosition: Int?, pinCount: Int,
         canZoom: (EmojiGridZoom) -> Bool, togglePin: @escaping () -> Void,
         movePin: @escaping (Int) -> Void, zoom: @escaping (EmojiGridZoom) -> Void
     )
@@ -225,6 +232,19 @@ enum EmojiActionsMenu {
                     isEnabled: pinPosition < pinCount - 1, shortcut: "⌥⌘↓"
                 ) { movePin(1) })
         }
+        items.append(
+            PopoverMenuItem(
+                title: "Rename \(noun)…", systemImage: "pencil", startsSection: true,
+                shortcut: "⌘E"
+            ) {
+                Task { await core.emojiCoordinator.rename(entry) }
+            })
+        if hasCustomName {
+            items.append(
+                PopoverMenuItem(title: "Reset Name", systemImage: "arrow.uturn.backward") {
+                    core.emojiCoordinator.resetName(entry)
+                })
+        }
         items.append(contentsOf: [
             PopoverMenuItem(
                 title: "Actual Size", systemImage: "magnifyingglass",
@@ -239,6 +259,7 @@ enum EmojiActionsMenu {
                 isEnabled: canZoom(.zoomOut), shortcut: "⌘-"
             ) { zoom(.zoomOut) }
         ])
-        return PopoverMenuContent(header: entry.displayName, items: items)
+        return PopoverMenuContent(
+            header: core.emojiCoordinator.displayName(of: entry), items: items)
     }
 }

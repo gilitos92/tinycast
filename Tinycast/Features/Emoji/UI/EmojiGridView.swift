@@ -14,7 +14,8 @@ enum EmojiGrid {
     @MainActor
     static func sections(
         query: String, index: EmojiIndex, frequent: FrequentEmojiStore,
-        pinned: PinnedEmojiStore, filter: EmojiCategoryFilter, columns: EmojiGridColumns
+        pinned: PinnedEmojiStore, names: EmojiNameStore, filter: EmojiCategoryFilter,
+        columns: EmojiGridColumns
     ) -> [EmojiGridSection] {
         var sections: [EmojiGridSection] = []
         var start = 0
@@ -43,7 +44,7 @@ enum EmojiGrid {
                 }
             }
         } else {
-            let results = index.search(query, frequent: frequent)
+            let results = index.search(query, frequent: frequent, customNames: names.names)
             let filtered: [EmojiEntry]
             switch filter {
             case .all:

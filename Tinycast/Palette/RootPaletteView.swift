@@ -74,7 +74,8 @@ struct RootPaletteView: View {
                 coordinator: core.snippetCoordinator, openInputMenu: openInputOptions)
         case .emoji:
             return EmojiScreen(
-                index: emojiIndex, frequent: frequentEmoji, pinned: core.pinnedEmoji, core: core, vm: vm,
+                index: emojiIndex, frequent: frequentEmoji, pinned: core.pinnedEmoji,
+                names: core.emojiNames, core: core, vm: vm,
                 tone: settings.emojiSkinTone, defaultColumns: settings.emojiGridColumns,
                 openActions: openActions)
         case .fileSearch:
@@ -360,6 +361,7 @@ struct RootPaletteView: View {
         content
             .onChange(of: vm.emojiCategoryFilter) { land() }
             .onChange(of: core.pinnedEmoji.revision) { emojiGridChanged() }
+            .onChange(of: core.emojiNames.revision) { emojiGridChanged() }
             .onChange(of: (screen as? EmojiScreen)?.frequentlyUsed) { old, new in
                 guard let old, let new else { return }
                 (screen as? EmojiScreen)?.frequentlyUsedChanged(from: old, to: new)
