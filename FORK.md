@@ -19,6 +19,8 @@ A personal fork of [abue-ammar/tinycast](https://github.com/abue-ammar/tinycast)
   and searched beside the catalog name.
 - **Clipboard History has Quick Look.** `⌘Y` opens the selected entry in the system Quick Look
   panel, and the arrow keys move through the history while it stays open.
+- **Notes has Raycast's ⌘K action panel.** It lists every note action with its shortcut, and `⌃X`
+  deletes the note. Link moves from `⌘K` to `⌘L`.
 - **Search Menu Bar Items can pin items** per app: `⌘.` pins or unpins, `⌥⌘↑/↓` reorders, and pins lead
   the list in a Pinned section.
 - **Releases are built here and published by hand.** The in-app updater reads this fork's GitHub
@@ -112,6 +114,8 @@ there is expected and the fork's side must survive:
 | Keyboard hand-back | `Platform/KeyboardHandoff.swift`, `Clipboard/Service/Paster.swift`, `Palette/PaletteWindowController.swift`, `Palette/PaletteCoordinator.swift`, `Extensions/Service/ExtensionHostBridge.swift`, `TextInjection/Service/TextInjector.swift`, every `activateReclaimingKeyboard()` caller |
 | Emoji ranking | `Emoji/Service/EmojiIndex.swift`, `Emoji/Service/FrequentEmojiStore.swift` |
 | Emoji name | `Palette/PaletteScreen.swift` (`footerCaption`), `Palette/RootPaletteView.swift` (`bottomBar`), `Emoji/UI/EmojiScreen.swift`, `Emoji/Service/EmojiNameStore.swift`, `Windows/Dialog/DialogTextInput.swift` |
+| Notes action panel | `Notes/Model/NoteAction.swift` (`NoteActionCatalog`, the only list of note actions), `Notes/UI/**` |
+| Clipboard Quick Look | `Clipboard/UI/ClipboardQuickLook.swift`, `Clipboard/UI/ClipboardCoordinator.swift`, `Clipboard/UI/ClipboardScreen.swift`, `Palette/PalettePanel.swift` |
 | Menu pins | `MenuSearch/**`, `App/AppCore.swift` (`pinnedMenuItems`), `Palette/RootPaletteView.swift` (`movePinnedOrFavorite`) |
 | Fork setup | `Updates/Model/ReleaseFeed.swift` (`repository`), `Scripts/install-local.sh`, `Scripts/publish-release.sh`, `Scripts/update-from-upstream.sh`, `Scripts/run-tests.sh` (harness file lists) |
 
