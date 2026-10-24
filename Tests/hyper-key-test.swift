@@ -125,9 +125,9 @@ struct HyperKeyTest {
         let recoveryKey = "hyperKeyKeyboardMappings"
         func fixture(_ body: (KeyboardRemapper, UserDefaults) -> Void) {
             HIDEventSystem.reset()
-            let domain = "tinycast.hyper-key-test.\(UUID())"
-            let defaults = UserDefaults(suiteName: domain)!
-            defer { defaults.removePersistentDomain(forName: domain) }
+            let domain = "tinycast.hyper-key-test"
+            let defaults = isolatedDefaults(domain)
+            defer { discardSuite(domain, defaults) }
             body(KeyboardRemapper(defaults: defaults), defaults)
         }
         fixture { remapper, defaults in
@@ -345,4 +345,21 @@ struct HyperKeyTest {
             "an unreadable config is not a conflict",
             !HyperKeyConflictPolicy.karabinerRemaps("capsLock", config: Data("{".utf8)))
     }
+}
+
+/// `removePersistentDomain` only empties the domain; cfprefsd still leaves the plist on disk.
+private func discardSuite(_ name: String, _ defaults: UserDefaults) {
+    defaults.removePersistentDomain(forName: name)
+    UserDefaults.standard.removeSuite(named: name)
+    CFPreferencesAppSynchronize(name as CFString)
+    try? FileManager.default.removeItem(
+        at: URL(fileURLWithPath: NSHomeDirectory())
+            .appendingPathComponent("Library/Preferences/\(name).plist"))
+}
+
+/// A fixed suite name stops cfprefsd accumulating a plist per run; cleared at both ends.
+private func isolatedDefaults(_ name: String) -> UserDefaults {
+    let defaults = UserDefaults(suiteName: name)!
+    defaults.removePersistentDomain(forName: name)
+    return defaults
 }

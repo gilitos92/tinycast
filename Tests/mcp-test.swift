@@ -205,12 +205,9 @@ struct MCPTests {
     }
 
     static func settingsPersistAndKeepHandlesApart() {
-        let suite = "mcp-test-\(UUID().uuidString)"
-        guard let defaults = UserDefaults(suiteName: suite) else {
-            expect(false, "the harness can open its own defaults")
-            return
-        }
-        defer { defaults.removePersistentDomain(forName: suite) }
+        let suite = "mcp-test"
+        let defaults = isolatedDefaults(suite)
+        defer { discardSuite(suite, defaults) }
 
         let store = MCPSettingsStore(defaults: defaults)
         store.save(
@@ -323,4 +320,21 @@ struct MCPTests {
             remote.runsInTinycast(whileCLIRouteSelected: true),
             "while a remote one stays connected: a session, no process, and a live status row")
     }
+}
+
+/// `removePersistentDomain` only empties the domain; cfprefsd still leaves the plist on disk.
+private func discardSuite(_ name: String, _ defaults: UserDefaults) {
+    defaults.removePersistentDomain(forName: name)
+    UserDefaults.standard.removeSuite(named: name)
+    CFPreferencesAppSynchronize(name as CFString)
+    try? FileManager.default.removeItem(
+        at: URL(fileURLWithPath: NSHomeDirectory())
+            .appendingPathComponent("Library/Preferences/\(name).plist"))
+}
+
+/// A fixed suite name stops cfprefsd accumulating a plist per run; cleared at both ends.
+private func isolatedDefaults(_ name: String) -> UserDefaults {
+    let defaults = UserDefaults(suiteName: name)!
+    defaults.removePersistentDomain(forName: name)
+    return defaults
 }

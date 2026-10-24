@@ -6,6 +6,25 @@ changes are in its [releases](https://github.com/abue-ammar/tinycast/releases).
 
 ## [Unreleased]
 
+Based on upstream v0.12.2-beta.125.
+
+### Added
+
+- Upstream's changes since v0.11.22-beta.121, among them native localization in eight languages,
+  editing Clipboard History text entries in place (⌘E), custom request headers for AI connections,
+  optional Dictation sounds and a Show animations setting.
+
+### Changed
+
+- Extension OAuth sign-in uses upstream's own `state` fix, which replaces the fork's.
+- The fork's own text is translated into upstream's eight languages: emoji renaming, menu item pins,
+  Clipboard History's Quick Look and the Notes action panel.
+
+### Fixed
+
+- `Scripts/update-from-upstream.sh` drops a `.github/` file that upstream newly added instead of
+  stopping on it.
+
 ## [1.3.0] - 2026-10-19
 
 Based on upstream v0.11.22-beta.121.

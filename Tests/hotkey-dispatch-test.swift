@@ -19,9 +19,9 @@ struct HotKeyDispatchTest {
     }
 
     static func dispatch(includesShift: Bool) {
-        let domain = "tinycast.hotkey-dispatch-test.\(UUID())"
-        let defaults = UserDefaults(suiteName: domain)!
-        defer { defaults.removePersistentDomain(forName: domain) }
+        let domain = "tinycast.hotkey-dispatch-test"
+        let defaults = isolatedDefaults(domain)
+        defer { discardSuite(domain, defaults) }
         let manager = HotKeyManager(defaults: defaults)
         let center = HotKeyCenter.current!
         var presses = 0
@@ -120,4 +120,21 @@ struct HotKeyDispatchTest {
             "Hyper selects the other action in a shared registration",
             palette == 3 && presses == beforePress + 1)
     }
+}
+
+/// `removePersistentDomain` only empties the domain; cfprefsd still leaves the plist on disk.
+private func discardSuite(_ name: String, _ defaults: UserDefaults) {
+    defaults.removePersistentDomain(forName: name)
+    UserDefaults.standard.removeSuite(named: name)
+    CFPreferencesAppSynchronize(name as CFString)
+    try? FileManager.default.removeItem(
+        at: URL(fileURLWithPath: NSHomeDirectory())
+            .appendingPathComponent("Library/Preferences/\(name).plist"))
+}
+
+/// A fixed suite name stops cfprefsd accumulating a plist per run; cleared at both ends.
+private func isolatedDefaults(_ name: String) -> UserDefaults {
+    let defaults = UserDefaults(suiteName: name)!
+    defaults.removePersistentDomain(forName: name)
+    return defaults
 }

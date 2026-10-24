@@ -24,19 +24,19 @@ struct MenuSearchList: View {
         let title: String
         let items: ArraySlice<MenuSearchItem>
 
-        var label: String { "\(title) (\(items.count) item\(items.count == 1 ? "" : "s"))" }
+        var label: String { String(localized: "\(title) (\(items.count) items)") }
     }
 
     /// The walk emits a menu's leaves contiguously, so runs group without reordering the rows.
     private var sections: [Section] {
         guard !isSearching else {
-            return [Section(id: 0, title: "Results", items: items[...])]
+            return [Section(id: 0, title: String(localized: "Results"), items: items[...])]
         }
         var sections: [Section] = []
         var start = items.startIndex
         if pinnedCount > 0 {
             start = min(pinnedCount, items.count)
-            sections.append(Section(id: 0, title: "Pinned", items: items[..<start]))
+            sections.append(Section(id: 0, title: String(localized: "Pinned"), items: items[..<start]))
         }
         while start < items.endIndex {
             let menu = items[start].menu

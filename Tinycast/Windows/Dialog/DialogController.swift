@@ -22,7 +22,7 @@ final class DialogController: NSObject, NSWindowDelegate {
 
     func confirm(
         title: String, message: String?, symbol: String?, tone: DialogTone, confirmTitle: String,
-        confirmRole: DialogAction.Role, dismissTitle: String = "Cancel"
+        confirmRole: DialogAction.Role, dismissTitle: String = String(localized: "Cancel")
     ) async -> Bool {
         let request = DialogRequest(
             title: title, message: message, symbol: symbol, tone: tone,
@@ -48,7 +48,8 @@ final class DialogController: NSObject, NSWindowDelegate {
     func notice(title: String, message: String, symbol: String, tone: DialogTone) async {
         let request = DialogRequest(
             title: title, message: message, symbol: symbol, tone: tone,
-            actions: [DialogAction(title: "OK", role: .cancel)], defaultIndex: 0, cancelIndex: 0)
+            actions: [DialogAction(title: String(localized: "OK"), role: .cancel)], defaultIndex: 0,
+            cancelIndex: 0)
         _ = await present(request)
     }
 
@@ -58,7 +59,7 @@ final class DialogController: NSObject, NSWindowDelegate {
     ) async
         -> Bool
     {
-        var actions = [DialogAction(title: "OK", role: .cancel)]
+        var actions = [DialogAction(title: String(localized: "OK"), role: .cancel)]
         if let recovery { actions.append(DialogAction(title: recovery)) }
         // ↵ lands on the recovery action when there is one to take, not on the OK dismissal.
         let recoveryIndex = recovery == nil ? nil : actions.count - 1
@@ -71,11 +72,12 @@ final class DialogController: NSObject, NSWindowDelegate {
     func pickVolume(current: Float32) async -> Float32? {
         let volume = VolumeState(level: Double(current))
         let request = DialogRequest(
-            title: "Set Volume", message: "Choose the output volume.", symbol: "speaker.wave.2",
+            title: String(localized: "Set Volume"),
+            message: String(localized: "Choose the output volume."), symbol: "speaker.wave.2",
             tone: .neutral,
             actions: [
-                DialogAction(title: "Set Volume"),
-                DialogAction(title: "Cancel", role: .cancel)
+                DialogAction(title: String(localized: "Set Volume")),
+                DialogAction(title: String(localized: "Cancel"), role: .cancel)
             ],
             defaultIndex: 0, cancelIndex: 1, accessory: .volume(volume))
         guard await present(request) == 0 else { return nil }
@@ -87,11 +89,11 @@ final class DialogController: NSObject, NSWindowDelegate {
     ) async -> [String: String]? {
         let state = SnippetArgumentsState(arguments: arguments)
         let request = DialogRequest(
-            title: snippetName, message: "Fill in the template fields.", symbol: "curlybraces",
-            tone: .neutral,
+            title: snippetName, message: String(localized: "Fill in the template fields."),
+            symbol: "curlybraces", tone: .neutral,
             actions: [
-                DialogAction(title: "Expand"),
-                DialogAction(title: "Cancel", role: .cancel)
+                DialogAction(title: String(localized: "Expand")),
+                DialogAction(title: String(localized: "Cancel"), role: .cancel)
             ],
             defaultIndex: 0, cancelIndex: 1, accessory: .snippetArguments(state))
         guard await present(request) == 0 else { return nil }
@@ -108,15 +110,27 @@ final class DialogController: NSObject, NSWindowDelegate {
             title: title, message: message, symbol: symbol, tone: .neutral,
             actions: [
                 DialogAction(title: confirmTitle),
-                DialogAction(title: "Cancel", role: .cancel)
+                DialogAction(title: String(localized: "Cancel"), role: .cancel)
             ],
             defaultIndex: 0, cancelIndex: 1, accessory: .textInput(input))
         guard await present(request) == 0 else { return nil }
         return input.text
     }
 
+    func editClipboardText(_ text: String) async -> String? {
+        let state = ClipboardEditState(text: text)
+        let request = DialogRequest(
+            title: String(localized: "Edit Entry"), message: String(localized: "⌘↵ saves."), symbol: nil,
+            actions: [
+                DialogAction(title: String(localized: "Save")),
+                DialogAction(title: String(localized: "Cancel"), role: .cancel)
+            ],
+            defaultIndex: 0, cancelIndex: 1, accessory: .clipboardText(state))
+        guard await present(request) == 0 else { return nil }
+        return state.text
+    }
+
     private func present(_ request: DialogRequest) async -> Int {
-        // Keyed on the continuation, so a panel still fading can't swallow the next.
         guard continuation == nil else { return request.cancelIndex }
         return await withCheckedContinuation { continuation in
             self.continuation = continuation
@@ -124,7 +138,7 @@ final class DialogController: NSObject, NSWindowDelegate {
             let width =
                 switch request.accessory {
                 case nil, .volume, .textInput: metrics.size.dialogCompactWidth
-                case .snippetArguments: metrics.size.dialogWidth
+                case .snippetArguments, .clipboardText: metrics.size.dialogWidth
                 }
             let content = hostingView(
                 DialogView(
@@ -135,6 +149,7 @@ final class DialogController: NSObject, NSWindowDelegate {
                 width: width, minHeight: 0)
             let panel = DialogPanel(content: content, cornerRadius: metrics.radius.panel)
             panel.handlesArrowKeys = request.accessory?.claimsArrowKeys ?? false
+            panel.acceptsLineBreaks = request.accessory?.acceptsLineBreaks ?? false
             panel.delegate = self
             panel.onKey = { [weak self] key in
                 guard let self else { return }
@@ -151,30 +166,12 @@ final class DialogController: NSObject, NSWindowDelegate {
             }
             self.panel = panel
             place(panel)
-            show(panel)
+            // Non-activating like the palette: key focus without pulling the user out.
+            panel.makeKeyAndOrderFront(nil)
+            panel.orderFrontRegardless()
         }
     }
 
-    /// Moves the full-size glass panel, avoiding the transient rim caused by scaling its content.
-    private func show(_ panel: NSPanel) {
-        let destination = panel.frame
-        panel.alphaValue = Theme.DialogMotion.initialOpacity
-        panel.setFrameOrigin(
-            NSPoint(x: destination.minX, y: destination.minY - Theme.DialogMotion.offset))
-        // Non-activating like the palette: key focus without pulling the user out.
-        panel.makeKeyAndOrderFront(nil)
-        panel.orderFrontRegardless()
-
-        NSAnimationContext.runAnimationGroup { context in
-            context.duration = Theme.Duration.dialogEnter
-            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
-            // Moving a cached surface avoids redrawing the glass at each whole-point frame step.
-            panel.animator().setFrame(destination, display: false)
-            panel.animator().alphaValue = 1
-        }
-    }
-
-    /// Resumes before the fade finishes, so a confirmation isn't held up by animation.
     private func finish(_ index: Int) {
         guard let continuation else { return }
         self.continuation = nil
@@ -185,13 +182,14 @@ final class DialogController: NSObject, NSWindowDelegate {
         closing?.onKey = nil
         if closing?.isKeyWindow == true { onClosedWhileKey() }
         continuation.resume(returning: index)
-        closing?.fadeOut(duration: Theme.Duration.dialogExit)
+        closing?.orderOut(nil)
     }
 
     private var metrics: InterfaceMetrics { settings.interfaceSize.metrics }
 
     private func hostingView(_ view: some View, width: CGFloat, minHeight: CGFloat) -> NSView {
-        let hosting = NSHostingView(rootView: AnyView(view.environment(\.metrics, metrics)))
+        let hosting = NSHostingView(
+            rootView: AnyView(view.environment(\.metrics, metrics).motionScope()))
         // Measure at the fixed width first: the message wraps, so height follows width.
         hosting.setFrameSize(NSSize(width: width, height: minHeight))
         let fitted = hosting.fittingSize
