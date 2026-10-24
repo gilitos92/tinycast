@@ -57,7 +57,9 @@ against the total and shows its run and compile time, a quiet stretch names the 
 than `TINYCAST_TEST_TIMEOUT` seconds (default 300) is killed and reported as timed out. Parallelism is safe
 because each harness already roots its scratch state somewhere of its own — a UUID-suffixed
 `temporaryDirectory`, a `UserDefaults(suiteName:)`, or `NSPasteboard.withUniqueName()` — and a new
-harness must keep doing that rather than reach for a fixed path.
+harness must keep doing that rather than reach for a fixed path. A suite name is the exception: it is
+fixed per harness and cleared at both ends, because cfprefsd leaves a plist in `~/Library/Preferences`
+for every name it has seen.
 
 Two consequences worth knowing. Status lines arrive in **completion order**, not the order the `run`
 lines are written; and a failing harness's compiler diagnostics or assertion output are replayed

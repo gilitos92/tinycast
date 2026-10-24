@@ -203,11 +203,11 @@ struct LauncherSettingsFileTest {
         let visibility: VisibilityStore
         let shortcuts: HotKeySettingsFile
         let file: LauncherSettingsFile
-        private let suite = "launcher-settings-file-test-\(UUID().uuidString)"
+        private let suite = "launcher-settings-file-test"
         private let defaults: UserDefaults
 
         init() {
-            defaults = UserDefaults(suiteName: suite)!
+            defaults = isolatedDefaults(suite)
             aliases = AliasStore(defaults: defaults)
             visibility = VisibilityStore(defaults: defaults)
             shortcuts = HotKeySettingsFile(hotKeys: hotKeys)
@@ -215,7 +215,7 @@ struct LauncherSettingsFileTest {
                 appIndex: index, aliases: aliases, visibility: visibility, shortcuts: shortcuts)
         }
 
-        isolated deinit { defaults.removePersistentDomain(forName: suite) }
+        isolated deinit { discardSuite(suite, defaults) }
     }
 }
 
@@ -255,4 +255,21 @@ final class HotKeyManager {
         bindings.first { $0.key != action && binding.conflicts(with: $0.value) }
             .map { String(describing: $0.key) }
     }
+}
+
+/// `removePersistentDomain` only empties the domain; cfprefsd still leaves the plist on disk.
+private func discardSuite(_ name: String, _ defaults: UserDefaults) {
+    defaults.removePersistentDomain(forName: name)
+    UserDefaults.standard.removeSuite(named: name)
+    CFPreferencesAppSynchronize(name as CFString)
+    try? FileManager.default.removeItem(
+        at: URL(fileURLWithPath: NSHomeDirectory())
+            .appendingPathComponent("Library/Preferences/\(name).plist"))
+}
+
+/// A fixed suite name stops cfprefsd accumulating a plist per run; cleared at both ends.
+private func isolatedDefaults(_ name: String) -> UserDefaults {
+    let defaults = UserDefaults(suiteName: name)!
+    defaults.removePersistentDomain(forName: name)
+    return defaults
 }

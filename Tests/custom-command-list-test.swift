@@ -9,9 +9,9 @@ struct CustomCommandListTests {
     static var passes = 0
 
     static func main() throws {
-        let suite = "custom-command-list-test.\(UUID().uuidString)"
-        let defaults = UserDefaults(suiteName: suite)!
-        defer { defaults.removePersistentDomain(forName: suite) }
+        let suite = "custom-command-list-test"
+        let defaults = isolatedDefaults(suite)
+        defer { discardSuite(suite, defaults) }
         let store = CustomCommandStore(defaults: defaults)
         let coordinator = CustomCommandCoordinator()
         let vm = PaletteState()
@@ -168,4 +168,21 @@ struct CustomCommandList: View {
 struct CustomCommandPreview: View {
     let command: CustomCommand?
     var body: some View { EmptyView() }
+}
+
+/// `removePersistentDomain` only empties the domain; cfprefsd still leaves the plist on disk.
+private func discardSuite(_ name: String, _ defaults: UserDefaults) {
+    defaults.removePersistentDomain(forName: name)
+    UserDefaults.standard.removeSuite(named: name)
+    CFPreferencesAppSynchronize(name as CFString)
+    try? FileManager.default.removeItem(
+        at: URL(fileURLWithPath: NSHomeDirectory())
+            .appendingPathComponent("Library/Preferences/\(name).plist"))
+}
+
+/// A fixed suite name stops cfprefsd accumulating a plist per run; cleared at both ends.
+private func isolatedDefaults(_ name: String) -> UserDefaults {
+    let defaults = UserDefaults(suiteName: name)!
+    defaults.removePersistentDomain(forName: name)
+    return defaults
 }

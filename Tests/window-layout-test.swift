@@ -567,12 +567,9 @@ struct WindowLayoutTests {
     // MARK: - Store
 
     static func withStore(_ body: (WindowLayoutStore) -> Void) {
-        let name = "tinycast-window-layout-test-\(UUID().uuidString)"
-        guard let defaults = UserDefaults(suiteName: name) else {
-            expect(false, "a scratch defaults suite opens")
-            return
-        }
-        defer { defaults.removePersistentDomain(forName: name) }
+        let name = "tinycast-window-layout-test"
+        let defaults = isolatedDefaults(name)
+        defer { discardSuite(name, defaults) }
         body(WindowLayoutStore(defaults: defaults))
     }
 
@@ -678,11 +675,9 @@ struct WindowLayoutTests {
     }
 
     static func storePersistence() {
-        let name = "tinycast-window-layout-test-\(UUID().uuidString)"
-        guard let defaults = UserDefaults(suiteName: name) else {
-            return expect(false, "a scratch defaults suite opens")
-        }
-        defer { defaults.removePersistentDomain(forName: name) }
+        let name = "tinycast-window-layout-persistence-test"
+        let defaults = isolatedDefaults(name)
+        defer { discardSuite(name, defaults) }
 
         var stored: WindowLayout?
         do {
@@ -911,11 +906,9 @@ struct WindowLayoutTests {
     }
 
     static func withCustomSizeStore(_ body: (UserDefaults) -> Void) {
-        let name = "tinycast-custom-window-size-test-\(UUID().uuidString)"
-        guard let defaults = UserDefaults(suiteName: name) else {
-            return expect(false, "a scratch defaults suite opens")
-        }
-        defer { defaults.removePersistentDomain(forName: name) }
+        let name = "tinycast-custom-window-size-test"
+        let defaults = isolatedDefaults(name)
+        defer { discardSuite(name, defaults) }
         body(defaults)
     }
 
@@ -991,4 +984,21 @@ struct WindowLayoutTests {
             expect(reopened.sizes.first == stored, "every field survives persistence")
         }
     }
+}
+
+/// `removePersistentDomain` only empties the domain; cfprefsd still leaves the plist on disk.
+private func discardSuite(_ name: String, _ defaults: UserDefaults) {
+    defaults.removePersistentDomain(forName: name)
+    UserDefaults.standard.removeSuite(named: name)
+    CFPreferencesAppSynchronize(name as CFString)
+    try? FileManager.default.removeItem(
+        at: URL(fileURLWithPath: NSHomeDirectory())
+            .appendingPathComponent("Library/Preferences/\(name).plist"))
+}
+
+/// A fixed suite name stops cfprefsd accumulating a plist per run; cleared at both ends.
+private func isolatedDefaults(_ name: String) -> UserDefaults {
+    let defaults = UserDefaults(suiteName: name)!
+    defaults.removePersistentDomain(forName: name)
+    return defaults
 }

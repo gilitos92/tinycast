@@ -71,9 +71,9 @@ struct AppInstallationTest {
         try makeApp(utility, id: "com.example.utility", version: "1.0")
         let alias = root.appendingPathComponent("Linked.app")
         try FileManager.default.createSymbolicLink(at: alias, withDestinationURL: stable)
-        let domain = "tinycast.installation-test.\(UUID())"
-        let defaults = UserDefaults(suiteName: domain)!
-        defer { defaults.removePersistentDomain(forName: domain) }
+        let domain = "tinycast.installation-test"
+        let defaults = isolatedDefaults(domain)
+        defer { discardSuite(domain, defaults) }
         let aliases = AliasStore(defaults: defaults)
         let visibility = VisibilityStore(defaults: defaults)
         let ranking = LauncherRankingStore(fileURL: root.appendingPathComponent("ranking.json"))
@@ -216,9 +216,9 @@ struct AppInstallationTest {
         check(
             "the fixture exposes an interface-localized declaration",
             Bundle(url: app)?.installedAppName == "InterfaceOnlyFixture")
-        let domain = "tinycast.language-index-test.\(UUID())"
-        let defaults = UserDefaults(suiteName: domain)!
-        defer { defaults.removePersistentDomain(forName: domain) }
+        let domain = "tinycast.language-index-test"
+        let defaults = isolatedDefaults(domain)
+        defer { discardSuite(domain, defaults) }
         let aliases = AliasStore(defaults: defaults)
         let visibility = VisibilityStore(defaults: defaults)
         let ranking = LauncherRankingStore(fileURL: root.appendingPathComponent("ranking.json"))
@@ -579,4 +579,21 @@ final class AppSettings {
 final class HotKeyManager {
     var revision = 0
     func binding(for action: HotKeyAction) -> Int? { nil }
+}
+
+/// `removePersistentDomain` only empties the domain; cfprefsd still leaves the plist on disk.
+private func discardSuite(_ name: String, _ defaults: UserDefaults) {
+    defaults.removePersistentDomain(forName: name)
+    UserDefaults.standard.removeSuite(named: name)
+    CFPreferencesAppSynchronize(name as CFString)
+    try? FileManager.default.removeItem(
+        at: URL(fileURLWithPath: NSHomeDirectory())
+            .appendingPathComponent("Library/Preferences/\(name).plist"))
+}
+
+/// A fixed suite name stops cfprefsd accumulating a plist per run; cleared at both ends.
+private func isolatedDefaults(_ name: String) -> UserDefaults {
+    let defaults = UserDefaults(suiteName: name)!
+    defaults.removePersistentDomain(forName: name)
+    return defaults
 }
