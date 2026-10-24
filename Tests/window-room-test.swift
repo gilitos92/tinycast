@@ -800,11 +800,9 @@ struct WindowRoomTests {
     }
 
     static func storeCRUD() {
-        let suite = "tinycast-window-room-test-\(UUID().uuidString)"
-        guard let defaults = UserDefaults(suiteName: suite) else {
-            return expect(false, "a scratch suite opens")
-        }
-        defer { defaults.removePersistentDomain(forName: suite) }
+        let suite = "tinycast-window-room-test"
+        let defaults = isolatedDefaults(suite)
+        defer { discardSuite(suite, defaults) }
 
         let store = RoomStore(defaults: defaults)
         var changes = 0
@@ -832,12 +830,13 @@ struct WindowRoomTests {
         let reloaded = RoomStore(defaults: defaults)
         let mixed = #"[{"name":"Kept","layout":"someday","windows":[{"bundleID":"a"}]},{"windows":[]}]"#
         let mixedSuite = suite + "-mixed"
-        if let other = UserDefaults(suiteName: mixedSuite) {
+        do {
+            let other = isolatedDefaults(mixedSuite)
             other.set(Data(mixed.utf8), forKey: "windowRooms")
             let survivor = RoomStore(defaults: other).rooms
             expect(survivor.map(\.name) == ["Kept"], "one bad record never costs the library")
             expect(survivor.first?.layout == .auto, "an unknown layout resets to Auto")
-            other.removePersistentDomain(forName: mixedSuite)
+            discardSuite(mixedSuite, other)
         }
         expect(
             reloaded.room(id: buildID)?.layout(onDisplay: "display") == .columns, "a display layout persists")
@@ -855,11 +854,9 @@ struct WindowRoomTests {
     }
 
     static func minimumSizeStore() {
-        let suite = "tinycast-window-room-minimums-\(UUID().uuidString)"
-        guard let defaults = UserDefaults(suiteName: suite) else {
-            return expect(false, "a scratch suite opens")
-        }
-        defer { defaults.removePersistentDomain(forName: suite) }
+        let suite = "tinycast-window-room-minimums"
+        let defaults = isolatedDefaults(suite)
+        defer { discardSuite(suite, defaults) }
 
         let store = RoomMinimumSizeStore(defaults: defaults)
         expect(store.size(for: "app") == .zero, "an unknown app has no minimum")
@@ -909,4 +906,21 @@ struct WindowRoomTests {
             kept.filter { $0.hasPrefix("room-parking.unreadable-") }.count == 1,
             "the unreadable ledger is kept aside")
     }
+}
+
+/// `removePersistentDomain` only empties the domain; cfprefsd still leaves the plist on disk.
+private func discardSuite(_ name: String, _ defaults: UserDefaults) {
+    defaults.removePersistentDomain(forName: name)
+    UserDefaults.standard.removeSuite(named: name)
+    CFPreferencesAppSynchronize(name as CFString)
+    try? FileManager.default.removeItem(
+        at: URL(fileURLWithPath: NSHomeDirectory())
+            .appendingPathComponent("Library/Preferences/\(name).plist"))
+}
+
+/// A fixed suite name stops cfprefsd accumulating a plist per run; cleared at both ends.
+private func isolatedDefaults(_ name: String) -> UserDefaults {
+    let defaults = UserDefaults(suiteName: name)!
+    defaults.removePersistentDomain(forName: name)
+    return defaults
 }

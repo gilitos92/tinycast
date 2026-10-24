@@ -39,10 +39,17 @@ enum DialogAccessory {
     case volume(VolumeState)
     case snippetArguments(SnippetArgumentsState)
     case textInput(DialogTextInputState)
+    case clipboardText(ClipboardEditState)
 
     /// Whether ←/→/↑/↓ belong to the control rather than to whatever has focus inside it.
     var claimsArrowKeys: Bool {
         if case .volume = self { return true }
+        return false
+    }
+
+    /// Whether ↵ belongs to a multi-line field, which leaves ⌘↵ to confirm the dialog.
+    var acceptsLineBreaks: Bool {
+        if case .clipboardText = self { return true }
         return false
     }
 }
