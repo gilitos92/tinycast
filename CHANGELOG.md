@@ -20,6 +20,11 @@ Based on upstream v0.12.2-beta.125.
 - The Notes action panel and Clipboard History's Quick Look use translated titles where upstream
   already translates the same words.
 
+### Fixed
+
+- `Scripts/update-from-upstream.sh` drops a `.github/` file that upstream newly added instead of
+  stopping on it.
+
 ## [1.3.0] - 2026-10-19
 
 Based on upstream v0.11.22-beta.121.

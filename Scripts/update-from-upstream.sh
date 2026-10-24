@@ -19,7 +19,7 @@ merge_upstream() {
     git merge --no-ff --no-edit upstream/main && return
     for path in "${REMOVED[@]}"; do
         if git ls-files --unmerged -- "$path" | grep -q .; then
-            git rm -rq --ignore-unmatch -- "$path"
+            git rm -rqf --ignore-unmatch -- "$path"
         fi
     done
     if [ -n "$(git diff --name-only --diff-filter=U)" ]; then
