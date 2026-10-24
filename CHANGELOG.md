@@ -24,6 +24,8 @@ Based on upstream v0.12.2-beta.125.
 
 - `Scripts/update-from-upstream.sh` drops a `.github/` file that upstream newly added instead of
   stopping on it.
+- The test harnesses no longer leave an empty preferences file in `~/Library/Preferences` on every
+  run.
 
 ## [1.3.0] - 2026-10-19
 
