@@ -536,7 +536,8 @@ another, so a late write never outlives its cleanup. An image shows its stored P
 its original path. Every item carries the row's own title, so a text copy never shows as a UUID.
 
 Escape and opening any menu close it through `PaletteScreen.dismissOverlay()`, and
-`paletteDidHide()` and the screen's `onDisappear` close it with the palette.
+`paletteDidHide()` and the screen's `onDisappear` close it with the palette. Edit Entry closes it
+before its dialog opens: an edit keeps the entry's ID, and the panel reloads only on a new one.
 
 ## Paste Sequentially
 

@@ -296,6 +296,8 @@ final class ClipboardCoordinator {
 
     func editClip(_ item: ClipboardItem) async {
         guard item.kind == .text else { return }
+        // Quick Look reloads only on a new ID, and an edit keeps it, so it would show the old text.
+        quickLook.hide()
         guard let text = await core.editClipboardText(item.text ?? ""), !text.isEmpty else { return }
         do {
             guard let edited = try clipboardStore.updateText(text, of: item) else {
