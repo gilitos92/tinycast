@@ -8,7 +8,7 @@ struct MenuSearchScreen: PaletteScreen {
 
     var rows: [MenuSearchItem] { session.filtered }
 
-    var primaryActionTitle: String { "Activate Menu Item" }
+    var primaryActionTitle: String { String(localized: "Activate Menu Item") }
 
     private var coordinator: MenuSearchCoordinator { core.menuSearchCoordinator }
 
@@ -75,9 +75,9 @@ struct MenuSearchScreen: PaletteScreen {
         switch session.target {
         case .searchable(let name):
             if session.state == .reading {
-                EmptyResults(text: "Reading menu…")
+                EmptyResults(text: String(localized: "Reading menu…"))
             } else if rows.isEmpty {
-                EmptyResults(text: "No menu items found in \(name)")
+                EmptyResults(text: String(localized: "No menu items found in \(name)"))
             } else {
                 MenuSearchList(
                     items: rows, targetName: name, isSearching: session.isSearching,
@@ -89,13 +89,13 @@ struct MenuSearchScreen: PaletteScreen {
                     onActivate: { core.menuSearchCoordinator.activate($0) })
             }
         case .excluded(let name):
-            EmptyResults(text: "Menu search is turned off for \(name)")
+            EmptyResults(text: String(localized: "Menu search is turned off for \(name)"))
         case .selfTarget:
-            EmptyResults(text: "Tinycast has no menu to search")
+            EmptyResults(text: String(localized: "Tinycast has no menu to search"))
         case .menuLess(let name):
-            EmptyResults(text: "\(name) has no menu bar to search")
+            EmptyResults(text: String(localized: "\(name) has no menu bar to search"))
         case .noApplication:
-            EmptyResults(text: "No application to search")
+            EmptyResults(text: String(localized: "No application to search"))
         }
     }
 }

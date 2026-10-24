@@ -21,8 +21,6 @@ A personal fork of [abue-ammar/tinycast](https://github.com/abue-ammar/tinycast)
   panel, and the arrow keys move through the history while it stays open.
 - **Search Menu Bar Items can pin items** per app: `⌘.` pins or unpins, `⌥⌘↑/↓` reorders, and pins lead
   the list in a Pinned section.
-- **Extension OAuth sign-in completes.** Raycast's web redirect page needs `state` as base64url JSON,
-  so `PKCEClient` sends it that way instead of random bytes.
 - **Releases are built here and published by hand.** The in-app updater reads this fork's GitHub
   releases, so an upstream release never replaces this build. Pulling upstream's changes means running
   `Scripts/update-from-upstream.sh` (below).
@@ -115,7 +113,6 @@ there is expected and the fork's side must survive:
 | Emoji ranking | `Emoji/Service/EmojiIndex.swift`, `Emoji/Service/FrequentEmojiStore.swift` |
 | Emoji name | `Palette/PaletteScreen.swift` (`footerCaption`), `Palette/RootPaletteView.swift` (`bottomBar`), `Emoji/UI/EmojiScreen.swift`, `Emoji/Service/EmojiNameStore.swift`, `Windows/Dialog/DialogTextInput.swift` |
 | Menu pins | `MenuSearch/**`, `App/AppCore.swift` (`pinnedMenuItems`), `Palette/RootPaletteView.swift` (`movePinnedOrFavorite`) |
-| OAuth state | `Scripts/raycast-runtime/src/api/oauth.js` (rebuild the runtime after a conflict) |
 | Fork setup | `Updates/Model/ReleaseFeed.swift` (`repository`), `Scripts/install-local.sh`, `Scripts/publish-release.sh`, `Scripts/update-from-upstream.sh`, `Scripts/run-tests.sh` (harness file lists) |
 
 Paths are under `Tinycast/Features/` unless they start with `Platform/`, `Palette/`, `App/` or

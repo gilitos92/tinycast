@@ -89,7 +89,7 @@ private struct NoteFormattingToggle: View {
         .accessibilityLabel("Formatting")
         .accessibilityValue(isExpanded ? "Expanded" : "Collapsed")
         // Against the window's trailing edge, so a centred label would run off it.
-        .tooltip("Formatting  ⌥⌘T", alignment: .trailing)
+        .tooltip(String(localized: "Formatting  ⌥⌘T"), alignment: .trailing)
     }
 }
 
@@ -134,14 +134,14 @@ private struct NoteHeadingButton: View {
         .accessibilityValue(accessibilityValue)
         .accessibilityAddTraits(isHeading ? .isSelected : [])
         // The leading end of an expanded capsule, which a narrow note pushes against the edge.
-        .tooltip(isOpen ? nil : "Heading", alignment: .leading)
+        .tooltip(isOpen ? nil : String(localized: "Heading"), alignment: .leading)
     }
 
     private var accessibilityValue: String {
         switch level {
         case nil: ""
-        case 0: "Text"
-        case let level?: "Heading \(level)"
+        case 0: String(localized: "Text")
+        case let level?: String(localized: "Heading \(level)")
         }
     }
 }
