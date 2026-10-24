@@ -17,8 +17,8 @@ Based on upstream v0.12.2-beta.125.
 ### Changed
 
 - Extension OAuth sign-in uses upstream's own `state` fix, which replaces the fork's.
-- The Notes action panel and Clipboard History's Quick Look use translated titles where upstream
-  already translates the same words.
+- The fork's own text is translated into upstream's eight languages: emoji renaming, menu item pins,
+  Clipboard History's Quick Look and the Notes action panel.
 
 ### Fixed
 

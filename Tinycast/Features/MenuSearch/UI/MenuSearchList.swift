@@ -36,7 +36,7 @@ struct MenuSearchList: View {
         var start = items.startIndex
         if pinnedCount > 0 {
             start = min(pinnedCount, items.count)
-            sections.append(Section(id: 0, title: "Pinned", items: items[..<start]))
+            sections.append(Section(id: 0, title: String(localized: "Pinned"), items: items[..<start]))
         }
         while start < items.endIndex {
             let menu = items[start].menu

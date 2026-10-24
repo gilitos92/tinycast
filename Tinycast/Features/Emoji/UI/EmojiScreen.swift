@@ -235,14 +235,14 @@ enum EmojiActionsMenu {
         }
         items.append(
             PopoverMenuItem(
-                title: "Rename \(noun)…", systemImage: "pencil", startsSection: true,
+                title: String(localized: "Rename \(noun)…"), systemImage: "pencil", startsSection: true,
                 shortcut: "⌘E"
             ) {
                 Task { await core.emojiCoordinator.rename(entry) }
             })
         if hasCustomName {
             items.append(
-                PopoverMenuItem(title: "Reset Name", systemImage: "arrow.uturn.backward") {
+                PopoverMenuItem(title: String(localized: "Reset Name"), systemImage: "arrow.uturn.backward") {
                     core.emojiCoordinator.resetName(entry)
                 })
         }

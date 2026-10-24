@@ -33,10 +33,10 @@ final class EmojiCoordinator {
     func rename(_ entry: EmojiEntry) async {
         guard
             let name = await core.requestText(
-                title: "Rename \(entry.display(tone: settings.emojiSkinTone))",
-                message: "Leave it empty to use “\(entry.displayName)”.",
+                title: String(localized: "Rename \(entry.display(tone: settings.emojiSkinTone))"),
+                message: String(localized: "Leave it empty to use “\(entry.displayName)”."),
                 symbol: nil, text: names.name(for: entry.glyph) ?? "",
-                placeholder: entry.displayName, confirmTitle: "Rename",
+                placeholder: entry.displayName, confirmTitle: String(localized: "Rename"),
                 maxLength: EmojiNameStore.maxLength)
         else { return }
         names.setName(name, for: entry.glyph)

@@ -27,7 +27,7 @@ struct MenuSearchScreen: PaletteScreen {
                 title: primaryActionTitle, systemImage: "menubar.rectangle", shortcut: "↵"
             ) { coordinator.activate(item) },
             PopoverMenuItem(
-                title: pinned ? "Unpin Menu Item" : "Pin Menu Item",
+                title: pinned ? String(localized: "Unpin Menu Item") : String(localized: "Pin Menu Item"),
                 systemImage: pinned ? "pin.slash" : "pin",
                 startsSection: true, shortcut: "⌘."
             ) { coordinator.togglePin(item) },
@@ -35,12 +35,12 @@ struct MenuSearchScreen: PaletteScreen {
         if let position {
             items.append(
                 PopoverMenuItem(
-                    title: "Move Up in Pinned", systemImage: "arrow.up",
+                    title: String(localized: "Move Up in Pinned"), systemImage: "arrow.up",
                     isEnabled: position > 0, shortcut: "⌥⌘↑"
                 ) { coordinator.movePin(item, by: -1) })
             items.append(
                 PopoverMenuItem(
-                    title: "Move Down in Pinned", systemImage: "arrow.down",
+                    title: String(localized: "Move Down in Pinned"), systemImage: "arrow.down",
                     isEnabled: position < coordinator.visiblePinCount - 1, shortcut: "⌥⌘↓"
                 ) { coordinator.movePin(item, by: 1) })
         }

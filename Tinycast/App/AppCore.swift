@@ -294,10 +294,10 @@ final class AppCore {
                 self?.showMessage(String(localized: "Couldn't save Emoji & Symbols pins"), tone: .danger)
             }
             emojiNames.onPersistenceFailure = { [weak self] in
-                self?.showMessage("Couldn't save Emoji & Symbols names", tone: .danger)
+                self?.showMessage(String(localized: "Couldn't save Emoji & Symbols names"), tone: .danger)
             }
             pinnedMenuItems.onPersistenceFailure = { [weak self] in
-                self?.showMessage("Couldn't save menu item pins", tone: .danger)
+                self?.showMessage(String(localized: "Couldn't save menu item pins"), tone: .danger)
             }
 
             appIndex.start(settings: settings)

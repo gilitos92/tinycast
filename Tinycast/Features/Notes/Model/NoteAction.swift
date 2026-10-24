@@ -58,7 +58,7 @@ struct NoteActionItem: Sendable, Equatable {
         case window
         case delete
 
-        var title: String? { self == .format ? "Format" : nil }
+        var title: String? { self == .format ? String(localized: "Format") : nil }
     }
 
     let action: NoteAction
@@ -87,7 +87,7 @@ enum NoteActionCatalog {
         action: .browseNotes, title: String(localized: "Browse Notes"), symbol: "rectangle.stack",
         shortcut: NoteShortcut(.command, .letter("p")), section: .note)
     static let findInNote = NoteActionItem(
-        action: .findInNote, title: "Find in Note", symbol: "text.magnifyingglass",
+        action: .findInNote, title: String(localized: "Find in Note"), symbol: "text.magnifyingglass",
         shortcut: NoteShortcut(.command, .letter("f")), section: .note)
     static let openNotesFolder = NoteActionItem(
         action: .openNotesFolder, title: String(localized: "Open Notes Folder"), symbol: "folder",
@@ -133,13 +133,14 @@ enum NoteActionCatalog {
         + [numberedList, bulletList, taskList]
 
     static let moveToTopRight = NoteActionItem(
-        action: .moveToTopRight, title: "Move Window to Top Right", symbol: "arrow.up.right.square",
+        action: .moveToTopRight, title: String(localized: "Move Window to Top Right"),
+        symbol: "arrow.up.right.square",
         shortcut: nil, section: .window)
     static let closeWindow = NoteActionItem(
         action: .closeWindow, title: String(localized: "Close Window"), symbol: "xmark.square",
         shortcut: NoteShortcut(.command, .letter("w")), section: .window)
     static let deleteNote = NoteActionItem(
-        action: .deleteNote, title: "Delete Note", symbol: "trash",
+        action: .deleteNote, title: String(localized: "Delete Note"), symbol: "trash",
         shortcut: NoteShortcut(.control, .letter("x")), section: .delete)
 
     /// Every row the panel offers for this state, in display order.
@@ -154,7 +155,8 @@ enum NoteActionCatalog {
                     NoteActionItem(
                         action: .toggleFormattingBar,
                         title: context.isFormattingBarExpanded
-                            ? "Collapse Formatting Bar" : "Expand Formatting Bar",
+                            ? String(localized: "Collapse Formatting Bar")
+                            : String(localized: "Expand Formatting Bar"),
                         symbol: "paintbrush",
                         shortcut: NoteShortcut([.command, .option], .letter("t")), section: .format))
             }
