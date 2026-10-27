@@ -6,6 +6,10 @@ changes are in its [releases](https://github.com/abue-ammar/tinycast/releases).
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-10-27
+
+Based on upstream v0.12.2-beta.125.
+
 ### Added
 
 - AI emoji search, as in Raycast: in the emoji picker, type a word and press Tab to find emoji by
