@@ -203,8 +203,12 @@ final class NotesWindowController: NSObject, NSWindowDelegate {
         panel.onMouseDown = { [weak coordinator] in coordinator?.noteWindowMouseDown() }
         panel.onDeleteChord = { [weak coordinator] in coordinator?.handleDeleteShortcut() ?? false }
         panel.onShortcut = { [weak coordinator] shortcut in
-            guard shortcut == NoteActionCatalog.deleteNote.shortcut else { return false }
-            return coordinator?.handleDeleteNoteShortcut() ?? false
+            switch shortcut {
+            case NoteActionCatalog.deleteNote.shortcut: coordinator?.handleDeleteNoteShortcut() ?? false
+            case NoteActionCatalog.goBack.shortcut: coordinator?.navigate(.back) ?? false
+            case NoteActionCatalog.goForward.shortcut: coordinator?.navigate(.forward) ?? false
+            default: false
+            }
         }
         panel.commandChords = [
             "n": { [weak coordinator] in coordinator?.createNote() },

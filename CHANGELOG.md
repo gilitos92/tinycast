@@ -6,6 +6,16 @@ changes are in its [releases](https://github.com/abue-ammar/tinycast/releases).
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-10-27
+
+Based on upstream v0.12.2-beta.125.
+
+### Added
+
+- `⌘[` and `⌘]` go back and forward, as in Raycast: in Notes through the notes opened this session,
+  and in Quick AI through the saved chats. Both appear in the ⌘K actions while there is somewhere to
+  go.
+
 ## [1.4.0] - 2026-10-23
 
 Based on upstream v0.12.2-beta.125.

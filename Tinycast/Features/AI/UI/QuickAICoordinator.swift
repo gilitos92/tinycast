@@ -99,6 +99,30 @@ final class QuickAICoordinator {
         palette.replace(mode: .ai)
     }
 
+    /// ⌘[ and ⌘]; refused mid-reply, since opening another chat would cancel the one arriving.
+    @discardableResult
+    func navigate(_ direction: ChatNavigation.Direction) -> Bool {
+        guard let destination = destination(direction) else { return false }
+        switch destination {
+        case .chat(let id): return chats.openInQuickAI(id: id)
+        case .newChat:
+            chat.startNewChat()
+            return true
+        }
+    }
+
+    func canNavigate(_ direction: ChatNavigation.Direction) -> Bool {
+        destination(direction) != nil
+    }
+
+    private func destination(_ direction: ChatNavigation.Direction) -> ChatNavigation.Destination? {
+        guard !chat.isStreaming else { return nil }
+        let current = chat.session.messages.isEmpty ? nil : chat.session.id
+        return ChatNavigation.destination(
+            from: current, in: core.chatHistory.conversations.map(\.id), direction: direction,
+            isAvailable: { chats.holder(of: $0) == nil })
+    }
+
     func showHistory() {
         palette.push(mode: .aiHistory)
     }

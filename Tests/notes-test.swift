@@ -16,6 +16,7 @@ struct NotesTests {
         try testUnnamedNotesTitleThemselves()
         testSwitcherInteraction()
         testActionCatalog()
+        testNavigationHistory()
         testWindowPlacement()
         try await testStoreCollectionAndAutosave()
         try await testStoreRefreshesExternalEdits()
@@ -216,6 +217,73 @@ struct NotesTests {
         let renamed = try repository.rename(id: unnamed.id, title: "Shopping")
         let afterRename = try require((try repository.list()).first { $0.id == renamed })
         check("naming a note retires its derived title", afterRename.firstLine == nil)
+    }
+
+    private static func testNavigationHistory() {
+        let a = NoteID(rawValue: "A.md"), b = NoteID(rawValue: "B.md"), c = NoteID(rawValue: "C.md")
+        let all: Set<NoteID> = [a, b, c]
+        var history = NoteNavigationHistory()
+        history.visit(a)
+        history.visit(b)
+        history.visit(c)
+        check("⌘[ targets the previous note", history.target(.back, existing: all) == b)
+        check("nothing lies ahead of the newest visit", history.target(.forward, existing: all) == nil)
+        history.move(.back, to: b)
+        check("going back makes the note current", history.current == b)
+        check("⌘] then targets the note just left", history.target(.forward, existing: all) == c)
+        history.visit(a)
+        check("a new visit drops the forward notes", history.target(.forward, existing: all) == nil)
+        check("a new visit is undone by ⌘[", history.target(.back, existing: all) == b)
+
+        history = NoteNavigationHistory()
+        history.visit(a)
+        history.visit(b)
+        history.visit(c)
+        check(
+            "a note missing from the folder is stepped over",
+            history.target(.back, existing: [a, c]) == a)
+        history.move(.back, to: a)
+        check("the stepped-over note is dropped", history.target(.forward, existing: all) == c)
+
+        history = NoteNavigationHistory()
+        history.visit(a)
+        history.visit(b)
+        history.visit(a)
+        check(
+            "stepping over a vanished note never lands on the open one",
+            history.target(.back, existing: [a, c]) == nil)
+
+        history = NoteNavigationHistory()
+        history.visit(a)
+        history.visit(b)
+        history.rename(a, to: c)
+        check("a rename keeps its place in the history", history.target(.back, existing: all) == c)
+
+        history = NoteNavigationHistory()
+        history.visit(a)
+        history.visit(b)
+        history.visit(a)
+        history.visit(c)
+        history.remove(c)
+        history.visit(a)
+        check("a trashed note leaves no step that stays put", history.target(.back, existing: all) == b)
+        history.remove(b)
+        check("removing a note collapses repeated neighbours", history.back.isEmpty)
+
+        history = NoteNavigationHistory()
+        for index in 0...(NoteNavigationHistory.limit + 5) {
+            history.visit(NoteID(rawValue: "\(index).md"))
+        }
+        check("the history keeps a bounded number of steps", history.back.count == NoteNavigationHistory.limit)
+
+        let context = NoteActionCatalog.Context(
+            hasActiveNote: true, rendersMarkdown: false, showsFormattingBar: false,
+            isFormattingBarExpanded: false, canGoBack: true, canGoForward: false)
+        let items = NoteActionCatalog.items(in: context)
+        check(
+            "⌘[ goes back, as in Raycast",
+            NoteActionCatalog.item(for: NoteShortcut(.command, .letter("[")), in: items)?.action == .goBack)
+        check("Go Forward is listed only with somewhere to go", !items.contains { $0.action == .goForward })
     }
 
     private static func testActionCatalog() {
@@ -434,9 +502,19 @@ struct NotesTests {
             switched && flushedOnSwitch == "draft that outlives a switch")
         _ = await store.select(firstID)
 
+        store.updateSource("draft before going back")
+        let wentBack = await store.navigate(.back)
+        let flushedOnBack = try String(contentsOf: activeURL, encoding: .utf8)
+        check(
+            "⌘[ flushes the draft and opens the note it came from",
+            wentBack && store.activeID == renamedID && flushedOnBack == "draft before going back")
+        let wentForward = await store.navigate(.forward)
+        check("⌘] returns to the note it came back from", wentForward && store.activeID == firstID)
+
         let projectID = try require(renamedID)
         let trashed = await store.trash(projectID)
         check("a non-active note moves to Trash", trashed)
+        check("a trashed note leaves nothing to go back to", !store.canGoBack && !store.canGoForward)
         check(
             "trashing another note moves it through the injected Trash operation",
             FileManager.default.fileExists(

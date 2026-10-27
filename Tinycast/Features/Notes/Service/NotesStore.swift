@@ -18,6 +18,7 @@ final class NotesStore {
     private(set) var searchQuery = ""
     private(set) var searchResults: [NoteSearchResult] = []
     private(set) var isSearching = false
+    private(set) var history = NoteNavigationHistory()
     /// Derived from the live draft, not the last listing, so an unnamed note titles itself as typed.
     var activeTitle: String {
         guard let activeID else { return String(localized: "Notes") }
@@ -80,6 +81,7 @@ final class NotesStore {
         guard isLoaded else { return }
         // Cleared first, so a folder that fails to load leaves no old note to save into it.
         apply(nil, summaries: [])
+        history = NoteNavigationHistory()
         _ = await reload(preferredID: nil)
     }
 
@@ -164,9 +166,27 @@ final class NotesStore {
         }
     }
 
+    var canGoBack: Bool { history.target(.back, existing: existingIDs) != nil }
+    var canGoForward: Bool { history.target(.forward, existing: existingIDs) != nil }
+
+    private var existingIDs: Set<NoteID> { Set(summaries.map(\.id)) }
+
+    /// ⌘[ and ⌘]: the history moves only once the note it points at has loaded.
+    @discardableResult
+    func navigate(
+        _ direction: NoteNavigationHistory.Direction,
+        permitsApply: @MainActor () -> Bool = { true }
+    ) async -> Bool {
+        guard let target = history.target(direction, existing: existingIDs) else { return false }
+        guard await select(target, recordsVisit: false, permitsApply: permitsApply) else { return false }
+        history.move(direction, to: target)
+        return true
+    }
+
     @discardableResult
     func select(
         _ id: NoteID,
+        recordsVisit: Bool = true,
         permitsApply: @MainActor () -> Bool = { true }
     ) async -> Bool {
         guard id != activeID else { return true }
@@ -182,7 +202,7 @@ final class NotesStore {
         guard permitsApply(), !Task.isCancelled else { return false }
         switch result {
         case .success(let document):
-            apply(document, summaries: summaries)
+            apply(document, summaries: summaries, recordsVisit: recordsVisit)
             return true
         case .failure(let failure):
             publish(.load(failure))
@@ -204,6 +224,7 @@ final class NotesStore {
         switch result {
         case .success(let payload):
             summaries = payload.1
+            history.rename(id, to: payload.0)
             if id == activeID {
                 activeID = payload.0
                 saveSelection(payload.0)
@@ -231,6 +252,7 @@ final class NotesStore {
         switch result {
         case .success(let payload):
             cancelSearch()
+            history.remove(id)
             // An empty collection is a legal resting state; only creating brings a note back.
             if replacesActive {
                 apply(payload.0, summaries: payload.1)
@@ -368,9 +390,10 @@ final class NotesStore {
         }
     }
 
-    private func apply(_ document: NoteDocument?, summaries: [NoteSummary]) {
+    private func apply(_ document: NoteDocument?, summaries: [NoteSummary], recordsVisit: Bool = true) {
         self.summaries = summaries
         activeID = document?.id
+        if recordsVisit { history.visit(document?.id) }
         source = document?.source ?? ""
         editorEpoch &+= 1
         isDirty = false
