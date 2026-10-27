@@ -65,9 +65,14 @@ final class EmojiAISearchSession {
             } catch {
                 result = .failed(Self.failureMessage)
             }
-            guard let self, !Task.isCancelled, self.query == query else { return }
+            guard let self, !Task.isCancelled, self.query == query, isAvailable else { return }
             phase = result
         }
+    }
+
+    /// Switching AI or its route off ends a search in flight, as it ends every chat reply.
+    func cancelIfUnavailable() {
+        if !isAvailable { cancel() }
     }
 
     func cancel() {

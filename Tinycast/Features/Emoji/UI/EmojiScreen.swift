@@ -219,9 +219,15 @@ private struct EmojiEmptyResults: View {
 
     private static let debounce = Duration.milliseconds(350)
 
+    /// Availability is part of the key: AI switched on under a kept query must still ask.
+    private struct AutoSearch: Hashable {
+        let query: String
+        let isAvailable: Bool
+    }
+
     var body: some View {
         content
-            .task(id: query) {
+            .task(id: AutoSearch(query: query, isAvailable: search.isAvailable)) {
                 guard asksOnItsOwn, search.isAvailable, search.phase(for: query) == nil
                 else { return }
                 try? await Task.sleep(for: Self.debounce)

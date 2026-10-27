@@ -81,7 +81,8 @@ for emoji by meaning, so `monday morning` finds ☕ and 📅 though no keyword s
 - **Only Apple Intelligence, and only while AI and its route are on.** `isAvailable` checks
   `aiEnabled` and `AISettingsStore.isRouteEnabled(.appleIntelligence)` beside the model's own status,
   so AI off, or the route off in Settings → AI, removes the hint and the automatic search, and
-  `phase(for:)` hides an answer kept from before. Nothing leaves the Mac either way.
+  `phase(for:)` hides an answer kept from before. `AppCore` cancels a search in flight when either
+  switch goes off, as turning AI off ends every chat reply. Nothing leaves the Mac either way.
 - **Answers are typed and kept to the catalog.** A `@Generable` list of 6–16 emoji comes back,
   and `EmojiCatalog.catalogGlyphs` maps each to a catalog glyph — skin tones dropped, VS16 tried
   with and without — dropping repeats and anything the catalog lacks. The configured tone still
