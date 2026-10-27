@@ -23,6 +23,7 @@ A palette sub-screen (reached like Clipboard / Calculator History) presenting a 
 | `Service/FrequentEmojiStore.swift`                  | Persisted emoji history and usage counts    |
 | `Service/PinnedEmojiStore.swift`                    | Persisted pins, in the order the user set   |
 | `Service/EmojiNameStore.swift`                      | Persisted custom names, keyed by base glyph |
+| `Service/EmojiAISearchSession.swift`                | AI search on the on-device model            |
 | `UI/EmojiGridView.swift`                            | The SwiftUI grid                            |
 | `UI/EmojiScreen.swift`, `UI/EmojiCoordinator.swift` | The palette screen and its action surface   |
 
@@ -65,6 +66,28 @@ are pure.
   next time; a scattered-letter hit never gets the lift. Among the rest, the top 100 glyphs from
   `FrequentEmojiStore.top` add a 100…1 tie-break bonus. The store's identity and revision are in the
   search memo key.
+
+## AI search
+
+Raycast's AI emoji search, on Apple Intelligence. `EmojiAISearchSession` asks the on-device model
+for emoji by meaning, so `monday morning` finds ☕ and 📅 though no keyword says so.
+
+- **Tab asks, and so does a search with no matches.** With a query, ⇥ claims Tab through
+  `tab(at:backwards:)` and the header shows an `AI Search ⇥` hint read from the same
+  `EmojiScreen.tabSearchesAI`. A query no name or keyword matches asks on its own after a 350 ms
+  pause, from the empty state's `.task(id:)`, so each keystroke cancels the wait before it.
+- **Only Apple Intelligence, and only while its route is on.** `isAvailable` checks
+  `AISettingsStore.isRouteEnabled(.appleIntelligence)` beside the model's own status, so switching
+  the route off in Settings → AI removes the hint and the automatic search. Nothing leaves the Mac,
+  which is why the feature needs no switch of its own and ignores `aiEnabled`.
+- **Answers are typed and kept to the catalog.** A `@Generable` list of 6–16 emoji comes back,
+  and `EmojiCatalog.catalogGlyphs` maps each to a catalog glyph — skin tones dropped, VS16 tried
+  with and without — dropping repeats and anything the catalog lacks. The configured tone still
+  applies at paste time.
+- **A reply belongs to its query.** The session records the query it answers; `phase(for:)` returns
+  nothing for any other, so a slow reply never lands under newer typing. A new search cancels the
+  one before it. AI results replace the section as `AI Results`, filtered by the category menu like
+  word results; an empty answer leaves the word results in place.
 
 ## Rendering
 
