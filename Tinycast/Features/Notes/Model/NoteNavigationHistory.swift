@@ -13,7 +13,7 @@ struct NoteNavigationHistory: Sendable, Equatable {
 
     static let limit = 50
 
-    /// Opening a note any other way than ⌘[ or ⌘] starts a new branch, as a link does in a browser.
+    /// Opening a note any other way starts a new branch, as following a link does in a browser.
     mutating func visit(_ id: NoteID?) {
         guard id != current else { return }
         if let current {
