@@ -16,8 +16,32 @@ struct AIChatTests {
         }
     }
 
+    static func quickAIStepsThroughRecentChats() {
+        let newest = UUID(), middle = UUID(), oldest = UUID()
+        let ids = [newest, middle, oldest]
+        func step(_ current: UUID?, _ direction: ChatNavigation.Direction, held: Set<UUID> = [])
+            -> ChatNavigation.Destination?
+        {
+            ChatNavigation.destination(
+                from: current, in: ids, direction: direction, isAvailable: { !held.contains($0) })
+        }
+        expect(step(nil, .older) == .chat(newest), "⌘[ from a new chat opens the newest chat")
+        expect(step(newest, .older) == .chat(middle), "⌘[ opens the next older chat")
+        expect(step(oldest, .older) == nil, "⌘[ stops at the oldest chat")
+        expect(step(oldest, .newer) == .chat(middle), "⌘] opens the next newer chat")
+        expect(step(newest, .newer) == .newChat, "⌘] past the newest chat starts a new one")
+        expect(step(nil, .newer) == nil, "⌘] from a new chat goes nowhere")
+        expect(
+            step(newest, .older, held: [middle]) == .chat(oldest),
+            "⌘[ skips a chat the window holds")
+        expect(
+            step(oldest, .newer, held: [middle, newest]) == .newChat,
+            "⌘] skips held chats on its way to a new one")
+    }
+
     static func main() async {
         sessionSummariesAndRequests()
+        quickAIStepsThroughRecentChats()
         requestsKeepOnlyBoundedContext()
         attachmentsStayInsideTheTurnBudget()
         attachedTextInlinesOnlyIntoTheRequest()

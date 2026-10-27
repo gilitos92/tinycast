@@ -80,6 +80,24 @@ struct AIScreen: PaletteScreen {
             ) {
                 coordinator.showHistory()
             })
+        if coordinator.canNavigate(.older) {
+            items.append(
+                PopoverMenuItem(
+                    title: String(localized: "Previous Chat"), systemImage: "chevron.backward",
+                    shortcut: "⌘["
+                ) {
+                    coordinator.navigate(.older)
+                })
+        }
+        if coordinator.canNavigate(.newer) {
+            items.append(
+                PopoverMenuItem(
+                    title: String(localized: "Next Chat"), systemImage: "chevron.forward",
+                    shortcut: "⌘]"
+                ) {
+                    coordinator.navigate(.newer)
+                })
+        }
         items.append(
             PopoverMenuItem(
                 title: String(localized: "AI Settings"), systemImage: "slider.horizontal.3",
@@ -110,6 +128,8 @@ struct AIScreen: PaletteScreen {
         case .quickLook: coordinator.showHistory()
         case .pin where chat.isStreaming: coordinator.stopResponse()
         case .settings: chatCoordinator.showSettings()
+        case .goBack: return coordinator.navigate(.older)
+        case .goForward: return coordinator.navigate(.newer)
         default: return false
         }
         return true

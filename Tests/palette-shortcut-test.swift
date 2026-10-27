@@ -89,6 +89,9 @@ struct PaletteShortcutTests {
 
         expect(resolve("j", command: true), .continueInChat, "⌘J continues Quick AI in AI Chat")
         expect(resolve("n", command: true), .newItem, "⌘N starts a new one")
+        expect(resolve("[", command: true), .goBack, "⌘[ goes back, as in Raycast")
+        expect(resolve("]", command: true), .goForward, "⌘] goes forward, as in Raycast")
+        expect(resolve("[", command: true, shift: true), nil, "⇧⌘[ is not the back chord")
         expect(resolve("n", command: true, shift: true), nil, "⇧⌘N is not the new-item chord")
         expect(resolve("e", command: true), .edit, "⌘E edits the row")
         expect(resolve("e"), nil, "typing E stays with the field")
@@ -111,7 +114,7 @@ struct PaletteShortcutTests {
         ]
         let anywhere: [PaletteShortcut] = [
             .commandDelete, .delete, .deleteAll, .pin, .favoriteSlot(0), .continueInChat, .newItem,
-            .settings, .copyCalculation
+            .settings, .copyCalculation, .goBack, .goForward
         ]
         for shortcut in expanded {
             expect(shortcut.requiresExpanded, "\(shortcut) is skipped in the compact bar")
@@ -123,7 +126,7 @@ struct PaletteShortcutTests {
         let closing: [PaletteShortcut] = [
             .delete, .deleteAll, .copyFile, .copyName, .copyPath, .copyText, .copyCalculation,
             .quickLook, .openInApp, .showDetails, .toggleFavorite, .hideFromSearch, .minimizeWindow,
-            .newItem, .settings, .edit, .duplicate, .showInFinder
+            .newItem, .settings, .edit, .duplicate, .showInFinder, .goBack, .goForward
         ]
         let leaving: [PaletteShortcut] = [
             .commandDelete, .pasteFile, .quit, .forceQuit, .hideApp, .restart, .pin, .favoriteSlot(0),
