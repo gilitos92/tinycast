@@ -107,7 +107,9 @@ final class NotesCoordinator {
             hasActiveNote: hasActiveNote,
             rendersMarkdown: rendersMarkdown,
             showsFormattingBar: showsFormattingBar,
-            isFormattingBarExpanded: isFormattingBarExpanded)
+            isFormattingBarExpanded: isFormattingBarExpanded,
+            canGoBack: store.canGoBack,
+            canGoForward: store.canGoForward)
     }
 
     var visibleActionItems: [NoteActionItem] {
@@ -271,6 +273,28 @@ final class NotesCoordinator {
         }
     }
 
+    /// ⌘[ and ⌘]; false when there is nowhere to go, so the key falls through to the editor.
+    func navigate(_ direction: NoteNavigationHistory.Direction) -> Bool {
+        guard settings.notesEnabled, store.isLoaded, !switcherRename.isActive else { return false }
+        guard direction == .back ? store.canGoBack : store.canGoForward else { return false }
+        closeHeadingMenu()
+        closeActionPanel(focusEditor: false)
+        runOperation { [weak self] generation in
+            guard let self else { return }
+            let moved = await store.navigate(direction) { [weak self] in
+                self?.permitsCompletion(generation) ?? false
+            }
+            guard moved, settings.notesEnabled, !Task.isCancelled else {
+                if !settings.notesEnabled { store.stop() }
+                return
+            }
+            guard permitsCompletion(generation) else { return }
+            closeSwitcher()
+            windowController.show(focusEditor: true)
+        }
+        return true
+    }
+
     func rename(_ id: NoteID, to title: String) {
         runOperation { [weak self] generation in
             guard let self else { return }
@@ -365,6 +389,8 @@ final class NotesCoordinator {
         switch action {
         case .createNote: createNote()
         case .browseNotes: searchNotes()
+        case .goBack: _ = navigate(.back)
+        case .goForward: _ = navigate(.forward)
         case .findInNote: windowController.showFindBar()
         case .openNotesFolder: openNotesFolder()
         case .format(let edit): format(edit)

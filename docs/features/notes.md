@@ -115,7 +115,11 @@ failed flush retains the draft for retry.
 
 Command-N creates, Command-P opens or refocuses the switcher, Command-O opens the Notes folder,
 Command-F opens AppKit's find bar in the active note, and Command-K opens the Actions panel.
-Control-X moves the open note to Trash, after the same confirmation as the switcher's Trash. Escape
+Control-X moves the open note to Trash, after the same confirmation as the switcher's Trash.
+Command-[ and Command-] go back and forward through the notes opened this session, as Raycast's do;
+`NoteNavigationHistory` holds that browser-style history in memory only. Opening a note any other way
+drops the notes ahead, a rename keeps its place, and a trashed or vanished note is stepped over. The
+Actions panel lists Go Back and Go Forward only while there is somewhere to go. Escape
 closes the Actions panel, find bar or switcher before hiding; Command-W and the red traffic light both hide directly. Hiding
 restores the prior external application or Tinycast window and flushes without delaying the order-out —
 but only while that app is still the frontmost one, so closing a window the user has already left behind

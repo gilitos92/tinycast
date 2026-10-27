@@ -4,6 +4,8 @@ import Foundation
 enum NoteAction: Sendable, Equatable {
     case createNote
     case browseNotes
+    case goBack
+    case goForward
     case findInNote
     case openNotesFolder
     case format(NoteEditAction)
@@ -76,6 +78,8 @@ enum NoteActionCatalog {
         var rendersMarkdown: Bool
         var showsFormattingBar: Bool
         var isFormattingBarExpanded: Bool
+        var canGoBack = false
+        var canGoForward = false
     }
 
     static let toggleActionPanel = NoteShortcut(.command, .letter("k"))
@@ -86,6 +90,12 @@ enum NoteActionCatalog {
     static let browseNotes = NoteActionItem(
         action: .browseNotes, title: String(localized: "Browse Notes"), symbol: "rectangle.stack",
         shortcut: NoteShortcut(.command, .letter("p")), section: .note)
+    static let goBack = NoteActionItem(
+        action: .goBack, title: String(localized: "Go Back"), symbol: "chevron.backward",
+        shortcut: NoteShortcut(.command, .letter("[")), section: .note)
+    static let goForward = NoteActionItem(
+        action: .goForward, title: String(localized: "Go Forward"), symbol: "chevron.forward",
+        shortcut: NoteShortcut(.command, .letter("]")), section: .note)
     static let findInNote = NoteActionItem(
         action: .findInNote, title: String(localized: "Find in Note"), symbol: "text.magnifyingglass",
         shortcut: NoteShortcut(.command, .letter("f")), section: .note)
@@ -146,6 +156,8 @@ enum NoteActionCatalog {
     /// Every row the panel offers for this state, in display order.
     static func items(in context: Context) -> [NoteActionItem] {
         var items = [createNote, browseNotes]
+        if context.canGoBack { items.append(goBack) }
+        if context.canGoForward { items.append(goForward) }
         if context.hasActiveNote { items.append(findInNote) }
         items.append(openNotesFolder)
         if context.hasActiveNote, context.rendersMarkdown {
