@@ -21,6 +21,8 @@ A personal fork of [abue-ammar/tinycast](https://github.com/abue-ammar/tinycast)
   panel, and the arrow keys move through the history while it stays open.
 - **Notes has Raycast's ⌘K action panel.** It lists every note action with its shortcut, and `⌃X`
   deletes the note. Link moves from `⌘K` to `⌘L`.
+- **Notes and Quick AI go back and forward with `⌘[` and `⌘]`**, as in Raycast. Notes walks the notes
+  opened this session; Quick AI steps through the saved chats.
 - **Search Menu Bar Items can pin items** per app: `⌘.` pins or unpins, `⌥⌘↑/↓` reorders, and pins lead
   the list in a Pinned section.
 - **Releases are built here and published by hand.** The in-app updater reads this fork's GitHub
