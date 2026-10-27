@@ -162,6 +162,25 @@ struct EmojiTests {
             EmojiGridGeometry.selection(0, afterSectionAt: 1, changesFrom: history, to: []) == 0,
             "cells before the section keep their index")
 
+        let known = Set(entries.map(\.glyph))
+        let isKnown = { known.contains($0) }
+        expect(
+            EmojiCatalog.catalogGlyphs(in: ["🎉", "🥳 🎂"], limit: 10, isKnown: isKnown)
+                == ["🎉", "🥳", "🎂"],
+            "AI replies keep their order across items and spaces")
+        expect(
+            EmojiCatalog.catalogGlyphs(in: ["👍🏽", "❤", "👩🏾‍💻"], limit: 10, isKnown: isKnown)
+                == ["👍", "❤️", "👩‍💻"],
+            "AI replies map toned and VS16-less emoji to catalog glyphs")
+        expect(
+            EmojiCatalog.catalogGlyphs(in: ["🎉🎉", "party", "🎉"], limit: 10, isKnown: isKnown)
+                == ["🎉"],
+            "AI replies drop repeats and plain text")
+        expect(
+            EmojiCatalog.catalogGlyphs(in: ["🇲🇽🇺🇸", "😀"], limit: 2, isKnown: isKnown)
+                == ["🇲🇽", "🇺🇸"],
+            "AI replies keep flags whole and stop at the limit")
+
         let sixColumns = EmojiGridGeometry(counts: [12, 8], columns: 6)
         expect(sixColumns.down(from: 2) == 8, "six-column navigation keeps its visual column")
         let tenColumns = EmojiGridGeometry(counts: [20], columns: 10)

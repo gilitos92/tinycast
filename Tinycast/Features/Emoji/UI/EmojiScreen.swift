@@ -33,8 +33,20 @@ struct EmojiScreen: PaletteScreen {
     private var sections: [EmojiGridSection] {
         EmojiGrid.sections(
             query: vm.query, index: index, frequent: frequent, pinned: pinned, names: names,
-            filter: vm.emojiCategoryFilter, columns: columns)
+            filter: vm.emojiCategoryFilter, columns: columns, aiResults: aiResults)
     }
+
+    /// An empty answer leaves the word matches in place rather than replacing them with nothing.
+    private var aiResults: [String]? {
+        guard case .finished(let glyphs) = core.emojiAISearch.phase(for: vm.query), !glyphs.isEmpty
+        else { return nil }
+        return glyphs
+    }
+
+    /// The header's hint reads this, so it can never promise what ⇥ does not do.
+    var tabSearchesAI: Bool { !isBrowsing && core.emojiAISearch.isAvailable }
+
+    var offersAISearch: Bool { tabSearchesAI && core.emojiAISearch.phase(for: vm.query) == nil }
 
     /// Flat grid order across sections — what the selection indexes.
     var rows: [EmojiEntry] { sections.flatMap(\.entries) }
@@ -78,6 +90,13 @@ struct EmojiScreen: PaletteScreen {
     func pasteKeepingWindowOpen(at selection: Int) -> Bool {
         guard let entry = entry(at: selection) else { return false }
         core.emojiCoordinator.pasteEmojiKeepingWindowOpen(entry)
+        return true
+    }
+
+    func tab(at selection: Int, backwards: Bool) -> Bool {
+        guard !backwards, tabSearchesAI else { return false }
+        core.emojiAISearch.search(vm.query)
+        vm.selection = 0
         return true
     }
 
@@ -144,7 +163,7 @@ struct EmojiScreen: PaletteScreen {
         if !index.isLoaded {
             EmptyResults(text: String(localized: "Loading emoji…"))
         } else if sections.isEmpty {
-            EmptyResults(text: String(localized: "No emoji found"))
+            EmojiEmptyResults(query: vm.query, search: core.emojiAISearch)
         } else {
             EmojiGridView(
                 sections: sections,
@@ -183,6 +202,35 @@ struct EmojiScreen: PaletteScreen {
         else { return }
         pinned.swap(entry.glyph, with: pins[position + delta])
         if pinsLeadGrid, vm.selection == position { vm.selection = position + delta }
+    }
+}
+
+/// A query no emoji's words match asks the model on its own, once the typing pauses.
+private struct EmojiEmptyResults: View {
+    let query: String
+    let search: EmojiAISearchSession
+
+    private static let debounce = Duration.milliseconds(350)
+
+    var body: some View {
+        content
+            .task(id: query) {
+                guard search.isAvailable, search.phase(for: query) == nil else { return }
+                try? await Task.sleep(for: Self.debounce)
+                guard !Task.isCancelled else { return }
+                search.search(query)
+            }
+    }
+
+    @ViewBuilder private var content: some View {
+        switch search.isAvailable ? search.phase(for: query) ?? .searching : nil {
+        case .searching:
+            EmptyResults(text: String(localized: "Searching with AI…"), systemImage: "sparkles")
+        case .failed(let message):
+            EmptyResults(text: String(localized: "No emoji found"), detail: message)
+        case .finished, nil:
+            EmptyResults(text: String(localized: "No emoji found"))
+        }
     }
 }
 

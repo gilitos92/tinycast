@@ -201,6 +201,8 @@ final class AppCore {
     @ObservationIgnored private(set) lazy var emojiCoordinator = EmojiCoordinator(
         frequentEmoji: frequentEmoji, names: emojiNames, settings: settings,
         windowController: windowController, paletteCoordinator: paletteCoordinator, core: self)
+    @ObservationIgnored private(set) lazy var emojiAISearch = EmojiAISearchSession(
+        index: emojiIndex, aiSettings: aiSettings)
     @ObservationIgnored private(set) lazy var calculatorCoordinator = CalculatorCoordinator(
         calcHistory: calcHistory, paletteCoordinator: paletteCoordinator, core: self)
     @ObservationIgnored private(set) lazy var calendarCoordinator = CalendarCoordinator(

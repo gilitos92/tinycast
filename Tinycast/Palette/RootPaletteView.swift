@@ -712,6 +712,10 @@ struct RootPaletteView: View {
                     help: String(localized: "Filter by type  ⌘P"),
                     action: toggleFileSearchFilter)
             }
+            if !isCollapsed, vm.mode == .emoji, (screen as? EmojiScreen)?.offersAISearch == true {
+                headerGutter(width: metrics.spacing.md)
+                emojiAITabHint
+            }
             if !isCollapsed, vm.mode == .emoji {
                 headerGutter(width: metrics.spacing.md)
                 HeaderMenuButton(
@@ -797,6 +801,19 @@ struct RootPaletteView: View {
             }
         }
         .help("Press Tab to ask Quick AI")
+    }
+
+    private var emojiAITabHint: some View {
+        BarButton(chrome: .rounded, action: { advanceTabFocus(backwards: false) }) {
+            HStack(spacing: metrics.spacing.sm) {
+                Text("AI Search")
+                    .font(metrics.typography.bar)
+                    .foregroundStyle(Theme.Colors.textSecondary)
+                KeyCapChip(text: "⇥", style: .outline)
+                    .accessibilityHidden(true)
+            }
+        }
+        .help("Press Tab to search emoji with Apple Intelligence")
     }
 
     /// Resolved through `PaletteTabAction`, so the hint cannot promise the wrong destination.
