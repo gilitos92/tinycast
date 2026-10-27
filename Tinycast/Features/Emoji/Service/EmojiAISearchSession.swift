@@ -20,19 +20,23 @@ final class EmojiAISearchSession {
     @ObservationIgnored private var task: Task<Void, Never>?
     private let index: EmojiIndex
     private let aiSettings: AISettingsStore
+    private let settings: AppSettings
 
-    init(index: EmojiIndex, aiSettings: AISettingsStore) {
+    init(index: EmojiIndex, aiSettings: AISettingsStore, settings: AppSettings) {
         self.index = index
         self.aiSettings = aiSettings
+        self.settings = settings
     }
 
-    /// A route switched off in Settings → AI is off here too.
+    /// AI switched off, or its on-device route switched off in Settings → AI, is off here too.
     var isAvailable: Bool {
-        aiSettings.isRouteEnabled(.appleIntelligence) && AppleIntelligenceProvider.status().isAvailable
+        settings.aiEnabled && aiSettings.isRouteEnabled(.appleIntelligence)
+            && AppleIntelligenceProvider.status().isAvailable
     }
 
+    /// Nil while unavailable, so an answer kept from before AI was switched off never shows.
     func phase(for query: String) -> Phase? {
-        self.query == Self.normalized(query) ? phase : nil
+        isAvailable && self.query == Self.normalized(query) ? phase : nil
     }
 
     /// Asking again for the query on screen reuses its answer unless that answer was a failure.
@@ -106,7 +110,7 @@ private struct EmojiSuggestions {
     var emoji: [String]
 }
 
-private extension EmojiAISearchSession.Phase {
+extension EmojiAISearchSession.Phase {
     var isFailure: Bool {
         if case .failed = self { return true }
         return false

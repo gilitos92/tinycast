@@ -43,10 +43,12 @@ struct EmojiScreen: PaletteScreen {
         return glyphs
     }
 
-    /// The header's hint reads this, so it can never promise what ⇥ does not do.
-    var tabSearchesAI: Bool { !isBrowsing && core.emojiAISearch.isAvailable }
-
-    var offersAISearch: Bool { tabSearchesAI && core.emojiAISearch.phase(for: vm.query) == nil }
+    /// ⇥ and the header's hint both read this, so the hint can never promise what ⇥ does not do.
+    var offersAISearch: Bool {
+        guard !isBrowsing, core.emojiAISearch.isAvailable else { return false }
+        let phase = core.emojiAISearch.phase(for: vm.query)
+        return phase == nil || phase?.isFailure == true
+    }
 
     /// Flat grid order across sections — what the selection indexes.
     var rows: [EmojiEntry] { sections.flatMap(\.entries) }
@@ -94,7 +96,7 @@ struct EmojiScreen: PaletteScreen {
     }
 
     func tab(at selection: Int, backwards: Bool) -> Bool {
-        guard !backwards, tabSearchesAI else { return false }
+        guard !backwards, offersAISearch else { return false }
         core.emojiAISearch.search(vm.query)
         vm.selection = 0
         return true
@@ -163,7 +165,10 @@ struct EmojiScreen: PaletteScreen {
         if !index.isLoaded {
             EmptyResults(text: String(localized: "Loading emoji…"))
         } else if sections.isEmpty {
-            EmojiEmptyResults(query: vm.query, search: core.emojiAISearch)
+            EmojiEmptyResults(
+                query: vm.query, search: core.emojiAISearch,
+                asksOnItsOwn: index.search(vm.query, frequent: frequent, customNames: names.names)
+                    .isEmpty)
         } else {
             EmojiGridView(
                 sections: sections,
@@ -209,13 +214,16 @@ struct EmojiScreen: PaletteScreen {
 private struct EmojiEmptyResults: View {
     let query: String
     let search: EmojiAISearchSession
+    /// False when only the category filter emptied the grid, which is no reason to ask the model.
+    let asksOnItsOwn: Bool
 
     private static let debounce = Duration.milliseconds(350)
 
     var body: some View {
         content
             .task(id: query) {
-                guard search.isAvailable, search.phase(for: query) == nil else { return }
+                guard asksOnItsOwn, search.isAvailable, search.phase(for: query) == nil
+                else { return }
                 try? await Task.sleep(for: Self.debounce)
                 guard !Task.isCancelled else { return }
                 search.search(query)
@@ -223,7 +231,8 @@ private struct EmojiEmptyResults: View {
     }
 
     @ViewBuilder private var content: some View {
-        switch search.isAvailable ? search.phase(for: query) ?? .searching : nil {
+        let pending = asksOnItsOwn && search.isAvailable
+        switch search.phase(for: query) ?? (pending ? .searching : nil) {
         case .searching:
             EmptyResults(text: String(localized: "Searching with AI…"), systemImage: "sparkles")
         case .failed(let message):
