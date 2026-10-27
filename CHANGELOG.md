@@ -6,6 +6,12 @@ changes are in its [releases](https://github.com/abue-ammar/tinycast/releases).
 
 ## [Unreleased]
 
+### Added
+
+- AI emoji search, as in Raycast: in the emoji picker, type a word and press Tab to find emoji by
+  meaning with Apple Intelligence. A search no emoji name or keyword matches asks it on its own.
+  It runs only while AI is on in Settings → AI.
+
 ## [1.5.0] - 2026-10-27
 
 Based on upstream v0.12.2-beta.125.
