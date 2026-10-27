@@ -184,6 +184,26 @@ enum EmojiCatalog {
         return String(scalars)
     }
 
+    /// The catalog glyph for each emoji in a model's reply: tones dropped, VS16 tried both ways.
+    static func catalogGlyphs(
+        in replies: [String], limit: Int, isKnown: (String) -> Bool
+    ) -> [String] {
+        var result: [String] = []
+        for reply in replies {
+            for character in reply where !character.isASCII {
+                let untoned = character.unicodeScalars.filter { !(0x1F3FB...0x1F3FF).contains($0.value) }
+                let bare = untoned.filter { $0.value != 0xFE0F }
+                var selected = bare
+                if !bare.isEmpty { selected.insert("\u{FE0F}", at: bare.index(after: bare.startIndex)) }
+                let spellings = [untoned, bare, selected].map(String.init)
+                guard let glyph = spellings.first(where: isKnown), !result.contains(glyph) else { continue }
+                result.append(glyph)
+                if result.count == limit { return result }
+            }
+        }
+        return result
+    }
+
     /// Parse the generated `glyph|name|category|tone|keywords` records, dropping malformed lines.
     nonisolated static func parse(_ raw: String, localized: [String] = []) -> [EmojiEntry] {
         let localizedTerms = terms(in: localized)

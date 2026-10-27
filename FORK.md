@@ -17,6 +17,8 @@ A personal fork of [abue-ammar/tinycast](https://github.com/abue-ammar/tinycast)
 - **The emoji picker's footer names the selected emoji.**
 - **Emoji can be renamed.** `⌘E` gives an emoji a custom name (`EmojiNameStore`), shown in the footer
   and searched beside the catalog name.
+- **Emoji search with AI.** In the emoji picker, Tab finds emoji by meaning with Apple Intelligence
+  (`EmojiAISearchSession`), and a search nothing matches asks it on its own.
 - **Clipboard History has Quick Look.** `⌘Y` opens the selected entry in the system Quick Look
   panel, and the arrow keys move through the history while it stays open.
 - **Notes has Raycast's ⌘K action panel.** It lists every note action with its shortcut, and `⌃X`
@@ -116,6 +118,7 @@ there is expected and the fork's side must survive:
 | Keyboard hand-back | `Platform/KeyboardHandoff.swift`, `Clipboard/Service/Paster.swift`, `Palette/PaletteWindowController.swift`, `Palette/PaletteCoordinator.swift`, `Extensions/Service/ExtensionHostBridge.swift`, `TextInjection/Service/TextInjector.swift`, every `activateReclaimingKeyboard()` caller |
 | Emoji ranking | `Emoji/Service/EmojiIndex.swift`, `Emoji/Service/FrequentEmojiStore.swift` |
 | Emoji name | `Palette/PaletteScreen.swift` (`footerCaption`), `Palette/RootPaletteView.swift` (`bottomBar`), `Emoji/UI/EmojiScreen.swift`, `Emoji/Service/EmojiNameStore.swift`, `Windows/Dialog/DialogTextInput.swift` |
+| Emoji AI search | `Emoji/Service/EmojiAISearchSession.swift`, `Emoji/UI/EmojiScreen.swift` (`tab`), `Emoji/UI/EmojiGridView.swift` (`aiResults`), `Emoji/Model/EmojiCatalog.swift` (`catalogGlyphs`), `Palette/RootPaletteView.swift` (`emojiAITabHint`) |
 | Notes action panel | `Notes/Model/NoteAction.swift` (`NoteActionCatalog`, the only list of note actions), `Notes/UI/**` |
 | Clipboard Quick Look | `Clipboard/UI/ClipboardQuickLook.swift`, `Clipboard/UI/ClipboardCoordinator.swift`, `Clipboard/UI/ClipboardScreen.swift`, `Palette/PalettePanel.swift` |
 | Menu pins | `MenuSearch/**`, `App/AppCore.swift` (`pinnedMenuItems`), `Palette/RootPaletteView.swift` (`movePinnedOrFavorite`) |

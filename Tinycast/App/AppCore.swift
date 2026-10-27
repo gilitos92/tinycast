@@ -201,6 +201,8 @@ final class AppCore {
     @ObservationIgnored private(set) lazy var emojiCoordinator = EmojiCoordinator(
         frequentEmoji: frequentEmoji, names: emojiNames, settings: settings,
         windowController: windowController, paletteCoordinator: paletteCoordinator, core: self)
+    @ObservationIgnored private(set) lazy var emojiAISearch = EmojiAISearchSession(
+        index: emojiIndex, aiSettings: aiSettings, settings: settings)
     @ObservationIgnored private(set) lazy var calculatorCoordinator = CalculatorCoordinator(
         calcHistory: calcHistory, paletteCoordinator: paletteCoordinator, core: self)
     @ObservationIgnored private(set) lazy var calendarCoordinator = CalendarCoordinator(
@@ -707,7 +709,15 @@ final class AppCore {
                 $0.menuSearchCoordinator.applyEnabled()
             })
         track({ _ = $0.notesEnabled }, reproject: { $0.notesCoordinator.applyEnabled() })
-        track({ _ = $0.aiEnabled }, reproject: { $0.aiChatCoordinator.applyEnabled() })
+        track(
+            { _ = $0.aiEnabled },
+            reproject: {
+                $0.aiChatCoordinator.applyEnabled()
+                $0.emojiAISearch.cancelIfUnavailable()
+            })
+        track(
+            aiSettings, { _ = $0.isRouteEnabled(.appleIntelligence) },
+            reproject: { $0.emojiAISearch.cancelIfUnavailable() })
         track(
             { _ = $0.dictationIdleRelease },
             reproject: {

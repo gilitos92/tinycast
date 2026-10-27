@@ -430,6 +430,7 @@ struct RootPaletteView: View {
                 land(restoringSelection: true)
                 searchFocused = !screen.hidesSearchField
                 if vm.mode != .uninstall { uninstall.cancel() }
+                if vm.mode != .emoji { core.emojiAISearch.cancel() }
                 // Entering with no query is the blank screen's own request for recents.
                 if vm.mode == .fileSearch {
                     fileSearch.search(vm.query, filter: vm.fileSearchFilter)
@@ -712,6 +713,10 @@ struct RootPaletteView: View {
                     help: String(localized: "Filter by type  ⌘P"),
                     action: toggleFileSearchFilter)
             }
+            if !isCollapsed, vm.mode == .emoji, (screen as? EmojiScreen)?.offersAISearch == true {
+                headerGutter(width: metrics.spacing.md)
+                emojiAITabHint
+            }
             if !isCollapsed, vm.mode == .emoji {
                 headerGutter(width: metrics.spacing.md)
                 HeaderMenuButton(
@@ -797,6 +802,19 @@ struct RootPaletteView: View {
             }
         }
         .help("Press Tab to ask Quick AI")
+    }
+
+    private var emojiAITabHint: some View {
+        BarButton(chrome: .rounded, action: { advanceTabFocus(backwards: false) }) {
+            HStack(spacing: metrics.spacing.sm) {
+                Text("AI Search")
+                    .font(metrics.typography.bar)
+                    .foregroundStyle(Theme.Colors.textSecondary)
+                KeyCapChip(text: "⇥", style: .outline)
+                    .accessibilityHidden(true)
+            }
+        }
+        .help("Press Tab to search emoji with Apple Intelligence")
     }
 
     /// Resolved through `PaletteTabAction`, so the hint cannot promise the wrong destination.
