@@ -74,19 +74,21 @@ for emoji by meaning, so `monday morning` finds ☕ and 📅 though no keyword s
 
 - **Tab asks, and so does a search with no matches.** With a query, ⇥ claims Tab through
   `tab(at:backwards:)` and the header shows an `AI Search ⇥` hint read from the same
-  `EmojiScreen.tabSearchesAI`. A query no name or keyword matches asks on its own after a 350 ms
-  pause, from the empty state's `.task(id:)`, so each keystroke cancels the wait before it.
-- **Only Apple Intelligence, and only while its route is on.** `isAvailable` checks
-  `AISettingsStore.isRouteEnabled(.appleIntelligence)` beside the model's own status, so switching
-  the route off in Settings → AI removes the hint and the automatic search. Nothing leaves the Mac,
-  which is why the feature needs no switch of its own and ignores `aiEnabled`.
+  `EmojiScreen.offersAISearch`. Once a query has an answer, or is waiting for one, Tab goes back to
+  the palette's ring; only a failed search can be asked again. A query no name or keyword matches
+  asks on its own after a 350 ms pause, from the empty state's `.task(id:)`, so each keystroke
+  cancels the wait before it. A category filter that empties the grid does not ask.
+- **Only Apple Intelligence, and only while AI and its route are on.** `isAvailable` checks
+  `aiEnabled` and `AISettingsStore.isRouteEnabled(.appleIntelligence)` beside the model's own status,
+  so AI off, or the route off in Settings → AI, removes the hint and the automatic search, and
+  `phase(for:)` hides an answer kept from before. Nothing leaves the Mac either way.
 - **Answers are typed and kept to the catalog.** A `@Generable` list of 6–16 emoji comes back,
   and `EmojiCatalog.catalogGlyphs` maps each to a catalog glyph — skin tones dropped, VS16 tried
   with and without — dropping repeats and anything the catalog lacks. The configured tone still
   applies at paste time.
 - **A reply belongs to its query.** The session records the query it answers; `phase(for:)` returns
   nothing for any other, so a slow reply never lands under newer typing. A new search cancels the
-  one before it. AI results replace the section as `AI Results`, filtered by the category menu like
+  one before it, and leaving the picker cancels both the request and the kept answer. AI results replace the section as `AI Results`, filtered by the category menu like
   word results; an empty answer leaves the word results in place.
 
 ## Rendering
