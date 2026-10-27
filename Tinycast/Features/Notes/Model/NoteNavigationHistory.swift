@@ -25,12 +25,10 @@ struct NoteNavigationHistory: Sendable, Equatable {
         dropStepsInPlace()
     }
 
-    /// The nearest note that still exists, so a note deleted behind Tinycast's back is stepped over.
+    /// The nearest existing note other than the open one; a note deleted outside is stepped over.
     func target(_ direction: Direction, existing: Set<NoteID>) -> NoteID? {
-        switch direction {
-        case .back: back.last { existing.contains($0) }
-        case .forward: forward.last { existing.contains($0) }
-        }
+        let steps = direction == .back ? back : forward
+        return steps.last { $0 != current && existing.contains($0) }
     }
 
     /// Notes stepped over on the way to `target` are dropped rather than kept to fail again.

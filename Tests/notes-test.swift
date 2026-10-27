@@ -248,6 +248,14 @@ struct NotesTests {
         history = NoteNavigationHistory()
         history.visit(a)
         history.visit(b)
+        history.visit(a)
+        check(
+            "stepping over a vanished note never lands on the open one",
+            history.target(.back, existing: [a, c]) == nil)
+
+        history = NoteNavigationHistory()
+        history.visit(a)
+        history.visit(b)
         history.rename(a, to: c)
         check("a rename keeps its place in the history", history.target(.back, existing: all) == c)
 
