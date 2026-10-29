@@ -6,6 +6,15 @@ changes are in its [releases](https://github.com/abue-ammar/tinycast/releases).
 
 ## [Unreleased]
 
+## [1.7.2] - 2026-10-29
+
+Based on upstream v0.12.3-beta.127.
+
+### Fixed
+
+- The compact launcher has a shadow again, so it stays visible over light windows at the clearest
+  Liquid Glass setting.
+
 ## [1.7.1] - 2026-10-28
 
 Based on upstream v0.12.3-beta.127.
