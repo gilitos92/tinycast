@@ -6,6 +6,27 @@ changes are in its [releases](https://github.com/abue-ammar/tinycast/releases).
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-10-28
+
+Based on upstream v0.12.3-beta.127.
+
+### Added
+
+- Upstream's changes since v0.12.2-beta.125: a Spotlight-style compact bar with configurable shortcut
+  buttons and keyboard navigation, file and folder favorites in the launcher, and an opt-in Notes menu
+  bar item in Settings → Notes.
+
+### Changed
+
+- Compact is the window mode for anyone who never chose one; a saved Expanded choice is kept. The
+  compact bar no longer shows favorites.
+- The Hyper Key listens on its own thread, so a busy app no longer delays typing, and recovers more
+  reliably when two copies of Tinycast run.
+
+### Fixed
+
+- Upstream's new test harnesses no longer leave a preferences file in `~/Library/Preferences` per run.
+
 ## [1.6.0] - 2026-10-27
 
 Based on upstream v0.12.2-beta.125.
