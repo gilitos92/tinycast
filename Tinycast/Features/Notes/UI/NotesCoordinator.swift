@@ -21,6 +21,7 @@ final class NotesCoordinator {
         coordinator: self)
     @ObservationIgnored private lazy var actionPanelController = NoteActionPanelWindowController(
         coordinator: self)
+    @ObservationIgnored private var menuBarController: NotesMenuBarController?
     @ObservationIgnored private var loadTask: Task<Void, Never>?
     @ObservationIgnored private var issueTask: Task<Void, Never>?
     @ObservationIgnored private var operationTask: Task<Void, Never>?
@@ -120,6 +121,7 @@ final class NotesCoordinator {
         enablementGeneration &+= 1
         let generation = enablementGeneration
         appIndex.setCommandsVisible([.showNotes, .createNote, .searchNotes], settings.notesEnabled)
+        applyMenuBarItem()
         guard !settings.notesEnabled else { return }
         presentationGeneration &+= 1
         pendingPresentation = nil
@@ -136,6 +138,13 @@ final class NotesCoordinator {
             guard generation == enablementGeneration, !settings.notesEnabled else { return }
             store.stop()
         }
+    }
+
+    func applyMenuBarItem() {
+        let shows = settings.notesEnabled && settings.notesShowsInMenuBar
+        guard shows != (menuBarController != nil) else { return }
+        menuBarController?.remove()
+        menuBarController = shows ? NotesMenuBarController(coordinator: self) : nil
     }
 
     /// Quit waits on this so the 300 ms autosave debounce cannot swallow the last edit.
