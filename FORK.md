@@ -122,7 +122,7 @@ there is expected and the fork's side must survive:
 | Notes action panel | `Notes/Model/NoteAction.swift` (`NoteActionCatalog`, the only list of note actions), `Notes/UI/**` |
 | Clipboard Quick Look | `Clipboard/UI/ClipboardQuickLook.swift`, `Clipboard/UI/ClipboardCoordinator.swift`, `Clipboard/UI/ClipboardScreen.swift`, `Palette/PalettePanel.swift` |
 | Menu pins | `MenuSearch/**`, `App/AppCore.swift` (`pinnedMenuItems`), `Palette/RootPaletteView.swift` (`movePinnedOrFavorite`) |
-| Fork setup | `Updates/Model/ReleaseFeed.swift` (`repository`), `Scripts/install-local.sh`, `Scripts/publish-release.sh`, `Scripts/update-from-upstream.sh`, `Scripts/run-tests.sh` (harness file lists) |
+| Fork setup | `Updates/Model/ReleaseFeed.swift` (`repository`), `Scripts/install-local.sh`, `Scripts/publish-release.sh`, `Scripts/update-from-upstream.sh`, `Scripts/check-migrations.sh` (`not_upstream`), `Scripts/run-tests.sh` (harness file lists) |
 
 Paths are under `Tinycast/Features/` unless they start with `Platform/`, `Palette/`, `App/` or
 `Scripts/`. If upstream later ships its own fix for one of these, prefer upstream's and drop the patch.
