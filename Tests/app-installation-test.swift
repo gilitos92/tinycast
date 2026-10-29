@@ -162,9 +162,9 @@ struct AppInstallationTest {
     }
 
     private static func testFileFavorites(_ root: URL) {
-        let domain = "tinycast.file-favorites-test.\(UUID())"
-        let defaults = UserDefaults(suiteName: domain)!
-        defer { defaults.removePersistentDomain(forName: domain) }
+        let domain = "tinycast.file-favorites-test"
+        let defaults = isolatedDefaults(domain)
+        defer { discardSuite(domain, defaults) }
         let store = FavoritesStore(defaults: defaults)
         let app = AppEntry(
             id: root.appending(path: "Fixture.app").path, name: "Fixture",

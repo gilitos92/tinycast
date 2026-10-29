@@ -59,9 +59,9 @@ struct CompactBarTests {
                 "invalid command lists are rejected whole")
         }
 
-        let suite = "compact-bar-test.\(UUID().uuidString)"
-        let preferences = UserDefaults(suiteName: suite)!
-        defer { preferences.removePersistentDomain(forName: suite) }
+        let suite = "tinycast.compact-bar-test"
+        let preferences = isolatedDefaults(suite)
+        defer { discardSuite(suite, preferences) }
         let key = AppSettingsKey.compactBarCommands.rawValue
         check(
             preferences.stringArray(forKey: key).flatMap(CommandID.compactBarCommands(from:))
@@ -106,4 +106,21 @@ struct CompactBarTests {
     private final class Commands {
         var value = CommandID.defaultCompactBarCommands
     }
+}
+
+/// `removePersistentDomain` only empties the domain; cfprefsd still leaves the plist on disk.
+private func discardSuite(_ name: String, _ defaults: UserDefaults) {
+    defaults.removePersistentDomain(forName: name)
+    UserDefaults.standard.removeSuite(named: name)
+    CFPreferencesAppSynchronize(name as CFString)
+    try? FileManager.default.removeItem(
+        at: URL(fileURLWithPath: NSHomeDirectory())
+            .appendingPathComponent("Library/Preferences/\(name).plist"))
+}
+
+/// A fixed suite name stops cfprefsd accumulating a plist per run; cleared at both ends.
+private func isolatedDefaults(_ name: String) -> UserDefaults {
+    let defaults = UserDefaults(suiteName: name)!
+    defaults.removePersistentDomain(forName: name)
+    return defaults
 }

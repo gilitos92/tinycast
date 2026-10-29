@@ -374,15 +374,15 @@ struct HyperKeyTest {
             ) -> Void
         ) {
             HIDEventSystem.reset()
-            let domain = "tinycast.hyper-key-ownership-test.\(UUID())"
-            let defaults = UserDefaults(suiteName: domain)!
+            let domain = "tinycast.hyper-key-ownership-test"
+            let defaults = isolatedDefaults(domain)
             let url = FileManager.default.temporaryDirectory.appending(path: "\(domain).lock")
             let ownerLock = RemapInstanceLock(url: url)
             let waitingLock = RemapInstanceLock(url: url)
             defer {
                 ownerLock.release()
                 waitingLock.release()
-                defaults.removePersistentDomain(forName: domain)
+                discardSuite(domain, defaults)
                 try? FileManager.default.removeItem(at: url)
             }
             let owner = KeyboardRemapper(defaults: defaults, instanceLock: ownerLock)

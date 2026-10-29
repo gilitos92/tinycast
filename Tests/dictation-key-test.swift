@@ -34,9 +34,9 @@ struct DictationKeyTest {
         _ body: (DictationKeyManager, DictationKeyManager, HotKeyManager, HotKeyManager, URL) -> Void
     ) {
         HIDEventSystem.reset()
-        let domain = "tinycast.dictation-key-test.\(UUID())"
-        let ownerDefaults = UserDefaults(suiteName: domain)!
-        let waitingDefaults = sharedPreferences ? ownerDefaults : UserDefaults(suiteName: domain + ".dev")!
+        let domain = "tinycast.dictation-key-test"
+        let ownerDefaults = isolatedDefaults(domain)
+        let waitingDefaults = sharedPreferences ? ownerDefaults : isolatedDefaults(domain + ".dev")
         let lockURL = FileManager.default.temporaryDirectory.appending(path: "\(domain).lock")
         let ownerKeys = HotKeyManager()
         let waitingKeys = HotKeyManager()
@@ -48,8 +48,8 @@ struct DictationKeyTest {
         defer {
             owner.prepareForTermination()
             waiting.prepareForTermination()
-            ownerDefaults.removePersistentDomain(forName: domain)
-            waitingDefaults.removePersistentDomain(forName: domain + ".dev")
+            discardSuite(domain, ownerDefaults)
+            discardSuite(domain + ".dev", waitingDefaults)
             try? FileManager.default.removeItem(at: lockURL)
             withExtendedLifetime(ticker) {}
         }
@@ -104,4 +104,21 @@ struct DictationKeyTest {
             contender.release()
         }
     }
+}
+
+/// `removePersistentDomain` only empties the domain; cfprefsd still leaves the plist on disk.
+private func discardSuite(_ name: String, _ defaults: UserDefaults) {
+    defaults.removePersistentDomain(forName: name)
+    UserDefaults.standard.removeSuite(named: name)
+    CFPreferencesAppSynchronize(name as CFString)
+    try? FileManager.default.removeItem(
+        at: URL(fileURLWithPath: NSHomeDirectory())
+            .appendingPathComponent("Library/Preferences/\(name).plist"))
+}
+
+/// A fixed suite name stops cfprefsd accumulating a plist per run; cleared at both ends.
+private func isolatedDefaults(_ name: String) -> UserDefaults {
+    let defaults = UserDefaults(suiteName: name)!
+    defaults.removePersistentDomain(forName: name)
+    return defaults
 }

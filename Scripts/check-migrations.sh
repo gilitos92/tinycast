@@ -26,7 +26,7 @@ for file in "${files[@]}"; do
     fi
     added=$(git log --no-renames --diff-filter=A --format=%H -1 -- "$file")
     [ -n "$added" ] || continue
-    shipped=$(git tag --contains "$added" ${not_upstream[@]+"${not_upstream[@]}"} --sort=v:refname | grep -Em1 '^v[0-9]+\.[0-9]+\.[0-9]+$')
+    shipped=$(git tag --contains "$added" ${not_upstream[@]+"${not_upstream[@]}"} --sort=v:refname | grep -Em1 '^(fork-)?v[0-9]+\.[0-9]+\.[0-9]+$')
     if [ -n "$shipped" ]; then
         echo "✗ $name shipped in $shipped: delete what its row in docs/migrations.md lists" >&2
         status=1
