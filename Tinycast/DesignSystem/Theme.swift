@@ -354,6 +354,8 @@ enum Theme {
         static let capsule = Animation.spring(response: 0.44, dampingFraction: 0.62)
         /// The buttons barely overshoot: the last rests on the window's edge, which would clip it.
         static let button = Animation.spring(response: 0.44, dampingFraction: 0.86)
+        /// Past the last button's spring and the capsule's undershoot, so the shadow lands at rest.
+        static let settle: TimeInterval = 1.2
     }
 
     enum MenuMotion {
