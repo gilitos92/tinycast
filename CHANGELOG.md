@@ -6,6 +6,10 @@ changes are in its [releases](https://github.com/abue-ammar/tinycast/releases).
 
 ## [Unreleased]
 
+### Removed
+
+- The one-time cleanup of the retired Show favorites in compact mode setting, which ran in 1.7.0.
+
 ## [1.7.0] - 2026-10-28
 
 Based on upstream v0.12.3-beta.127.
