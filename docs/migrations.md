@@ -29,6 +29,4 @@ When the check fails, delete everything the row lists, then the row.
 
 ## Live migrations
 
-| Migration | Repairs | Delete with it |
-| --- | --- | --- |
-| `CompactFavoritesMigration` | `appearance.showFavoritesInCompactMode` left in `settings.json`, which the import reports as unknown on every launch, and the orphaned `showFavoritesInCompactMode` default | its call in `AppCore.start()`, `Tests/compact-favorites-migration-test.swift`, its `run-tests.sh` entry and its testing.md row |
+None.
