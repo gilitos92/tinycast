@@ -137,6 +137,10 @@ feature's doc, under its own `## Invariants`.
   persisted must stay keyed by `Bundle.main.bundleIdentifier`.
 - **XcodeGen owns the project.** `Tinycast.xcodeproj` is committed but generated from `project.yml`;
   after editing it, run `xcodegen generate` and commit both. No SwiftPM, and never `Bundle.module`.
+- **Never link an upstream issue or PR from this fork.** On GitHub, `#1720`, `abue-ammar/tinycast#1720`
+  and a URL to one all post a "mentioned this" line on upstream's item, which editing never removes.
+  A bare `#N` the fork lacks resolves to upstream. In PRs, issues, releases and commit messages, write
+  `upstream#1720` as plain text instead.
 
 ## Before you finish
 
