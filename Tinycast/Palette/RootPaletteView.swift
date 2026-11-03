@@ -47,6 +47,8 @@ struct RootPaletteView: View {
     /// Compact vs. full; the source of truth is on `AppCore`, so the two can't disagree.
     private var isCollapsed: Bool { core.paletteCoordinator.paletteIsCollapsed }
 
+    private var renderingOutset: CGFloat { isCollapsed ? Theme.Size.paletteGlassOutset : 0 }
+
     private var screen: any PaletteScreen {
         switch vm.mode {
         case .launcher:
@@ -342,8 +344,6 @@ struct RootPaletteView: View {
                 )
                 // The window's frame is the size source, so the glass and clip stay matched.
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                // Compact, the bar's own glass shapes are the surface and the window is bare.
-                .background(isCollapsed ? .clear : Theme.Colors.panelScrim)
                 // Hidden rather than unmounted, so expanding never shows a frame without glass.
                 .background(GlassEffectView().opacity(isCollapsed ? 0 : 1))
                 .overlay {
@@ -357,8 +357,14 @@ struct RootPaletteView: View {
                             ? Theme.Duration.dialogEnter : Theme.Duration.dialogExit),
                     value: core.isDimmingPaletteForDialog
                 )
-                .clipShape(RoundedRectangle(cornerRadius: metrics.radius.panel, style: .continuous))),
-            selection: sel)
+                .clipShape(
+                    RoundedRectangle(
+                        cornerRadius: isCollapsed ? 0 : metrics.radius.panel, style: .continuous
+                    )
+                    .inset(by: -renderingOutset))),
+            selection: sel
+        )
+        .padding(renderingOutset)
     }
 
     /// The emoji grid's observers, split out so `stateObservers` stays within type-checker reach.
@@ -519,8 +525,9 @@ struct RootPaletteView: View {
                     moveMenu(1)
                     return .handled
                 }
+                // Marked text owns these keys: an IME drives its candidate window with them.
+                if vm.isComposing { return .ignored }
                 if isCollapsed {
-                    guard !vm.isComposing else { return .ignored }
                     if compactSelection.command != nil {
                         activateCompactSelection()
                         return .handled
@@ -540,17 +547,20 @@ struct RootPaletteView: View {
                     moveMenu(-1)
                     return .handled
                 }
+                if vm.isComposing { return .ignored }
                 return moveVertically(-1)
             }
             .onKeyPress(keys: [.leftArrow], phases: [.down, .repeat]) { press in
                 if vm.isControlListOpen { return .ignored }
                 if menuOpen { return .handled }
+                if vm.isComposing { return .ignored }
                 if moveCompactSelection(-1, modifiers: press.modifiers) { return .handled }
                 return moveHorizontally(-1) ? .handled : .ignored
             }
             .onKeyPress(keys: [.rightArrow], phases: [.down, .repeat]) { press in
                 if vm.isControlListOpen { return .ignored }
                 if menuOpen { return .handled }
+                if vm.isComposing { return .ignored }
                 if moveCompactSelection(1, modifiers: press.modifiers) { return .handled }
                 return moveHorizontally(1) ? .handled : .ignored
             }
@@ -593,6 +603,7 @@ struct RootPaletteView: View {
             .onKeyPress(.escape) {
                 // An open control list owns Escape before the palette beneath it.
                 if vm.isControlListOpen { return .ignored }
+                if vm.isComposing, !menuOpen { return .ignored }
                 if !menuOpen, screen.dismissOverlay() { return .handled }
                 switch PaletteEscapeAction.resolve(
                     menuOpen: menuOpen, menuQuery: vm.menuQuery,
@@ -625,8 +636,9 @@ struct RootPaletteView: View {
             }
             .onKeyPress(keys: [.tab], phases: .down) { press in
                 // ⇥ inside an open list belongs to the list, not to the form's field order.
-                if vm.isControlListOpen { return .handled }
-                if !menuOpen { advanceTabFocus(backwards: press.modifiers.contains(.shift)) }
+                if vm.isControlListOpen || menuOpen { return .handled }
+                if vm.isComposing { return .ignored }
+                advanceTabFocus(backwards: press.modifiers.contains(.shift))
                 return .handled
             }
             .modifier(
