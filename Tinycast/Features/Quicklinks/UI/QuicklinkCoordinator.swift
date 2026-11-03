@@ -457,7 +457,6 @@ final class QuicklinkCoordinator {
         return store.append(merge.additions)
     }
 
-    /// A link's batch: nothing is added until the reader agrees, and duplicates are skipped.
     /// Every field an import saves, so nothing it adds goes unseen.
     private static func reviewLines(_ quicklink: Quicklink) -> [ReviewLine] {
         var lines = [ReviewLine(name: "name", value: quicklink.name), ReviewLine(name: "link", value: quicklink.link)]
@@ -466,6 +465,7 @@ final class QuicklinkCoordinator {
         return lines
     }
 
+    /// A link's batch: nothing is added until the reader agrees, and duplicates are skipped.
     func importQuicklinks(offered incoming: [Quicklink]) async {
         guard settings.quicklinksEnabled, !incoming.isEmpty else { return }
         guard

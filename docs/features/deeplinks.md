@@ -179,8 +179,10 @@ asks the same question through `DeepLinkCoordinator.runExtensionLink`, after its
 an extension acts outside Tinycast like any row that always asks. The question is titled with the
 command and its extension. Its detail box starts with the extension and command the link resolved
 to, since the link's owner is only a hint, then each field the command reads, `launchType` and
-`context` included, under its own name (`ExtensionDeepLink.reviewLines`): a parameter no command
-reads, or one whose name only looks like a field's, never shows. Always Allow stores `DeepLinkConsentPolicy.key(entryID:percentEncodedQuery:)`:
+`context` included, under its own name and as parsed (`ExtensionDeepLink.reviewLines`): one row per
+argument and `context` re-encoded, so a JSON key given twice shows only the copy that acts, and a
+parameter no command reads, or one whose name only looks like a field's, never shows. Built-in rows
+are re-encoded from the parsed input the same way. Always Allow stores `DeepLinkConsentPolicy.key(entryID:percentEncodedQuery:)`:
 the command's row with its exact query. A query over 64 KB is refused, and so is one that sets a
 field twice, in any spelling (`ExtensionDeepLink.repeatsField`): the box would show both while only
 the last one acts. After the answer the link

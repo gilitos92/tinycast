@@ -113,7 +113,7 @@ struct ExtensionDeepLink: Sendable, Equatable {
             case .fallbackText:
                 fallbackText = item.value
             case .launchType:
-                launchType = item.value?.lowercased() == "background" ? .background : .userInitiated
+                launchType = Self.launchType(item.value)
             case .launchContext:
                 if let raw = item.value { launchContext = parseContext(raw) }
             case nil:
@@ -152,16 +152,40 @@ struct ExtensionDeepLink: Sendable, Equatable {
         }
     }
 
-    /// Only the fields a command reads, by their own names: a look-alike name can't pose as one.
+    /// The fields a command reads, by their own names and as parsed: what shows is what runs.
     static func reviewLines(ofPercentEncodedQuery query: String?) -> [ReviewLine] {
         var components = URLComponents()
         components.percentEncodedQuery = query
-        return (components.queryItems ?? []).compactMap { item in
-            guard let field = field(named: item.name), let value = item.value, !value.isEmpty else {
-                return nil
+        return (components.queryItems ?? []).flatMap { item -> [ReviewLine] in
+            guard let field = field(named: item.name), let raw = item.value, !raw.isEmpty else { return [] }
+            switch field {
+            case .arguments:
+                return parseArguments(raw).sorted { $0.key < $1.key }.map {
+                    ReviewLine(name: "arguments." + $0.key, value: $0.value)
+                }
+            case .fallbackText:
+                return [ReviewLine(name: field.name, value: raw)]
+            case .launchType:
+                let background = launchType(raw) == .background
+                return [ReviewLine(name: field.name, value: background ? "background" : "userInitiated")]
+            case .launchContext:
+                return [ReviewLine(name: field.name, json: reencodedContext(raw))]
             }
-            return ReviewLine(name: field.name, value: value)
         }
+    }
+
+    static func launchType(_ raw: String?) -> ExtensionLaunchType {
+        raw?.lowercased() == "background" ? .background : .userInitiated
+    }
+
+    /// Parsed as `parseContext` parses, so a key given twice shows only the copy that acts.
+    private static func reencodedContext(_ raw: String) -> String {
+        guard let data = raw.data(using: .utf8),
+            let object = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
+            let encoded = try? JSONSerialization.data(
+                withJSONObject: object, options: [.sortedKeys, .withoutEscapingSlashes])
+        else { return "{}" }
+        return String(bytes: encoded, encoding: .utf8) ?? "{}"
     }
 
     /// Whether two parameters set the same field, in any of its spellings.

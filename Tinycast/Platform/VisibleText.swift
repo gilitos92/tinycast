@@ -9,6 +9,12 @@ struct ReviewLine: Sendable, Equatable {
         self.name = VisibleText.escaped(name.replacingOccurrences(of: "\\", with: "\\\\"))
         self.value = VisibleText.escaped(value.replacingOccurrences(of: "\\", with: "\\\\"))
     }
+
+    /// JSON escapes its own backslashes and line breaks, so doubling them again would mislead.
+    init(name: String, json: String) {
+        self.name = VisibleText.escaped(name.replacingOccurrences(of: "\\", with: "\\\\"))
+        self.value = VisibleText.escaped(json)
+    }
 }
 
 /// Text from outside, made safe to read before agreeing to it: nothing can hide, move or fake a line.

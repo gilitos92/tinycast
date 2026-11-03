@@ -71,11 +71,13 @@ struct DeepLinkInput: Equatable, Sendable {
     /// Nil when there is nothing to show, so the question reads as a plain run.
     var consentDetails: [[ReviewLine]]? { isEmpty ? nil : [details] }
 
-    /// Every parameter in full: a consent question must never hide what it approves.
+    /// Every parameter in full, re-encoded from what was parsed: exactly what will run.
     var details: [ReviewLine] {
-        percentEncodedQueryItems.compactMap { item in
-            item.value?.removingPercentEncoding.map { ReviewLine(name: item.name, value: $0) }
-        }
+        [
+            fallbackText.map { ReviewLine(name: "fallbackText", value: $0) },
+            arguments.flatMap(Self.json).map { ReviewLine(name: "arguments", json: $0) },
+            context.flatMap(Self.json).map { ReviewLine(name: "context", json: $0) }
+        ].compactMap { $0 }
     }
 
     /// The inverse of `init?(queryItems:)`, encoded strictly so the link reads back exactly.

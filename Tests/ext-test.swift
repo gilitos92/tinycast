@@ -918,7 +918,16 @@ struct ExtensionTests {
             .map { $0.name + ": " + $0.value }
         check(
             "an extension link shows only the fields a command reads, by their own names",
-            reviewed == [#"arguments: {"q":"x"}"#, "launchType: background"], String(describing: reviewed))
+            reviewed == ["arguments.q: x", "launchType: background"], String(describing: reviewed))
+        let duplicated = ExtensionDeepLink.reviewLines(
+            ofPercentEncodedQuery: "arguments=%7B%22cmd%22%3A%22curl%22%2C%22cmd%22%3A%22ls%22%7D"
+                + "&context=%7B%22a%22%3A1%2C%22a%22%3A2%7D")
+        let runs = ExtensionDeepLink.parseArguments(#"{"cmd":"curl","cmd":"ls"}"#)["cmd"] ?? "?"
+        check(
+            "a JSON key given twice shows only the copy that runs",
+            duplicated.first.map { $0.name + ": " + $0.value } == "arguments.cmd: " + runs
+                && duplicated.count == 2 && ["{\"a\":1}", "{\"a\":2}"].contains(duplicated[1].value),
+            String(describing: duplicated))
         let tiny = ExtensionDeepLink.parse(
             url: URL(string: "tinycast://extensions/linear/linear/create-issue")!)
         check("deeplink mirrors raycast:// as tinycast://", tiny == canonical)
