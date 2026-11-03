@@ -73,7 +73,8 @@ uses it to try layouts, and forms use it to move between fields.
 
 There's one exception: when the selected row takes arguments, like a
 [quicklink](/docs/launcher/quicklinks), a [custom command](/docs/launcher/commands#arguments) or an
-[extension command](/docs/extensions), <kbd>tab</kbd> moves through its fields first.
+[extension command](/docs/extensions), <kbd>tab</kbd> moves through its fields first. After the
+start of its [alias](/docs/launcher/aliases), <kbd>space</kbd> jumps into them too.
 
 ## How screens stack
 

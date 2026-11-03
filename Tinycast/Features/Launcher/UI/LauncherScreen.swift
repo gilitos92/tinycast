@@ -199,6 +199,12 @@ struct LauncherScreen: PaletteScreen {
             onSubmit: { activate(at: selection) })
     }
 
+    func spaceEntersArguments(at selection: Int, query: String) -> Bool {
+        guard let entry = entry(at: selection) else { return false }
+        return AliasSpacePolicy.entersArguments(
+            query: query, alias: core.aliases.alias(for: entry.preferenceKey))
+    }
+
     private func headerFieldBinding(entry: AppEntry, name: String) -> Binding<String> {
         let key = PaletteState.argumentKey(entry.id, name)
         return Binding(get: { vm.commandArguments[key] ?? "" }, set: { vm.commandArguments[key] = $0 })
