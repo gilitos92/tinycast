@@ -178,17 +178,21 @@ An extension command link from outside (`raycast://`, `com.raycast:` or `tinycas
 asks the same question through `DeepLinkCoordinator.runExtensionLink`, after its command resolves:
 an extension acts outside Tinycast like any row that always asks. The question is titled with the
 command and its extension. Its detail box starts with the extension and command the link resolved
-to, since the link's owner is only a hint, then each field the command reads, `launchType` and
-`context` included, under its own name and as parsed (`ExtensionDeepLink.reviewLines`). There is one
-row per argument the command declares, and `keepingArguments` drops every other key before it runs.
-`context` shows what the command receives after `parseContext`. So a JSON key given twice shows only
-the copy that acts, and a parameter or key no command reads, or one whose name only looks like a
-real one, never shows. Built-in rows
-are re-encoded from the parsed input the same way. Always Allow stores `DeepLinkConsentPolicy.key(entryID:percentEncodedQuery:)`:
-the command's row with its exact query. A query over 64 KB is refused, and so is one that sets a
-field twice, in any spelling (`ExtensionDeepLink.repeatsField`): the box would show both while only
-the last one acts. After the answer the link
-resolves again and runs only if it is still the same command.
+to, since the link's owner is only a hint. Then come the fields the command reads, `launchType` and
+`context` included, under their own names and as parsed (`ExtensionDeepLink.reviewLines`):
+
+- One row per argument the command declares; `keepingArguments` drops every other key before it runs.
+- `context` as the command receives it after `parseContext`.
+
+So a JSON key given twice shows only the copy that acts, and a parameter or key no command reads, or
+one whose name only looks like a real one, never shows. Built-in rows are re-encoded from the parsed
+input the same way.
+
+Always Allow stores `DeepLinkConsentPolicy.key(entryID:percentEncodedQuery:)`: the command's row with
+its exact query. A link that sets a field twice, in any spelling (`ExtensionDeepLink.repeatsField`),
+is always refused, since the box would show both while only the last one acts. A query over 64 KB is
+refused when the link would ask, since no one can read that much. After the answer the link resolves
+again and runs only if it is still the same command.
 
 An extension's own `open("raycast://…")` runs a command of the same extension directly. A command of
 another extension asks first, because the URL may come from the extension's data, such as a feed
