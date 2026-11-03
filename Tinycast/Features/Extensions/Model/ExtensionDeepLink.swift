@@ -107,16 +107,16 @@ struct ExtensionDeepLink: Sendable, Equatable {
         var launchType = ExtensionLaunchType.userInitiated
         var launchContext: [String: RenderValue] = [:]
         for item in items {
-            switch item.name.lowercased() {
-            case "arguments":
+            switch field(named: item.name) {
+            case .arguments:
                 if let raw = item.value { arguments = parseArguments(raw) }
-            case "fallbacktext":
+            case .fallbackText:
                 fallbackText = item.value
-            case "launchtype", "launch_type":
-                launchType = item.value?.lowercased() == "background" ? .background : .userInitiated
-            case "context", "launchcontext":
+            case .launchType:
+                launchType = Self.launchType(item.value)
+            case .launchContext:
                 if let raw = item.value { launchContext = parseContext(raw) }
-            default:
+            case nil:
                 break
             }
         }
@@ -125,6 +125,85 @@ struct ExtensionDeepLink: Sendable, Equatable {
                 ownerOrAuthor: ownerOrAuthor, extensionName: extensionName, commandName: commandName,
                 arguments: arguments, fallbackText: fallbackText, launchType: launchType,
                 launchContext: launchContext))
+    }
+
+    enum Field {
+        case arguments, fallbackText, launchType, launchContext
+
+        /// The name a reader sees, whichever spelling the link used.
+        var name: String {
+            switch self {
+            case .arguments: "arguments"
+            case .fallbackText: "fallbackText"
+            case .launchType: "launchType"
+            case .launchContext: "context"
+            }
+        }
+    }
+
+    /// The one field each accepted spelling sets; nil for a parameter no command reads.
+    static func field(named name: String) -> Field? {
+        switch name.lowercased() {
+        case "arguments": .arguments
+        case "fallbacktext": .fallbackText
+        case "launchtype", "launch_type": .launchType
+        case "context", "launchcontext": .launchContext
+        default: nil
+        }
+    }
+
+    /// The same link with only the arguments its command declares, the only ones a reader sees.
+    func keepingArguments(named declared: Set<String>) -> ExtensionDeepLink {
+        ExtensionDeepLink(
+            ownerOrAuthor: ownerOrAuthor, extensionName: extensionName, commandName: commandName,
+            arguments: arguments.filter { declared.contains($0.key) }, fallbackText: fallbackText,
+            launchType: launchType, launchContext: launchContext)
+    }
+
+    /// The fields a command reads, as parsed and cut to `declaredArguments`: what shows is what runs.
+    static func reviewLines(
+        ofPercentEncodedQuery query: String?, declaredArguments: Set<String>? = nil
+    ) -> [ReviewLine] {
+        var components = URLComponents()
+        components.percentEncodedQuery = query
+        return (components.queryItems ?? []).flatMap { item -> [ReviewLine] in
+            guard let field = field(named: item.name), let raw = item.value, !raw.isEmpty else { return [] }
+            switch field {
+            case .arguments:
+                return parseArguments(raw).filter { declaredArguments?.contains($0.key) ?? true }
+                    .sorted { $0.key < $1.key }
+                    .map { ReviewLine(name: "arguments." + $0.key, value: $0.value) }
+            case .fallbackText:
+                return [ReviewLine(name: field.name, value: raw)]
+            case .launchType:
+                let background = launchType(raw) == .background
+                return [ReviewLine(name: field.name, value: background ? "background" : "userInitiated")]
+            case .launchContext:
+                return [ReviewLine(name: field.name, json: reencodedContext(raw))]
+            }
+        }
+    }
+
+    static func launchType(_ raw: String?) -> ExtensionLaunchType {
+        raw?.lowercased() == "background" ? .background : .userInitiated
+    }
+
+    /// What the command receives, after `parseContext` and its conversions, not what was sent.
+    private static func reencodedContext(_ raw: String) -> String {
+        let received = parseContext(raw).mapValues(\.jsonValue)
+        guard JSONSerialization.isValidJSONObject(received),
+            let encoded = try? JSONSerialization.data(
+                withJSONObject: received, options: [.sortedKeys, .withoutEscapingSlashes])
+        else { return "{}" }
+        return String(bytes: encoded, encoding: .utf8) ?? "{}"
+    }
+
+    /// Whether two parameters set the same field, in any of its spellings.
+    static func repeatsField(inPercentEncodedQuery query: String?) -> Bool {
+        var components = URLComponents()
+        components.percentEncodedQuery = query
+        let fields = (components.queryItems ?? []).compactMap { field(named: $0.name) }
+        return Set(fields).count != fields.count
     }
 
     nonisolated static func parseContext(_ raw: String) -> [String: RenderValue] {

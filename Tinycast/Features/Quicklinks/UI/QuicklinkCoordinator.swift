@@ -221,6 +221,11 @@ final class QuicklinkCoordinator {
             return core.deepLinkCoordinator.open(url, source: .tinycast)
         }
         let openWith = forcingDefaultApp ? nil : quicklink.openWithBundleID
+        if openWith == nil || openWith == Bundle.main.bundleIdentifier,
+            let url = URL(string: link), core.openChosenExtensionLink(url)
+        {
+            return
+        }
         Task {
             do throws(QuicklinkLauncher.Failure) {
                 try await QuicklinkLauncher.open(
@@ -452,16 +457,23 @@ final class QuicklinkCoordinator {
         return store.append(merge.additions)
     }
 
+    /// Every field an import saves, so nothing it adds goes unseen.
+    private static func reviewLines(_ quicklink: Quicklink) -> [ReviewLine] {
+        var lines = [ReviewLine(name: "name", value: quicklink.name), ReviewLine(name: "link", value: quicklink.link)]
+        if let app = quicklink.openWithBundleID { lines.append(ReviewLine(name: "openWith", value: app)) }
+        if let icon = quicklink.iconSymbol { lines.append(ReviewLine(name: "icon", value: icon)) }
+        return lines
+    }
+
     /// A link's batch: nothing is added until the reader agrees, and duplicates are skipped.
     func importQuicklinks(offered incoming: [Quicklink]) async {
         guard settings.quicklinksEnabled, !incoming.isEmpty else { return }
         guard
             await core.confirm(
                 title: String(localized: "Add \(incoming.count) quicklinks from a link?"),
-                message: incoming.map { $0.name.isEmpty ? $0.link : "\($0.name) — \($0.link)" }
-                    .joined(separator: "\n"),
-                symbol: Quicklink.sfSymbol, confirmTitle: String(localized: "Add"), tone: .neutral,
-                confirmRole: .standard)
+                message: nil, symbol: Quicklink.sfSymbol, confirmTitle: String(localized: "Add"),
+                tone: .neutral, confirmRole: .standard,
+                details: incoming.map(Self.reviewLines))
         else { return }
         let added = addImportedQuicklinks(incoming)
         guard !added.isEmpty else {

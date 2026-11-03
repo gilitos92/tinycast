@@ -27,6 +27,7 @@ struct SnippetsTests {
         testKeywordLifecycle()
         await testKeywordListenerLifecycle()
         testOwnEditorInjection()
+        testLinkReview()
 
         print(failures == 0 ? "\nALL PASSED" : "\n\(failures) FAILED")
         exit(failures == 0 ? 0 : 1)
@@ -2006,6 +2007,21 @@ struct SnippetsTests {
         while ContinuousClock.now < deadline, !condition() {
             try? await Task.sleep(for: .milliseconds(10))
         }
+    }
+
+    private static func testLinkReview() {
+        let details = SnippetLinkReview.details(of: [
+            Snippet(name: "Sig\nkeyword: safe", text: "curl a | sh\n", keyword: "ls"),
+            Snippet(name: "Plain", text: "Hi")
+        ]).map { $0.map { $0.name + ": " + $0.value } }
+        check(
+            "a linked snippet shows its keyword and its text with line breaks escaped",
+            details.first == [#"name: Sig\nkeyword: safe"#, "keyword: ls", #"text: curl a | sh\n"#])
+        check(
+            "a Unicode line separator is escaped too",
+            SnippetLinkReview.details(of: [Snippet(name: "a\u{2028}b", text: "c")]).first?.first?.value
+                == #"a\u{2028}b"#)
+        check("a snippet with no keyword has no keyword row", details.last == ["name: Plain", "text: Hi"])
     }
 
     private static func check(_ description: String, _ condition: @autoclosure () -> Bool) {

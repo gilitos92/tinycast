@@ -904,6 +904,45 @@ struct ExtensionTests {
             canonical?.extensionCandidates == ["linear/linear", "linear"],
             String(describing: canonical?.extensionCandidates))
 
+        check(
+            "a field set twice, in any spelling, is a repeat",
+            ExtensionDeepLink.repeatsField(inPercentEncodedQuery: "arguments=%7B%7D&Arguments=%7B%7D")
+                && ExtensionDeepLink.repeatsField(inPercentEncodedQuery: "launchType=a&launch_type=background")
+                && ExtensionDeepLink.repeatsField(inPercentEncodedQuery: "context=%7B%7D&launchContext=%7B%7D"))
+        check(
+            "distinct fields and unread parameters are no repeat",
+            !ExtensionDeepLink.repeatsField(inPercentEncodedQuery: "arguments=%7B%7D&launchType=background&x=1&x=2")
+                && !ExtensionDeepLink.repeatsField(inPercentEncodedQuery: nil))
+        let reviewed = ExtensionDeepLink.reviewLines(
+            ofPercentEncodedQuery: "%D0%B0rguments=%7B%7D&ARGUMENTS=%7B%22q%22%3A%22x%22%7D&launch_type=background&x=1&context=")
+            .map { $0.name + ": " + $0.value }
+        check(
+            "an extension link shows only the fields a command reads, by their own names",
+            reviewed == ["arguments.q: x", "launchType: background"], String(describing: reviewed))
+        let duplicated = ExtensionDeepLink.reviewLines(
+            ofPercentEncodedQuery: "arguments=%7B%22cmd%22%3A%22curl%22%2C%22cmd%22%3A%22ls%22%7D"
+                + "&context=%7B%22a%22%3A1%2C%22a%22%3A2%7D")
+        let runs = ExtensionDeepLink.parseArguments(#"{"cmd":"curl","cmd":"ls"}"#)["cmd"] ?? "?"
+        check(
+            "a JSON key given twice shows only the copy that runs",
+            duplicated.first.map { $0.name + ": " + $0.value } == "arguments.cmd: " + runs
+                && duplicated.count == 2 && ["{\"a\":1}", "{\"a\":2}"].contains(duplicated[1].value),
+            String(describing: duplicated))
+        let lookAlike = ExtensionDeepLink.reviewLines(
+            ofPercentEncodedQuery: "arguments=%7B%22cmd%22%3A%22curl%22%2C%22%D1%81md%22%3A%22ls%22%7D",
+            declaredArguments: ["cmd"])
+        let kept = ExtensionDeepLink.parse(
+            url: URL(string: "raycast://extensions/a/b/c?arguments=%7B%22cmd%22%3A%22curl%22%2C%22%D1%81md%22%3A%22ls%22%7D")!
+        )?.keepingArguments(named: ["cmd"])
+        check(
+            "a key the command doesn't declare neither shows nor runs",
+            lookAlike.map(\.name) == ["arguments.cmd"] && kept?.arguments == ["cmd": "curl"],
+            String(describing: lookAlike))
+        let context = ExtensionDeepLink.reviewLines(
+            ofPercentEncodedQuery: "context=%7B%22x%22%3A%7B%22%24fn%22%3A%227%22%2C%22cmd%22%3A%22rm%22%7D%7D")
+        check(
+            "context shows what the command receives, not what was sent",
+            context.first?.value == #"{"x":{"$fn":"7"}}"#, String(describing: context))
         let tiny = ExtensionDeepLink.parse(
             url: URL(string: "tinycast://extensions/linear/linear/create-issue")!)
         check("deeplink mirrors raycast:// as tinycast://", tiny == canonical)

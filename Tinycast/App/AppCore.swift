@@ -514,10 +514,21 @@ final class AppCore {
         }
         switch route {
         case .command(let link):
-            extensionCoordinator.runDeepLink(link)
+            extensionCoordinator.runDeepLink(link, percentEncodedQuery: url.query(percentEncoded: true))
         case .storeInstall(let install):
             extensionCoordinator.showStoreInstall(install)
         }
+    }
+
+    /// An extension link chosen in Tinycast that macOS would hand straight back runs here, unasked.
+    func openChosenExtensionLink(_ url: URL) -> Bool {
+        guard case .command(let link)? = ExtensionDeepLink.route(url: url),
+            let handler = NSWorkspace.shared.urlForApplication(toOpen: url),
+            handler.standardizedFileURL == Bundle.main.bundleURL.standardizedFileURL
+        else { return false }
+        extensionCoordinator.runDeepLink(
+            link, percentEncodedQuery: url.query(percentEncoded: true), asks: false)
+        return true
     }
 
     func allowsHotKeyAction(_ action: HotKeyAction) -> Bool {
@@ -979,21 +990,21 @@ final class AppCore {
     func confirm(
         title: String, message: String?, symbol: String?, confirmTitle: String,
         tone: DialogTone = .danger, confirmRole: DialogAction.Role = .destructive,
-        dismissTitle: String = String(localized: "Cancel")
+        dismissTitle: String = String(localized: "Cancel"), details: [[ReviewLine]]? = nil
     ) async -> Bool {
         await dialogs.confirm(
             title: title, message: message, symbol: symbol, tone: tone, confirmTitle: confirmTitle,
-            confirmRole: confirmRole, dismissTitle: dismissTitle)
+            confirmRole: confirmRole, dismissTitle: dismissTitle, details: details)
     }
 
     /// A question with more than two answers; the returned index is into `options`.
     func choose(
         title: String, message: String?, symbol: String?, options: [DialogAction],
-        defaultIndex: Int, tone: DialogTone = .neutral
+        defaultIndex: Int, tone: DialogTone = .neutral, details: [[ReviewLine]]? = nil
     ) async -> Int {
         await dialogs.choose(
             title: title, message: message, symbol: symbol, tone: tone, options: options,
-            defaultIndex: defaultIndex)
+            defaultIndex: defaultIndex, details: details)
     }
 
     /// A failure with one usable second option; `true` when the user takes it.

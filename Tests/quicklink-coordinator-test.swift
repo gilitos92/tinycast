@@ -19,6 +19,7 @@ struct QuicklinkCoordinatorTests {
         try await hotKeyCopiesOnce()
         try await plainLink()
         try ownSchemeLink()
+        try await extensionLink()
         try copying()
         try editing()
         try await deleting()
@@ -231,6 +232,23 @@ struct QuicklinkCoordinatorTests {
             "it runs as a link Tinycast chose, so it never asks")
     }
 
+    static func extensionLink() async throws {
+        let own = try Fixture(link: "tinycast://extensions/me/notes/create", openWith: nil)
+        defer { own.cleanUp() }
+        own.coordinator.openQuicklink(id: own.link.id)
+        expect(
+            QuicklinkLauncher.opened.isEmpty
+                && own.core.chosenExtensionLinks.map(\.absoluteString) == ["tinycast://extensions/me/notes/create"],
+            "an extension link that would come back to Tinycast runs in-process, unasked")
+        let other = try Fixture(link: "raycast://extensions/me/notes/create", openWith: nil)
+        defer { other.cleanUp() }
+        other.coordinator.openQuicklink(id: other.link.id)
+        await waitForOpen()
+        expect(
+            other.core.chosenExtensionLinks.isEmpty && QuicklinkLauncher.opened.count == 1,
+            "an extension link another app owns still goes to that app")
+    }
+
     static func copying() throws {
         for succeeds in [true, false] {
             let fixture = try Fixture(link: "https://example.com/?q={argument}&selection={selection}")
@@ -363,12 +381,14 @@ struct QuicklinkCoordinatorTests {
         let palette: PaletteCoordinator
         let coordinator: QuicklinkCoordinator
 
-        init(link: String = "https://example.com/?q={selection}") throws {
+        init(
+            link: String = "https://example.com/?q={selection}", openWith: String? = "com.example.browser"
+        ) throws {
             QuicklinkLauncher.opened = []
             store = QuicklinkStore(directory: directory)
             try store.add(Quicklink(name: "A different quicklink", link: "https://example.com/"))
             self.link = try store.add(
-                Quicklink(name: "Wikipedia", link: link, openWithBundleID: "com.example.browser"))
+                Quicklink(name: "Wikipedia", link: link, openWithBundleID: openWith))
             palette = PaletteCoordinator(window: window, state: core.palette)
             coordinator = QuicklinkCoordinator(
                 store: store, settings: settings, appIndex: AppIndex(), injector: injector,
@@ -523,6 +543,13 @@ final class AppCore {
         fatalError("The fixture must wire the coordinator")
     }()
     let deepLinkCoordinator = DeepLinkCoordinator()
+    var chosenExtensionLinks: [URL] = []
+    /// Stands in for macOS: only Tinycast's own scheme comes back to it.
+    func openChosenExtensionLink(_ url: URL) -> Bool {
+        guard url.scheme == "tinycast", url.host(percentEncoded: false) == "extensions" else { return false }
+        chosenExtensionLinks.append(url)
+        return true
+    }
     var messages: [String] = []
     var confirmations = 0
     func showNotice(title: String, message: String, symbol: String, tone: DialogTone) async {}
@@ -531,8 +558,9 @@ final class AppCore {
     }
     enum ConfirmRole { case standard, destructive }
     func confirm(
-        title: String, message: String, symbol: String, confirmTitle: String,
-        tone: DialogTone = .danger, confirmRole: ConfirmRole = .destructive
+        title: String, message: String?, symbol: String, confirmTitle: String,
+        tone: DialogTone = .danger, confirmRole: ConfirmRole = .destructive,
+        details: [[ReviewLine]]? = nil
     ) async -> Bool {
         confirmations += 1
         return false

@@ -61,5 +61,7 @@ final class ExtensionMenuBarHost: ExtensionHostContext {
             launchContext: launchContext)
     }
 
-    func launch(_ link: ExtensionDeepLink) throws { try manager?.launch(link) }
+    func launch(_ link: ExtensionDeepLink, percentEncodedQuery: String?) throws {
+        try manager?.launch(link, percentEncodedQuery: percentEncodedQuery, from: owner.manifest.name)
+    }
 }

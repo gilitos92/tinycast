@@ -278,6 +278,16 @@ struct DeepLinkTests {
             "a summary shows the input as it was sent")
         let long = DeepLinkInput(fallbackText: String(repeating: "x", count: 500))
         expect(long.summary.count == 161 && long.summary.hasSuffix("…"), "a long summary is cut")
+        let hidden = DeepLinkInput(
+            arguments: .positional([String(repeating: "x", count: 200), "~/Documents"]))
+        expect(
+            hidden.details.last?.value.hasSuffix(#""~/Documents"]"#) == true,
+            "a consent question shows every argument, however long the ones before it")
+        expect(
+            shown(DeepLinkInput(fallbackText: "a\nb", arguments: .named(["q": "rust"])).details)
+                == [#"fallbackText: a\nb"#, #"arguments: {"q":"rust"}"#],
+            "each parameter is its own row, named as the link names it, its line breaks escaped")
+        expect(DeepLinkInput.none.consentDetails == nil, "a link with no input shows no detail box")
     }
 
     static func routeInputChecks() {
@@ -358,6 +368,59 @@ struct DeepLinkTests {
         expect(
             DeepLinkConsentPolicy.parts(ofKey: "system-action:lock-screen")?.input == plain,
             "a plain key is the row alone")
+        extensionConsentChecks()
+        visibleTextChecks()
+    }
+
+    static func visibleTextChecks() {
+        expect(VisibleText.escaped("a b") == "a b", "plain text reads as it is")
+        expect(
+            VisibleText.escaped("a   b") == #"a \u{20}\u{20}b"#,
+            "a run of spaces is spelled out, so it can't push text onto a fake line")
+        expect(VisibleText.escaped(" a ") == #"\u{20}a\u{20}"#, "edge spaces are spelled out")
+        expect(
+            VisibleText.escaped("x\u{3164}\u{2800}\u{200B}y") == #"x\u{3164}\u{2800}\u{200B}y"#,
+            "blank-looking and zero-width characters are spelled out")
+        expect(
+            VisibleText.escaped("ok\u{202E}nruter") == #"ok\u{202E}nruter"#,
+            "a direction override is spelled out rather than reordering the line")
+        expect(
+            VisibleText.escaped("e\u{301}\u{301}\u{301}") == "e\u{301}\u{301}" + #"\u{301}"#,
+            "a pile of marks past two is spelled out")
+        expect(VisibleText.escaped("日本語 é") == "日本語 é", "ordinary letters and accents stay readable")
+        expect(
+            VisibleText.escaped("❤\u{FE0F} 👨\u{200D}👩 日本\u{3000}語") == "❤\u{FE0F} 👨\u{200D}👩 日本\u{3000}語",
+            "emoji sequences and a single ideographic space stay readable")
+        expect(
+            VisibleText.escaped("a\u{200D}b") == #"a\u{200D}b"#,
+            "a joiner between letters is spelled out")
+        expect(
+            !VisibleText.escaped("ls \u{3000} \u{3000}x").contains("\u{3000} "),
+            "a run mixing plain and ideographic spaces is spelled out")
+    }
+
+    static func extensionConsentChecks() {
+        let row = "extension:mail/send"
+        let query = "arguments=%7B%22to%22%3A%22a%40b.c%22%7D&launchType=background"
+        let key = DeepLinkConsentPolicy.key(entryID: row, percentEncodedQuery: query)
+        let encodedRow = DeepLinkConsentPolicy.key(entryID: row, input: .none)
+        expect(key == encodedRow + "?" + query, "an extension grant keeps the whole query")
+        expect(
+            key != DeepLinkConsentPolicy.key(entryID: row, percentEncodedQuery: "launchType=background"),
+            "an extension grant covers only its exact input")
+        expect(
+            DeepLinkConsentPolicy.key(entryID: row, percentEncodedQuery: nil) == encodedRow,
+            "an extension link with no query is the row alone")
+        expect(
+            ReviewLine(name: "t", value: "a\u{2028}b\r\nc").value == #"a\u{2028}b\r\nc"#,
+            "every kind of line break is escaped")
+        expect(
+            ReviewLine(name: "t", value: #"a\nb"#).value == #"a\\nb"#,
+            "a typed backslash is doubled, so it never passes for an escaped line break")
+    }
+
+    static func shown(_ lines: [ReviewLine]) -> [String] {
+        lines.map { $0.name + ": " + $0.value }
     }
 
     static func consentChecks() {
