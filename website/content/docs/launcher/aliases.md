@@ -40,8 +40,8 @@ When a command takes inputs, like a quicklink, a custom command or an extension 
 start of its alias and press <kbd>space</kbd>. The cursor jumps to the first input, as in Raycast.
 
 - It works with the start of the alias too: `tr` is enough for `translate`.
-- It works only when the entry has an alias. Typing part of its name and pressing
-  <kbd>space</kbd> types a space.
+- It works only when what you typed is the start of the entry's alias. If you typed part of its
+  name that isn't the start of its alias, <kbd>space</kbd> types a space.
 - Everywhere else, <kbd>space</kbd> types a space as usual.
 
 One alias can block another. If `go` leads the list and takes inputs, you can't type

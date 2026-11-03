@@ -220,8 +220,10 @@ these invariants:
 - **Space after an alias enters the fields, as in Raycast.** A fresh, bare Space with the caret at
   the query's end focuses the first field when the query is the start of the selected row's alias
   (`AliasSpacePolicy`). The query keeps the typed alias and no space is typed. `PalettePanel`
-  offers the key through `onTrailingSpace` before the field editor types it. A title match, a held
-  key, marked text, a selection or an open menu keeps the space. The accepted trade: once a row
+  offers the key through `onTrailingSpace` before the field editor types it. How the row matched
+  is never asked: a query off the alias's start keeps the space even when it matches the title, and
+  one on it jumps even when it matches the title too. A held key, marked text, a selection or an
+  open menu keeps the space. The accepted trade: once a row
   with fields leads on `go`, `go` + Space can't spell another row's alias `go compose`; that row
   is still found by its title.
 - **Never read a `@FocusState` back in the tick that writes it.** It still reports the old field, so
