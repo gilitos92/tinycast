@@ -22,19 +22,13 @@ enum DeepLinkConsentPolicy {
         return row + "?" + query
     }
 
-    /// An extension link's parameters in full, one per line; nil when it carries none.
-    static func details(ofPercentEncodedQuery query: String?) -> String? {
+    /// An extension link's parameters in full, as sent; empty ones are left out since none acts.
+    static func details(ofPercentEncodedQuery query: String?) -> [ReviewLine] {
         var components = URLComponents()
         components.percentEncodedQuery = query
-        let lines = (components.queryItems ?? []).compactMap { item in
-            item.value.flatMap { $0.isEmpty ? nil : detailLine(name: item.name, value: $0) }
+        return (components.queryItems ?? []).compactMap { item in
+            item.value.flatMap { $0.isEmpty ? nil : ReviewLine(name: item.name, value: $0) }
         }
-        return lines.isEmpty ? nil : lines.joined(separator: "\n")
-    }
-
-    /// One parameter per line, spelled out, so a value can never hide or fake another parameter.
-    static func detailLine(name: String, value: String) -> String {
-        VisibleText.escaped(name) + ": " + VisibleText.escaped(value)
     }
 
     /// The row and input a remembered key stands for; nil for one this build can't read.

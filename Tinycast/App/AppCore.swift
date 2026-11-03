@@ -990,7 +990,7 @@ final class AppCore {
     func confirm(
         title: String, message: String?, symbol: String?, confirmTitle: String,
         tone: DialogTone = .danger, confirmRole: DialogAction.Role = .destructive,
-        dismissTitle: String = String(localized: "Cancel"), details: String? = nil
+        dismissTitle: String = String(localized: "Cancel"), details: [[ReviewLine]]? = nil
     ) async -> Bool {
         await dialogs.confirm(
             title: title, message: message, symbol: symbol, tone: tone, confirmTitle: confirmTitle,
@@ -1000,7 +1000,7 @@ final class AppCore {
     /// A question with more than two answers; the returned index is into `options`.
     func choose(
         title: String, message: String?, symbol: String?, options: [DialogAction],
-        defaultIndex: Int, tone: DialogTone = .neutral, details: String? = nil
+        defaultIndex: Int, tone: DialogTone = .neutral, details: [[ReviewLine]]? = nil
     ) async -> Int {
         await dialogs.choose(
             title: title, message: message, symbol: symbol, tone: tone, options: options,

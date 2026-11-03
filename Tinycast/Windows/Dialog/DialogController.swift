@@ -23,7 +23,7 @@ final class DialogController: NSObject, NSWindowDelegate {
     func confirm(
         title: String, message: String?, symbol: String?, tone: DialogTone, confirmTitle: String,
         confirmRole: DialogAction.Role, dismissTitle: String = String(localized: "Cancel"),
-        details: String? = nil
+        details: [[ReviewLine]]? = nil
     ) async -> Bool {
         let request = DialogRequest(
             title: title, message: message, symbol: symbol, tone: tone,
@@ -38,7 +38,7 @@ final class DialogController: NSObject, NSWindowDelegate {
     /// More than two ways forward; `options` is in dispatch order and the last one is the cancel.
     func choose(
         title: String, message: String?, symbol: String?, tone: DialogTone,
-        options: [DialogAction], defaultIndex: Int, details: String? = nil
+        options: [DialogAction], defaultIndex: Int, details: [[ReviewLine]]? = nil
     ) async -> Int {
         let request = DialogRequest(
             title: title, message: message, symbol: symbol, tone: tone, actions: options,
@@ -132,8 +132,8 @@ final class DialogController: NSObject, NSWindowDelegate {
         return state.text
     }
 
-    private static func detailsAccessory(_ details: String?) -> DialogAccessory? {
-        details.map { .details(DialogDetailsState(text: $0)) }
+    private static func detailsAccessory(_ details: [[ReviewLine]]?) -> DialogAccessory? {
+        details.map { .details(DialogDetailsState(groups: $0)) }
     }
 
     private func present(_ request: DialogRequest) async -> Int {

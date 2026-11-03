@@ -125,9 +125,9 @@ The search screens are `clipboard-history`, `search-emoji`, `calculator-history`
 row's fields, as a hotkey with no selection does. Any other target ignores its input.
 
 - A `create-*` list asks once, then adds every item it can, skipping duplicates as a file import
-  does, and reports the count in a HUD. A quicklink list's question shows each name and link. A
-  snippet list's shows every name, keyword and text in a detail box, quoted and spelled out
-  (`SnippetLinkReview`), so a trailing line break that would run a command on expansion is visible.
+  does, and reports the count in a HUD. Its question has no message: a detail box lists each
+  quicklink's name and link, or each snippet's name, keyword and text (`SnippetLinkReview`), spelled
+  out so a trailing line break that would run a command on expansion is visible.
 - A volume outside `0`–`100`, or a note named `.` or `..`, refuses the link before anything asks.
 - `openWith` is kept only when it names an installed app's bundle ID.
 - A window size refuses, rather than clamps, a value outside what a saved size allows. `anchor` is a
@@ -152,10 +152,12 @@ Input always asks because a page chose it: typed into the launcher it is one Ret
 row, and as arguments it reaches a script.
 
 The question names the target, shows the whole input in a scrolling detail box and offers
-**Always Allow**, **Run Once** and **Cancel**. The box (`DeepLinkInput.details`) is one parameter
-per line and never cut. `VisibleText.escaped` spells out, as `\n` or `\u{…}`, anything that could
-hide or fake a line: line breaks, invisible and zero-width characters, direction marks, blank-looking
-letters, piled-up marks and runs of spaces. The two answers that run stay off until the box has been
+**Always Allow**, **Run Once** and **Cancel**. The box (`DeepLinkInput.details`) is never cut and
+lists each parameter as a `ReviewLine`: its name in one column and its value in the next, so a
+wrapped value can never start where a name would. `ReviewLine` doubles `\` and `VisibleText.escaped`
+spells out, as `\n` or `\u{…}`, anything that could hide or fake a line: line breaks, invisible and
+zero-width characters, direction marks, blank-looking letters, piled-up marks and runs of spaces.
+Emoji sequences and a single ideographic space stay as they are. The two answers that run stay off until the box has been
 scrolled to its end, because the app shows scrollers only while scrolling. **Cancel is the default**, because the dialog
 takes key and a stray Return must not run anything. A target that does not exist is reported as an
 unknown link before any question, so a page cannot learn what exists by asking.
@@ -176,7 +178,9 @@ an extension acts outside Tinycast like any row that always asks. The question i
 command and its extension. Its detail box starts with the extension and command the link resolved
 to, since the link's owner is only a hint, then every query parameter as sent, `launchType` and
 `context` included. Always Allow stores `DeepLinkConsentPolicy.key(entryID:percentEncodedQuery:)`:
-the command's row with its exact query. A query over 64 KB is refused. After the answer the link
+the command's row with its exact query. A query over 64 KB is refused, and so is one that sets a
+field twice, in any spelling (`ExtensionDeepLink.repeatsField`): the box would show both while only
+the last one acts. After the answer the link
 resolves again and runs only if it is still the same command.
 
 An extension's own `open("raycast://…")` runs a command of the same extension directly. A command of

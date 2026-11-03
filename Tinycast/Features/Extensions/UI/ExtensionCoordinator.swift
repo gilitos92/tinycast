@@ -93,7 +93,10 @@ final class ExtensionCoordinator {
 
     /// A `raycast://extensions/…` link; only one the user chose in Tinycast skips the question.
     func runDeepLink(_ link: ExtensionDeepLink, percentEncodedQuery query: String?, asks: Bool = true) {
-        guard (query?.utf8.count ?? 0) <= DeepLinkInput.maximumParameterBytes else {
+        // A repeated field shows twice while only its last copy acts, so neither can be trusted.
+        guard (query?.utf8.count ?? 0) <= DeepLinkInput.maximumParameterBytes,
+            !ExtensionDeepLink.repeatsField(inPercentEncodedQuery: query)
+        else {
             return core.showMessage(String(localized: "Tinycast can’t open this link"), tone: .danger)
         }
         guard let (owner, command) = resolveDeepLink(link) else { return }
@@ -110,9 +113,8 @@ final class ExtensionCoordinator {
         guard asks else { return launch() }
         let manifest = owner.manifest
         let identity = [
-            DeepLinkConsentPolicy.detailLine(
-                name: "extension", value: manifest.storeHandle + "/" + manifest.name),
-            DeepLinkConsentPolicy.detailLine(name: "command", value: command.name)
+            ReviewLine(name: "extension", value: manifest.storeHandle + "/" + manifest.name),
+            ReviewLine(name: "command", value: command.name)
         ]
         core.deepLinkCoordinator.runExtensionLink(
             entryID: entryID, name: command.title + " · " + owner.manifest.title, identity: identity,

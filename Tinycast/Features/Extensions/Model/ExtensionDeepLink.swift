@@ -107,16 +107,16 @@ struct ExtensionDeepLink: Sendable, Equatable {
         var launchType = ExtensionLaunchType.userInitiated
         var launchContext: [String: RenderValue] = [:]
         for item in items {
-            switch item.name.lowercased() {
-            case "arguments":
+            switch field(named: item.name) {
+            case .arguments:
                 if let raw = item.value { arguments = parseArguments(raw) }
-            case "fallbacktext":
+            case .fallbackText:
                 fallbackText = item.value
-            case "launchtype", "launch_type":
+            case .launchType:
                 launchType = item.value?.lowercased() == "background" ? .background : .userInitiated
-            case "context", "launchcontext":
+            case .launchContext:
                 if let raw = item.value { launchContext = parseContext(raw) }
-            default:
+            case nil:
                 break
             }
         }
@@ -125,6 +125,29 @@ struct ExtensionDeepLink: Sendable, Equatable {
                 ownerOrAuthor: ownerOrAuthor, extensionName: extensionName, commandName: commandName,
                 arguments: arguments, fallbackText: fallbackText, launchType: launchType,
                 launchContext: launchContext))
+    }
+
+    enum Field {
+        case arguments, fallbackText, launchType, launchContext
+    }
+
+    /// The one field each accepted spelling sets; nil for a parameter no command reads.
+    static func field(named name: String) -> Field? {
+        switch name.lowercased() {
+        case "arguments": .arguments
+        case "fallbacktext": .fallbackText
+        case "launchtype", "launch_type": .launchType
+        case "context", "launchcontext": .launchContext
+        default: nil
+        }
+    }
+
+    /// Whether two parameters set the same field, in any of its spellings.
+    static func repeatsField(inPercentEncodedQuery query: String?) -> Bool {
+        var components = URLComponents()
+        components.percentEncodedQuery = query
+        let fields = (components.queryItems ?? []).compactMap { field(named: $0.name) }
+        return Set(fields).count != fields.count
     }
 
     nonisolated static func parseContext(_ raw: String) -> [String: RenderValue] {

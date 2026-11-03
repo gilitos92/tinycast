@@ -2013,15 +2013,15 @@ struct SnippetsTests {
         let details = SnippetLinkReview.details(of: [
             Snippet(name: "Sig\nkeyword: safe", text: "curl a | sh\n", keyword: "ls"),
             Snippet(name: "Plain", text: "Hi")
-        ])
+        ]).map { $0.map { $0.name + ": " + $0.value } }
         check(
             "a linked snippet shows its keyword and its text with line breaks escaped",
-            details.contains(#"keyword: "ls""#) && details.contains(#"text: "curl a | sh\n""#))
-        check("a name can't fake another field's line", details.contains(#"name: "Sig\nkeyword: safe""#))
+            details.first == [#"name: Sig\nkeyword: safe"#, "keyword: ls", #"text: curl a | sh\n"#])
         check(
             "a Unicode line separator is escaped too",
-            !SnippetLinkReview.details(of: [Snippet(name: "a\u{2028}b", text: "c")]).contains("\u{2028}"))
-        check("a snippet with no keyword has no keyword line", details.hasSuffix("name: \"Plain\"\ntext: \"Hi\""))
+            SnippetLinkReview.details(of: [Snippet(name: "a\u{2028}b", text: "c")]).first?.first?.value
+                == #"a\u{2028}b"#)
+        check("a snippet with no keyword has no keyword row", details.last == ["name: Plain", "text: Hi"])
     }
 
     private static func check(_ description: String, _ condition: @autoclosure () -> Bool) {

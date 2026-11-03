@@ -69,15 +69,13 @@ struct DeepLinkInput: Equatable, Sendable {
     private static let summaryLength = 160
 
     /// Nil when there is nothing to show, so the question reads as a plain run.
-    var consentDetails: String? { isEmpty ? nil : details }
+    var consentDetails: [[ReviewLine]]? { isEmpty ? nil : [details] }
 
-    /// Every parameter in full, one per line: a consent question must never hide what it approves.
-    var details: String {
+    /// Every parameter in full: a consent question must never hide what it approves.
+    var details: [ReviewLine] {
         percentEncodedQueryItems.compactMap { item in
-            item.value?.removingPercentEncoding.map {
-                DeepLinkConsentPolicy.detailLine(name: item.name, value: $0)
-            }
-        }.joined(separator: "\n")
+            item.value?.removingPercentEncoding.map { ReviewLine(name: item.name, value: $0) }
+        }
     }
 
     /// The inverse of `init?(queryItems:)`, encoded strictly so the link reads back exactly.

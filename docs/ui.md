@@ -669,7 +669,8 @@ A dialog carries at most one control beyond its buttons, and `DialogAccessory` m
 rather than a convention — `.volume` for the Set Volume prompt, `.snippetArguments` for a snippet's
 `{argument}` values, `.textInput` for a single typed answer such as an emoji's custom name,
 `.clipboardText` for Edit Entry, and `.details` for read-only text a reader must see in full before
-agreeing, such as a link's input. `.details` scrolls in a `dialogTextHeight` box rather than cut,
+agreeing, such as a link's input. `.details` takes groups of `ReviewLine`s, drawn as a two-column
+grid per group with dividers between groups, and scrolls in a `dialogTextHeight` box rather than cut,
 and `DialogRequest.allows(_:)` keeps every non-cancel answer, ↵ included, off until it has been
 scrolled to its end. Its "Scroll to the end" line hides rather than goes, since the panel is sized once. Text fields take `dialogTextField()`; inline enumerated arguments are
 `DialogChip`s. `DialogPanel.handlesArrowKeys` is set from `DialogAccessory.claimsArrowKeys`, so the

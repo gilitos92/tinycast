@@ -4,11 +4,11 @@ import SwiftUI
 @MainActor
 @Observable
 final class DialogDetailsState {
-    let text: String
+    let groups: [[ReviewLine]]
     private(set) var hasReadAll = false
 
-    init(text: String) {
-        self.text = text
+    init(groups: [[ReviewLine]]) {
+        self.groups = groups
     }
 
     func markReadAll() {
@@ -24,12 +24,14 @@ struct DialogDetailsField: View {
     var body: some View {
         VStack(alignment: .leading, spacing: metrics.spacing.sm) {
             ScrollView {
-                Text(verbatim: state.text)
-                    .font(metrics.typography.code)
-                    .foregroundStyle(Theme.Colors.textPrimary)
-                    .textSelection(.enabled)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(metrics.spacing.md)
+                VStack(alignment: .leading, spacing: metrics.spacing.md) {
+                    ForEach(state.groups.indices, id: \.self) { index in
+                        if index > 0 { Divider() }
+                        group(state.groups[index])
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(metrics.spacing.md)
             }
             .scrollIndicators(.visible)
             // The app hides scrollers until a scroll, so the end is checked rather than trusted to show.
@@ -46,6 +48,24 @@ struct DialogDetailsField: View {
                 .foregroundStyle(Theme.Colors.textSecondary)
                 .opacity(state.hasReadAll ? 0 : 1)
         }
+    }
+
+    /// Names keep their own column, so a wrapped value can never start where a name would.
+    private func group(_ lines: [ReviewLine]) -> some View {
+        Grid(alignment: .topLeading, horizontalSpacing: metrics.spacing.md, verticalSpacing: metrics.spacing.xs) {
+            ForEach(lines.indices, id: \.self) { index in
+                GridRow {
+                    Text(verbatim: lines[index].name)
+                        .foregroundStyle(Theme.Colors.textSecondary)
+                        .gridColumnAlignment(.trailing)
+                    Text(verbatim: lines[index].value)
+                        .foregroundStyle(Theme.Colors.textPrimary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+        }
+        .font(metrics.typography.code)
+        .textSelection(.enabled)
     }
 
     private static func reachesEnd(_ geometry: ScrollGeometry) -> Bool {

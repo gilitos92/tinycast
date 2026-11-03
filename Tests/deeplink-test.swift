@@ -281,12 +281,12 @@ struct DeepLinkTests {
         let hidden = DeepLinkInput(
             arguments: .positional([String(repeating: "x", count: 200), "~/Documents"]))
         expect(
-            hidden.details.hasSuffix(#""~/Documents"]"#),
+            hidden.details.last?.value.hasSuffix(#""~/Documents"]"#) == true,
             "a consent question shows every argument, however long the ones before it")
         expect(
-            DeepLinkInput(fallbackText: "a\nb", arguments: .named(["q": "rust"])).details
-                == "fallbackText: a\\nb\narguments: {\"q\":\"rust\"}",
-            "each parameter is one line, named as the link names it, its line breaks escaped")
+            shown(DeepLinkInput(fallbackText: "a\nb", arguments: .named(["q": "rust"])).details)
+                == [#"fallbackText: a\nb"#, #"arguments: {"q":"rust"}"#],
+            "each parameter is its own row, named as the link names it, its line breaks escaped")
         expect(DeepLinkInput.none.consentDetails == nil, "a link with no input shows no detail box")
     }
 
@@ -388,6 +388,12 @@ struct DeepLinkTests {
             VisibleText.escaped("e\u{301}\u{301}\u{301}") == "e\u{301}\u{301}" + #"\u{301}"#,
             "a pile of marks past two is spelled out")
         expect(VisibleText.escaped("日本語 é") == "日本語 é", "ordinary letters and accents stay readable")
+        expect(
+            VisibleText.escaped("❤\u{FE0F} 👨\u{200D}👩 日本\u{3000}語") == "❤\u{FE0F} 👨\u{200D}👩 日本\u{3000}語",
+            "emoji sequences and a single ideographic space stay readable")
+        expect(
+            VisibleText.escaped("a\u{200D}b") == #"a\u{200D}b"#,
+            "a joiner between letters is spelled out")
     }
 
     static func extensionConsentChecks() {
@@ -403,20 +409,27 @@ struct DeepLinkTests {
             DeepLinkConsentPolicy.key(entryID: row, percentEncodedQuery: nil) == encodedRow,
             "an extension link with no query is the row alone")
         expect(
-            DeepLinkConsentPolicy.details(ofPercentEncodedQuery: query)
-                == "arguments: {\"to\":\"a@b.c\"}\nlaunchType: background",
+            shown(DeepLinkConsentPolicy.details(ofPercentEncodedQuery: query))
+                == [#"arguments: {"to":"a@b.c"}"#, "launchType: background"],
             "an extension link shows every parameter, launch type included")
         expect(
-            DeepLinkConsentPolicy.details(
-                ofPercentEncodedQuery: "fallbackText=x%0AlaunchType%3A%20userInitiated&launchType=background")
-                == "fallbackText: x\\nlaunchType: userInitiated\nlaunchType: background",
-            "a value can't fake another parameter's line")
+            shown(DeepLinkConsentPolicy.details(
+                ofPercentEncodedQuery: "fallbackText=x%0AlaunchType%3A%20userInitiated&launchType=background"))
+                == [#"fallbackText: x\nlaunchType: userInitiated"#, "launchType: background"],
+            "a value can't fake another parameter's row")
         expect(
-            DeepLinkConsentPolicy.detailLine(name: "t", value: "a\u{2028}b\r\nc") == #"t: a\u{2028}b\r\nc"#,
+            ReviewLine(name: "t", value: "a\u{2028}b\r\nc").value == #"a\u{2028}b\r\nc"#,
             "every kind of line break is escaped")
         expect(
-            DeepLinkConsentPolicy.details(ofPercentEncodedQuery: "launchType=") == nil,
+            ReviewLine(name: "t", value: #"a\nb"#).value == #"a\\nb"#,
+            "a typed backslash is doubled, so it never passes for an escaped line break")
+        expect(
+            DeepLinkConsentPolicy.details(ofPercentEncodedQuery: "launchType=").isEmpty,
             "an extension link with only empty parameters shows no detail box")
+    }
+
+    static func shown(_ lines: [ReviewLine]) -> [String] {
+        lines.map { $0.name + ": " + $0.value }
     }
 
     static func consentChecks() {

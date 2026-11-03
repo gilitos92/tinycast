@@ -904,6 +904,15 @@ struct ExtensionTests {
             canonical?.extensionCandidates == ["linear/linear", "linear"],
             String(describing: canonical?.extensionCandidates))
 
+        check(
+            "a field set twice, in any spelling, is a repeat",
+            ExtensionDeepLink.repeatsField(inPercentEncodedQuery: "arguments=%7B%7D&Arguments=%7B%7D")
+                && ExtensionDeepLink.repeatsField(inPercentEncodedQuery: "launchType=a&launch_type=background")
+                && ExtensionDeepLink.repeatsField(inPercentEncodedQuery: "context=%7B%7D&launchContext=%7B%7D"))
+        check(
+            "distinct fields and unread parameters are no repeat",
+            !ExtensionDeepLink.repeatsField(inPercentEncodedQuery: "arguments=%7B%7D&launchType=background&x=1&x=2")
+                && !ExtensionDeepLink.repeatsField(inPercentEncodedQuery: nil))
         let tiny = ExtensionDeepLink.parse(
             url: URL(string: "tinycast://extensions/linear/linear/create-issue")!)
         check("deeplink mirrors raycast:// as tinycast://", tiny == canonical)

@@ -463,10 +463,11 @@ final class QuicklinkCoordinator {
         guard
             await core.confirm(
                 title: String(localized: "Add \(incoming.count) quicklinks from a link?"),
-                message: incoming.map { $0.name.isEmpty ? $0.link : "\($0.name) — \($0.link)" }
-                    .joined(separator: "\n"),
-                symbol: Quicklink.sfSymbol, confirmTitle: String(localized: "Add"), tone: .neutral,
-                confirmRole: .standard)
+                message: nil, symbol: Quicklink.sfSymbol, confirmTitle: String(localized: "Add"),
+                tone: .neutral, confirmRole: .standard,
+                details: incoming.map {
+                    [ReviewLine(name: "name", value: $0.name), ReviewLine(name: "link", value: $0.link)]
+                })
         else { return }
         let added = addImportedQuicklinks(incoming)
         guard !added.isEmpty else {

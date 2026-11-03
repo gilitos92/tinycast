@@ -1,5 +1,16 @@
 import Foundation
 
+/// One named value a reader checks before agreeing; both halves are spelled out, `\` included.
+struct ReviewLine: Sendable, Equatable {
+    let name: String
+    let value: String
+
+    init(name: String, value: String) {
+        self.name = VisibleText.escaped(name.replacingOccurrences(of: "\\", with: "\\\\"))
+        self.value = VisibleText.escaped(value.replacingOccurrences(of: "\\", with: "\\\\"))
+    }
+}
+
 /// Text from outside, made safe to read before agreeing to it: nothing can hide, move or fake a line.
 enum VisibleText {
     /// Spells out line breaks, invisibles, direction marks, blank letters, mark pile-ups and space runs.
@@ -9,18 +20,32 @@ enum VisibleText {
         var marksInRow = 0
         for (index, scalar) in scalars.enumerated() {
             marksInRow = isMark(scalar) ? marksInRow + 1 : 0
+            let previous = index > 0 ? scalars[index - 1] : nil
+            let next = index + 1 < scalars.count ? scalars[index + 1] : nil
             switch scalar {
             case "\n": result += "\\n"
             case "\r": result += "\\r"
             case "\t": result += "\\t"
-            case " ":
-                let isEdge = index == 0 || index == scalars.count - 1
-                result += isEdge || scalars[index - 1] == " " ? spelled(scalar) : " "
+            case " ", "\u{3000}":
+                let isEdge = previous == nil || next == nil
+                result += isEdge || previous == scalar ? spelled(scalar) : String(scalar)
+            case "\u{200D}" where isEmoji(previous) && isEmoji(next):
+                result += String(scalar)
+            case "\u{FE0F}" where isEmoji(previous):
+                result += String(scalar)
             default:
                 result += hides(scalar) || marksInRow > maximumMarksInRow ? spelled(scalar) : String(scalar)
             }
         }
         return result
+    }
+
+    /// A joiner or presentation selector only shapes emoji; elsewhere it could hide in plain text.
+    private static func isEmoji(_ scalar: Unicode.Scalar?) -> Bool {
+        guard let scalar else { return false }
+        let properties = scalar.properties
+        return scalar == "\u{FE0F}" || properties.isEmojiPresentation
+            || (properties.isEmoji && scalar.value > 0xFF) || properties.isEmojiModifier
     }
 
     /// More than this many stacked marks can paint over the lines around them.

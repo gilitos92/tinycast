@@ -581,7 +581,8 @@ run quicklink-test         Tinycast/Features/Quicklinks/Model/Quicklink.swift \
                            Tinycast/Features/Quicklinks/Model/QuicklinkArchive.swift \
                            Tinycast/Features/Quicklinks/Model/RaycastQuicklinkImport.swift \
                            Tinycast/Features/Quicklinks/UI/QuicklinkEditorSession.swift
-run quicklink-coordinator-test Tinycast/Features/Quicklinks/Model/Quicklink.swift \
+run quicklink-coordinator-test Tinycast/Platform/VisibleText.swift \
+                           Tinycast/Features/Quicklinks/Model/Quicklink.swift \
                            Tinycast/Features/Quicklinks/Model/QuicklinkDestination.swift \
                            Tinycast/Features/Quicklinks/Model/QuicklinkStore.swift \
                            Tinycast/Features/Quicklinks/Model/QuicklinkArchive.swift \

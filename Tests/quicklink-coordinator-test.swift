@@ -558,8 +558,9 @@ final class AppCore {
     }
     enum ConfirmRole { case standard, destructive }
     func confirm(
-        title: String, message: String, symbol: String, confirmTitle: String,
-        tone: DialogTone = .danger, confirmRole: ConfirmRole = .destructive
+        title: String, message: String?, symbol: String, confirmTitle: String,
+        tone: DialogTone = .danger, confirmRole: ConfirmRole = .destructive,
+        details: [[ReviewLine]]? = nil
     ) async -> Bool {
         confirmations += 1
         return false
