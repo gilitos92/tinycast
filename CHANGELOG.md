@@ -6,23 +6,23 @@ changes are in its [releases](https://github.com/abue-ammar/tinycast/releases).
 
 ## [Unreleased]
 
+## [1.8.1] - 2026-11-03
+
 Based on upstream v0.12.6-beta.130.
 
 ### Fixed
 
 - A `raycast://` link from a web page or another app asks before it runs an extension command, as
-  built-in links do. Always Allow remembers the command with that exact input.
-- A link's consent question shows its whole input in a scrolling box, one parameter per row, with
-  hidden characters, line breaks and space runs spelled out, and its Run Once and Always Allow wait
-  until you scroll to the end. An extension link that sets the same field twice is refused, and one
-  passes on only the arguments its command declares. Before, input past 160 characters was hidden, so a page could slip in an argument you never
-  saw.
-- An extension that opens another extension's `raycast://` link asks first, since the link may come
-  from its data, such as a feed item.
-- A quicklink to a `raycast://` or `tinycast://extensions` link that Tinycast handles runs right away,
-  without asking.
-- Adding snippets or quicklinks from a link shows each one's every field, with line breaks visible,
-  not just its name.
+  built-in links do. Always Allow remembers the command with that exact input. An extension that
+  opens another extension's link asks too, since the link may come from its data, such as a feed.
+- A link's consent question shows exactly what will run, in a scrolling box with one row per
+  parameter and hidden characters, line breaks and space runs spelled out. Run Once and Always
+  Allow wait until you scroll to the end. Before, input past 160 characters was hidden, so a page
+  could slip in an argument you never saw.
+- An extension link that sets the same field twice is refused, and one passes on only the arguments
+  its command declares.
+- Adding snippets or quicklinks from a link shows every field of each one, not just its name.
+- Your own quicklinks to extension links still run without asking.
 
 ## [1.8.0] - 2026-11-03
 
