@@ -55,11 +55,14 @@ struct DialogDetailsField: View {
         Grid(alignment: .topLeading, horizontalSpacing: metrics.spacing.md, verticalSpacing: metrics.spacing.xs) {
             ForEach(lines.indices, id: \.self) { index in
                 GridRow {
+                    // Both wrap and never truncate, since a cut name or value would hide part of it.
                     Text(verbatim: lines[index].name)
                         .foregroundStyle(Theme.Colors.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
                         .gridColumnAlignment(.trailing)
                     Text(verbatim: lines[index].value)
                         .foregroundStyle(Theme.Colors.textPrimary)
+                        .fixedSize(horizontal: false, vertical: true)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }

@@ -101,6 +101,8 @@ final class ExtensionCoordinator {
         }
         guard let (owner, command) = resolveDeepLink(link) else { return }
         let entryID = Self.entryID(owner, command)
+        let declared = Set(command.arguments.map(\.name))
+        let link = link.keepingArguments(named: declared)
         let launch: @MainActor () -> Void = { [weak self] in
             // The question was a wait: the extension may have changed, so it must still be this one.
             guard let self, let (owner, command) = resolveDeepLink(link),
@@ -116,9 +118,10 @@ final class ExtensionCoordinator {
             ReviewLine(name: "extension", value: manifest.storeHandle + "/" + manifest.name),
             ReviewLine(name: "command", value: command.name)
         ]
+        let input = ExtensionDeepLink.reviewLines(ofPercentEncodedQuery: query, declaredArguments: declared)
         core.deepLinkCoordinator.runExtensionLink(
-            entryID: entryID, name: command.title + " · " + owner.manifest.title, identity: identity,
-            percentEncodedQuery: query, launch)
+            entryID: entryID, name: command.title + " · " + owner.manifest.title,
+            details: input.isEmpty ? [identity] : [identity, input], percentEncodedQuery: query, launch)
     }
 
     private static func entryID(_ owner: InstalledExtension, _ command: ExtensionCommand) -> String {

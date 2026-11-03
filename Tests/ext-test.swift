@@ -928,6 +928,21 @@ struct ExtensionTests {
             duplicated.first.map { $0.name + ": " + $0.value } == "arguments.cmd: " + runs
                 && duplicated.count == 2 && ["{\"a\":1}", "{\"a\":2}"].contains(duplicated[1].value),
             String(describing: duplicated))
+        let lookAlike = ExtensionDeepLink.reviewLines(
+            ofPercentEncodedQuery: "arguments=%7B%22cmd%22%3A%22curl%22%2C%22%D1%81md%22%3A%22ls%22%7D",
+            declaredArguments: ["cmd"])
+        let kept = ExtensionDeepLink.parse(
+            url: URL(string: "raycast://extensions/a/b/c?arguments=%7B%22cmd%22%3A%22curl%22%2C%22%D1%81md%22%3A%22ls%22%7D")!
+        )?.keepingArguments(named: ["cmd"])
+        check(
+            "a key the command doesn't declare neither shows nor runs",
+            lookAlike.map(\.name) == ["arguments.cmd"] && kept?.arguments == ["cmd": "curl"],
+            String(describing: lookAlike))
+        let context = ExtensionDeepLink.reviewLines(
+            ofPercentEncodedQuery: "context=%7B%22x%22%3A%7B%22%24fn%22%3A%227%22%2C%22cmd%22%3A%22rm%22%7D%7D")
+        check(
+            "context shows what the command receives, not what was sent",
+            context.first?.value == #"{"x":{"$fn":"7"}}"#, String(describing: context))
         let tiny = ExtensionDeepLink.parse(
             url: URL(string: "tinycast://extensions/linear/linear/create-issue")!)
         check("deeplink mirrors raycast:// as tinycast://", tiny == canonical)

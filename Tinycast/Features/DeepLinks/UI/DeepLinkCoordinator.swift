@@ -101,14 +101,13 @@ final class DeepLinkCoordinator {
         return DeepLinkInput(arguments: .positional(Array(filled)))
     }
 
-    /// An extension acts outside Tinycast too; `identity` is what it resolved to, not the link's hint.
+    /// An extension acts outside Tinycast too, so a link from outside asks like any such row.
     func runExtensionLink(
-        entryID: String, name: String, identity: [ReviewLine], percentEncodedQuery query: String?,
+        entryID: String, name: String, details: [[ReviewLine]], percentEncodedQuery query: String?,
         _ body: @escaping @MainActor () -> Void
     ) {
-        let input = ExtensionDeepLink.reviewLines(ofPercentEncodedQuery: query)
         runAfterConsent(
-            name: name, details: input.isEmpty ? [identity] : [identity, input],
+            name: name, details: details,
             key: DeepLinkConsentPolicy.key(entryID: entryID, percentEncodedQuery: query), asks: true,
             source: .outside, body)
     }

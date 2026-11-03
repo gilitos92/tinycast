@@ -152,17 +152,27 @@ struct ExtensionDeepLink: Sendable, Equatable {
         }
     }
 
-    /// The fields a command reads, by their own names and as parsed: what shows is what runs.
-    static func reviewLines(ofPercentEncodedQuery query: String?) -> [ReviewLine] {
+    /// The same link with only the arguments its command declares, the only ones a reader sees.
+    func keepingArguments(named declared: Set<String>) -> ExtensionDeepLink {
+        ExtensionDeepLink(
+            ownerOrAuthor: ownerOrAuthor, extensionName: extensionName, commandName: commandName,
+            arguments: arguments.filter { declared.contains($0.key) }, fallbackText: fallbackText,
+            launchType: launchType, launchContext: launchContext)
+    }
+
+    /// The fields a command reads, as parsed and cut to `declaredArguments`: what shows is what runs.
+    static func reviewLines(
+        ofPercentEncodedQuery query: String?, declaredArguments: Set<String>? = nil
+    ) -> [ReviewLine] {
         var components = URLComponents()
         components.percentEncodedQuery = query
         return (components.queryItems ?? []).flatMap { item -> [ReviewLine] in
             guard let field = field(named: item.name), let raw = item.value, !raw.isEmpty else { return [] }
             switch field {
             case .arguments:
-                return parseArguments(raw).sorted { $0.key < $1.key }.map {
-                    ReviewLine(name: "arguments." + $0.key, value: $0.value)
-                }
+                return parseArguments(raw).filter { declaredArguments?.contains($0.key) ?? true }
+                    .sorted { $0.key < $1.key }
+                    .map { ReviewLine(name: "arguments." + $0.key, value: $0.value) }
             case .fallbackText:
                 return [ReviewLine(name: field.name, value: raw)]
             case .launchType:
@@ -178,12 +188,12 @@ struct ExtensionDeepLink: Sendable, Equatable {
         raw?.lowercased() == "background" ? .background : .userInitiated
     }
 
-    /// Parsed as `parseContext` parses, so a key given twice shows only the copy that acts.
+    /// What the command receives, after `parseContext` and its conversions, not what was sent.
     private static func reencodedContext(_ raw: String) -> String {
-        guard let data = raw.data(using: .utf8),
-            let object = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
+        let received = parseContext(raw).mapValues(\.jsonValue)
+        guard JSONSerialization.isValidJSONObject(received),
             let encoded = try? JSONSerialization.data(
-                withJSONObject: object, options: [.sortedKeys, .withoutEscapingSlashes])
+                withJSONObject: received, options: [.sortedKeys, .withoutEscapingSlashes])
         else { return "{}" }
         return String(bytes: encoded, encoding: .utf8) ?? "{}"
     }
