@@ -217,6 +217,13 @@ these invariants:
   `returnFocusToSearchField()`, because the row that owned those fields is about to stop being
   selected and a field that unmounts while focused leaves the panel with no first responder at all.
   ↵ on a blank required argument focuses it instead of launching.
+- **Space after an alias enters the fields, as in Raycast.** A fresh, bare Space with the caret at
+  the query's end focuses the first field when the query is the start of the selected row's alias
+  (`AliasSpacePolicy`). The query keeps the typed alias and no space is typed. `PalettePanel`
+  offers the key through `onTrailingSpace` before the field editor types it. A title match, a held
+  key, marked text, a selection or an open menu keeps the space. The accepted trade: once a row
+  with fields leads on `go`, `go` + Space can't spell another row's alias `go compose`; that row
+  is still found by its title.
 - **Never read a `@FocusState` back in the tick that writes it.** It still reports the old field, so
   `searchFocused = argumentFocused == nil` resolved to `false` and Tab out of the last argument
   focused nothing; AppKit's key-view loop then answered the next presses instead. Both writes come

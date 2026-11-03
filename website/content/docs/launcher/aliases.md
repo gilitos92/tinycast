@@ -34,6 +34,20 @@ rather than something you do in the middle of a search.
 
 The first rule matters most. A two-letter alias is only worth setting if it always comes first.
 
+## Space jumps into a command's inputs
+
+When a command takes inputs, like a quicklink, a custom command or an extension command, type the
+start of its alias and press <kbd>space</kbd>. The cursor jumps to the first input, as in Raycast.
+
+- It works with the start of the alias too: `tr` is enough for `translate`.
+- It works only when the entry has an alias. Typing part of its name and pressing
+  <kbd>space</kbd> types a space.
+- Everywhere else, <kbd>space</kbd> types a space as usual.
+
+One alias can block another. If `go` leads the list and takes inputs, you can't type
+`go` <kbd>space</kbd> `compose` to reach an alias `go compose`. Search for that entry by its name
+instead.
+
 ## In the list
 
 An entry with an alias shows it as a small tag after its name, so you can see which entries you've

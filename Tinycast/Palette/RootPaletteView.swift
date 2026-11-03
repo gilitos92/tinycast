@@ -340,6 +340,7 @@ struct RootPaletteView: View {
                     WindowReader {
                         hostWindow = $0
                         installHeaderArrowHandler(in: $0)
+                        installTrailingSpaceHandler(in: $0)
                     }
                 )
                 // The window's frame is the size source, so the glass and clip stay matched.
@@ -498,6 +499,7 @@ struct RootPaletteView: View {
             .onDisappear {
                 menuPanel.hide()
                 (hostWindow as? PalettePanel)?.onHeaderFieldBoundaryArrow = nil
+                (hostWindow as? PalettePanel)?.onTrailingSpace = nil
             }
             // The first show builds this view after `prepare`, so no handler saw that reset.
             .onAppear {
@@ -1512,6 +1514,24 @@ struct RootPaletteView: View {
             case .trailing:
                 advanceTabFocus(backwards: false)
             }
+            return true
+        }
+    }
+
+    /// Raycast's alias then Space: the typed alias stays the query and the caret moves on.
+    private func installTrailingSpaceHandler(in window: NSWindow?) {
+        guard let panel = window as? PalettePanel else { return }
+        panel.onTrailingSpace = {
+            guard !menuOpen, !vm.isControlListOpen, !isCollapsed, !vm.isComposing,
+                searchFocused, argumentFocused == nil,
+                let field = headerAccessory?.fieldNames.first
+            else { return false }
+            let screen = screen
+            guard screen.spaceEntersArguments(at: selection(in: screen), query: vm.query) else {
+                return false
+            }
+            argumentFocused = field
+            searchFocused = false
             return true
         }
     }

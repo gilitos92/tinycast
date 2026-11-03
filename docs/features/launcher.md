@@ -388,7 +388,8 @@ can carry one. An alias is deliberate in a way no vendor field is, so an exact h
 prefix hit rule 6. Only a hit **from its start** earns those rules; anywhere else the alias ranks as
 an alternate title by score, so `dark` finds an alias `toggle light / dark`, while `term` inside
 `iterm` never beats Terminal's own prefix. `AppIndex` reads the alias at rank time, keying its
-memos on the store's revision.
+memos on the store's revision. Space after the start of a selected row's alias jumps into that
+row's arguments ([palette.md](palette.md#inline-row-arguments)).
 
 A launcher row shows its entry's alias as a small chip after the name, so what a badge-bearing
 result will answer to is visible without opening anything.

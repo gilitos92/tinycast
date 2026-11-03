@@ -6,6 +6,11 @@ changes are in its [releases](https://github.com/abue-ammar/tinycast/releases).
 
 ## [Unreleased]
 
+### Added
+
+- Type the start of an alias, then press Space, to jump into its command's inputs, as in Raycast.
+  It works only for a command that has inputs and an alias. Everywhere else, Space types a space.
+
 ## [1.8.1] - 2026-11-03
 
 Based on upstream v0.12.6-beta.130.
