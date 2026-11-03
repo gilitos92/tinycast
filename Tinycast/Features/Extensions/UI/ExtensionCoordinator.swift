@@ -91,20 +91,36 @@ final class ExtensionCoordinator {
             scheme: AppURLScheme.current)
     }
 
-    /// A `raycast://extensions/…` link from outside: the launcher's command, run once the user agrees.
-    func runDeepLink(_ link: ExtensionDeepLink, percentEncodedQuery query: String?) {
+    /// A `raycast://extensions/…` link; only one the user chose in Tinycast skips the question.
+    func runDeepLink(_ link: ExtensionDeepLink, percentEncodedQuery query: String?, asks: Bool = true) {
+        guard (query?.utf8.count ?? 0) <= DeepLinkInput.maximumParameterBytes else {
+            return core.showMessage(String(localized: "Tinycast can’t open this link"), tone: .danger)
+        }
         guard let (owner, command) = resolveDeepLink(link) else { return }
-        let entryID = ExtensionCommandRef(extensionName: owner.manifest.name, commandName: command.name)
-            .entryID
-        core.deepLinkCoordinator.runExtensionLink(
-            entryID: entryID, name: command.title, percentEncodedQuery: query
-        ) { [weak self] in
-            // The question was a wait: the extension may have been turned off or removed meanwhile.
-            guard let self, let (owner, command) = resolveDeepLink(link) else { return }
+        let entryID = Self.entryID(owner, command)
+        let launch: @MainActor () -> Void = { [weak self] in
+            // The question was a wait: the extension may have changed, so it must still be this one.
+            guard let self, let (owner, command) = resolveDeepLink(link),
+                Self.entryID(owner, command) == entryID
+            else { return }
             run(
                 owner, command: command, arguments: link.arguments, fallbackText: link.fallbackText,
                 launchType: link.launchType, launchContext: link.launchContext)
         }
+        guard asks else { return launch() }
+        let manifest = owner.manifest
+        let identity = [
+            DeepLinkConsentPolicy.detailLine(
+                name: "extension", value: manifest.storeHandle + "/" + manifest.name),
+            DeepLinkConsentPolicy.detailLine(name: "command", value: command.name)
+        ]
+        core.deepLinkCoordinator.runExtensionLink(
+            entryID: entryID, name: command.title + " · " + owner.manifest.title, identity: identity,
+            percentEncodedQuery: query, launch)
+    }
+
+    private static func entryID(_ owner: InstalledExtension, _ command: ExtensionCommand) -> String {
+        ExtensionCommandRef(extensionName: owner.manifest.name, commandName: command.name).entryID
     }
 
     private func resolveDeepLink(_ link: ExtensionDeepLink) -> (InstalledExtension, ExtensionCommand)? {

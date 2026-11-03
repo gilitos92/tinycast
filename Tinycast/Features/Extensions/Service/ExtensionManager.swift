@@ -1003,9 +1003,18 @@ final class ExtensionManager: ExtensionRuntimeDelegate, ExtensionHostContext {
             launchType: launchType, launchContext: launchContext)
     }
 
-    func launch(_ link: ExtensionDeepLink) throws {
+    func launch(_ link: ExtensionDeepLink, percentEncodedQuery: String?) throws {
+        try launch(link, percentEncodedQuery: percentEncodedQuery, from: activeExtensionName)
+    }
+
+    /// A URL an extension opens may come from its data, so another extension's command asks first.
+    func launch(_ link: ExtensionDeepLink, percentEncodedQuery: String?, from caller: String?) throws {
         guard let (owner, command) = resolve(link) else {
             throw ExtensionLaunchError.unknownCommand(link.commandName)
+        }
+        guard owner.manifest.name == caller else {
+            coordinator?.runDeepLink(link, percentEncodedQuery: percentEncodedQuery)
+            return
         }
         coordinator?.runExtensionCommand(
             entry(for: command, in: owner), arguments: link.arguments,

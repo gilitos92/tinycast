@@ -49,7 +49,7 @@ struct DialogView: View {
                 case .snippetArguments(let arguments): SnippetArgumentFields(state: arguments)
                 case .textInput(let input): DialogTextInputField(state: input)
                 case .clipboardText(let state): ClipboardEditField(state: state)
-                case .details(let text): DialogDetailsField(text: text)
+                case .details(let details): DialogDetailsField(state: details)
                 case nil: EmptyView()
                 }
             }
@@ -90,6 +90,7 @@ struct DialogView: View {
                 singleLine: singleLine,
                 onActivate: { onChoose(index) }
             )
+            .disabled(!request.allows(index))
         }
     }
 

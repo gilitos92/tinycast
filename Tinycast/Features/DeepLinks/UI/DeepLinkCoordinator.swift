@@ -102,12 +102,14 @@ final class DeepLinkCoordinator {
     }
 
     /// An extension command acts outside Tinycast too, so a link from outside asks first.
+    /// `identity` names the command it resolved to, which a link's owner hint may not match.
     func runExtensionLink(
-        entryID: String, name: String, percentEncodedQuery query: String?,
+        entryID: String, name: String, identity: [String], percentEncodedQuery query: String?,
         _ body: @escaping @MainActor () -> Void
     ) {
+        let input = DeepLinkConsentPolicy.details(ofPercentEncodedQuery: query)
         runAfterConsent(
-            name: name, details: DeepLinkConsentPolicy.details(ofPercentEncodedQuery: query),
+            name: name, details: (identity + [input].compactMap { $0 }).joined(separator: "\n"),
             key: DeepLinkConsentPolicy.key(entryID: entryID, percentEncodedQuery: query), asks: true,
             source: .outside, body)
     }

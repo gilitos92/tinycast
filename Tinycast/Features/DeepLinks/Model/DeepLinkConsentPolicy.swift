@@ -32,18 +32,9 @@ enum DeepLinkConsentPolicy {
         return lines.isEmpty ? nil : lines.joined(separator: "\n")
     }
 
-    /// One parameter per line, line breaks escaped, so a value can never fake another parameter.
+    /// One parameter per line, spelled out, so a value can never hide or fake another parameter.
     static func detailLine(name: String, value: String) -> String {
-        let flat = value.unicodeScalars.map { scalar -> String in
-            switch scalar {
-            case "\n": "\\n"
-            case "\r": "\\r"
-            case _ where CharacterSet.newlines.contains(scalar):
-                "\\u{" + String(scalar.value, radix: 16, uppercase: true) + "}"
-            default: String(scalar)
-            }
-        }.joined()
-        return "\(name): \(flat)"
+        VisibleText.escaped(name) + ": " + VisibleText.escaped(value)
     }
 
     /// The row and input a remembered key stands for; nil for one this build can't read.

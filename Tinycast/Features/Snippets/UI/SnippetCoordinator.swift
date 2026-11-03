@@ -146,8 +146,7 @@ final class SnippetCoordinator {
         guard
             await core.confirm(
                 title: String(localized: "Add \(incoming.count) snippets from a link?"),
-                message: ListFormatter.localizedString(byJoining: incoming.map(\.name)),
-                symbol: "curlybraces", confirmTitle: String(localized: "Add"), tone: .neutral,
+                message: nil, symbol: "curlybraces", confirmTitle: String(localized: "Add"), tone: .neutral,
                 confirmRole: .standard, details: SnippetLinkReview.details(of: incoming))
         else { return }
         // Matched as a backup import matches, so the same link twice leaves no second copy.

@@ -32,6 +32,12 @@ struct DialogRequest {
     var cancelIndex: Int
     /// The caller reads the result back out of the state object it passed in.
     var accessory: DialogAccessory?
+
+    /// Dismissing is always possible; agreeing waits until a details box has been read to its end.
+    @MainActor func allows(_ index: Int) -> Bool {
+        guard actions[index].role != .cancel, case .details(let details)? = accessory else { return true }
+        return details.hasReadAll
+    }
 }
 
 /// A dialog carries at most one control, so the cases are exclusive by construction.
@@ -40,8 +46,8 @@ enum DialogAccessory {
     case snippetArguments(SnippetArgumentsState)
     case textInput(DialogTextInputState)
     case clipboardText(ClipboardEditState)
-    /// Read-only text the reader must be able to see in full before agreeing to it.
-    case details(String)
+    /// Read-only text the reader must see in full before agreeing to it.
+    case details(DialogDetailsState)
 
     /// Whether ←/→/↑/↓ belong to the control rather than to whatever has focus inside it.
     var claimsArrowKeys: Bool {

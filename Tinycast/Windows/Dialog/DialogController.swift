@@ -31,7 +31,7 @@ final class DialogController: NSObject, NSWindowDelegate {
                 DialogAction(title: confirmTitle, role: confirmRole),
                 DialogAction(title: dismissTitle, role: .cancel)
             ],
-            defaultIndex: 0, cancelIndex: 1, accessory: details.map(DialogAccessory.details))
+            defaultIndex: 0, cancelIndex: 1, accessory: Self.detailsAccessory(details))
         return await present(request) == 0
     }
 
@@ -43,7 +43,7 @@ final class DialogController: NSObject, NSWindowDelegate {
         let request = DialogRequest(
             title: title, message: message, symbol: symbol, tone: tone, actions: options,
             defaultIndex: defaultIndex, cancelIndex: options.count - 1,
-            accessory: details.map(DialogAccessory.details))
+            accessory: Self.detailsAccessory(details))
         return await present(request)
     }
 
@@ -132,6 +132,10 @@ final class DialogController: NSObject, NSWindowDelegate {
         return state.text
     }
 
+    private static func detailsAccessory(_ details: String?) -> DialogAccessory? {
+        details.map { .details(DialogDetailsState(text: $0)) }
+    }
+
     private func present(_ request: DialogRequest) async -> Int {
         guard continuation == nil else { return request.cancelIndex }
         return await withCheckedContinuation { continuation in
@@ -159,6 +163,7 @@ final class DialogController: NSObject, NSWindowDelegate {
                 case .cancel:
                     finish(request.cancelIndex)
                 case .confirm:
+                    guard request.allows(request.defaultIndex) else { return }
                     finish(request.defaultIndex)
                 case .increment, .decrement:
                     // Keying the slider lands on the same values Volume Up/Down produce.

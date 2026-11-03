@@ -520,6 +520,17 @@ final class AppCore {
         }
     }
 
+    /// An extension link chosen in Tinycast that macOS would hand straight back runs here, unasked.
+    func openChosenExtensionLink(_ url: URL) -> Bool {
+        guard case .command(let link)? = ExtensionDeepLink.route(url: url),
+            let handler = NSWorkspace.shared.urlForApplication(toOpen: url),
+            handler.standardizedFileURL == Bundle.main.bundleURL.standardizedFileURL
+        else { return false }
+        extensionCoordinator.runDeepLink(
+            link, percentEncodedQuery: url.query(percentEncoded: true), asks: false)
+        return true
+    }
+
     func allowsHotKeyAction(_ action: HotKeyAction) -> Bool {
         guard visibility.allowsHotKey(action) else { return false }
         if action == .dictation { return settings.dictationEnabled }

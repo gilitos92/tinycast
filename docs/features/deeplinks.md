@@ -126,7 +126,7 @@ row's fields, as a hotkey with no selection does. Any other target ignores its i
 
 - A `create-*` list asks once, then adds every item it can, skipping duplicates as a file import
   does, and reports the count in a HUD. A quicklink list's question shows each name and link. A
-  snippet list's shows every name, keyword and text in a detail box, quoted with escapes
+  snippet list's shows every name, keyword and text in a detail box, quoted and spelled out
   (`SnippetLinkReview`), so a trailing line break that would run a command on expansion is visible.
 - A volume outside `0`–`100`, or a note named `.` or `..`, refuses the link before anything asks.
 - `openWith` is kept only when it names an installed app's bundle ID.
@@ -151,9 +151,12 @@ so a new command fails to build until it is classed:
 Input always asks because a page chose it: typed into the launcher it is one Return from a fallback
 row, and as arguments it reaches a script.
 
-The question names the target, shows the whole input in a scrolling detail box
-(`DeepLinkInput.details`, one parameter per line, never cut, so nothing past a long first argument
-hides) and offers **Always Allow**, **Run Once** and **Cancel**. **Cancel is the default**, because the dialog
+The question names the target, shows the whole input in a scrolling detail box and offers
+**Always Allow**, **Run Once** and **Cancel**. The box (`DeepLinkInput.details`) is one parameter
+per line and never cut. `VisibleText.escaped` spells out, as `\n` or `\u{…}`, anything that could
+hide or fake a line: line breaks, invisible and zero-width characters, direction marks, blank-looking
+letters, piled-up marks and runs of spaces. The two answers that run stay off until the box has been
+scrolled to its end, because the app shows scrollers only while scrolling. **Cancel is the default**, because the dialog
 takes key and a stray Return must not run anything. A target that does not exist is reported as an
 unknown link before any question, so a page cannot learn what exists by asking.
 
@@ -169,14 +172,22 @@ feature turned off during the question still wins.
 
 An extension command link from outside (`raycast://`, `com.raycast:` or `tinycast://extensions/…`)
 asks the same question through `DeepLinkCoordinator.runExtensionLink`, after its command resolves:
-an extension acts outside Tinycast like any row that always asks. Its detail box shows every query
-parameter as sent, `launchType` and `context` included, and Always Allow stores
-`DeepLinkConsentPolicy.key(entryID:percentEncodedQuery:)`: the command's row with its exact query.
-An extension's own `open("raycast://…")` never reaches this path, so it never asks.
+an extension acts outside Tinycast like any row that always asks. The question is titled with the
+command and its extension. Its detail box starts with the extension and command the link resolved
+to, since the link's owner is only a hint, then every query parameter as sent, `launchType` and
+`context` included. Always Allow stores `DeepLinkConsentPolicy.key(entryID:percentEncodedQuery:)`:
+the command's row with its exact query. A query over 64 KB is refused. After the answer the link
+resolves again and runs only if it is still the same command.
+
+An extension's own `open("raycast://…")` runs a command of the same extension directly. A command of
+another extension asks first, because the URL may come from the extension's data, such as a feed
+item. `launchCommand` never asks: the extension's code names that target itself.
 
 A link Tinycast opens itself — a quicklink whose link is the channel's own scheme — runs in-process
 with `source: .tinycast`. It never asks, because the reader chose it in Tinycast. It never goes
-through LaunchServices either.
+through LaunchServices either. A quicklink to an extension link runs in-process the same way when
+macOS would hand that link back to Tinycast (`AppCore.openChosenExtensionLink`) and the quicklink
+opens with no other app. Otherwise it goes to the app that owns the scheme, such as Raycast.
 
 ## Copy Deeplink
 

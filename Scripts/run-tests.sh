@@ -379,6 +379,7 @@ run dictation-field-test   Tinycast/Features/Dictation/Model/DictationModel.swif
                            Tinycast/Features/Dictation/Service/DictationInsertionContext.swift \
                            Tinycast/Features/AI/UI/ChatComposerTextView.swift \
                            Tinycast/Features/TextInjection/Service/*.swift \
+                           Tinycast/Platform/VisibleText.swift \
                            Tinycast/Features/Snippets/Model/*.swift \
                            Tinycast/Platform/AccessibilityText.swift \
                            Tinycast/Platform/PasteboardFiles.swift \
@@ -488,7 +489,8 @@ run window-layout-test     Tinycast/Features/WindowManagement/Model/WindowComman
                            Tinycast/Features/WindowManagement/Model/CustomWindowSize.swift \
                            Tinycast/Features/WindowManagement/Model/CustomWindowSizeStore.swift \
                            Tinycast/Platform/LocalizedResource.swift
-run deeplink-test          Tinycast/Features/DeepLinks/Model/DeepLink.swift \
+run deeplink-test          Tinycast/Platform/VisibleText.swift \
+                           Tinycast/Features/DeepLinks/Model/DeepLink.swift \
                            Tinycast/Features/DeepLinks/Model/DeepLinkInput.swift \
                            Tinycast/Features/DeepLinks/Model/DeepLinkConsentPolicy.swift \
                            Tinycast/Features/DeepLinks/Model/DeepLinkSource.swift \
@@ -592,6 +594,7 @@ run slow snippets-test     Tinycast/Platform/NotificationToken.swift \
                            Tinycast/Platform/KeyboardHandoff.swift \
                            Tinycast/Platform/HealthTicker.swift \
                            Tinycast/Platform/AccessibilityText.swift \
+                           Tinycast/Platform/VisibleText.swift \
                            Tinycast/Features/Snippets/Model/*.swift \
                            Tinycast/Features/Snippets/Service/*.swift \
                            Tinycast/Features/Snippets/UI/SnippetEditorSession.swift \

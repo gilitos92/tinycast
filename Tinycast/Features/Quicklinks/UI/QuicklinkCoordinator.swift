@@ -221,6 +221,11 @@ final class QuicklinkCoordinator {
             return core.deepLinkCoordinator.open(url, source: .tinycast)
         }
         let openWith = forcingDefaultApp ? nil : quicklink.openWithBundleID
+        if openWith == nil || openWith == Bundle.main.bundleIdentifier,
+            let url = URL(string: link), core.openChosenExtensionLink(url)
+        {
+            return
+        }
         Task {
             do throws(QuicklinkLauncher.Failure) {
                 try await QuicklinkLauncher.open(

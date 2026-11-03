@@ -633,7 +633,8 @@ do; see [deeplinks.md](deeplinks.md#consent). Every other `tinycast://` link is 
 covered by `Tests/ext-test.swift`. Two-segment links without `source=webstore` keep running commands
 as `<extension>/<command>`; three-segment command links keep running even with that parameter.
 An extension's own `open("raycast://…")` resolves through the same
-`ExtensionManager.resolve(_:)` instead of launching Raycast. Copy Deeplink on a command's launcher
+`ExtensionManager.resolve(_:)` instead of launching Raycast; one that targets another extension's
+command asks first, as an outside link does. Copy Deeplink on a command's launcher
 row, or on its Settings shortcut field, writes the `tinycast://extensions/…` form, with any typed
 arguments as `arguments`; built-in rows have their own links, in [deeplinks.md](deeplinks.md).
 

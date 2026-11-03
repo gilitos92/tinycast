@@ -369,6 +369,25 @@ struct DeepLinkTests {
             DeepLinkConsentPolicy.parts(ofKey: "system-action:lock-screen")?.input == plain,
             "a plain key is the row alone")
         extensionConsentChecks()
+        visibleTextChecks()
+    }
+
+    static func visibleTextChecks() {
+        expect(VisibleText.escaped("a b") == "a b", "plain text reads as it is")
+        expect(
+            VisibleText.escaped("a   b") == #"a \u{20}\u{20}b"#,
+            "a run of spaces is spelled out, so it can't push text onto a fake line")
+        expect(VisibleText.escaped(" a ") == #"\u{20}a\u{20}"#, "edge spaces are spelled out")
+        expect(
+            VisibleText.escaped("x\u{3164}\u{2800}\u{200B}y") == #"x\u{3164}\u{2800}\u{200B}y"#,
+            "blank-looking and zero-width characters are spelled out")
+        expect(
+            VisibleText.escaped("ok\u{202E}nruter") == #"ok\u{202E}nruter"#,
+            "a direction override is spelled out rather than reordering the line")
+        expect(
+            VisibleText.escaped("e\u{301}\u{301}\u{301}") == "e\u{301}\u{301}" + #"\u{301}"#,
+            "a pile of marks past two is spelled out")
+        expect(VisibleText.escaped("日本語 é") == "日本語 é", "ordinary letters and accents stay readable")
     }
 
     static func extensionConsentChecks() {
