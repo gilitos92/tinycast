@@ -49,6 +49,7 @@ struct DialogView: View {
                 case .snippetArguments(let arguments): SnippetArgumentFields(state: arguments)
                 case .textInput(let input): DialogTextInputField(state: input)
                 case .clipboardText(let state): ClipboardEditField(state: state)
+                case .details(let text): DialogDetailsField(text: text)
                 case nil: EmptyView()
                 }
             }

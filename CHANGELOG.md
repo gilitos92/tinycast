@@ -6,6 +6,17 @@ changes are in its [releases](https://github.com/abue-ammar/tinycast/releases).
 
 ## [Unreleased]
 
+Based on upstream v0.12.6-beta.130.
+
+### Fixed
+
+- A `raycast://` link from a web page or another app asks before it runs an extension command, as
+  built-in links do. Always Allow remembers the command with that exact input.
+- A link's consent question shows its whole input in a scrolling box. Before, input past 160
+  characters was hidden, so a page could slip in an argument you never saw.
+- Adding snippets from a link shows each one's keyword and text, with line breaks visible, not just
+  its name.
+
 ## [1.8.0] - 2026-11-03
 
 Based on upstream v0.12.6-beta.130.

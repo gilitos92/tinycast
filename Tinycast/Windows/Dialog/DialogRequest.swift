@@ -40,6 +40,8 @@ enum DialogAccessory {
     case snippetArguments(SnippetArgumentsState)
     case textInput(DialogTextInputState)
     case clipboardText(ClipboardEditState)
+    /// Read-only text the reader must be able to see in full before agreeing to it.
+    case details(String)
 
     /// Whether ←/→/↑/↓ belong to the control rather than to whatever has focus inside it.
     var claimsArrowKeys: Bool {

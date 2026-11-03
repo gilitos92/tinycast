@@ -15,6 +15,37 @@ enum DeepLinkConsentPolicy {
         return query.isEmpty ? row : row + "?" + query.joined(separator: "&")
     }
 
+    /// An extension link keeps its query as sent: launch type and context matter too.
+    static func key(entryID: String, percentEncodedQuery query: String?) -> String {
+        let row = key(entryID: entryID, input: .none)
+        guard let query, !query.isEmpty else { return row }
+        return row + "?" + query
+    }
+
+    /// An extension link's parameters in full, one per line; nil when it carries none.
+    static func details(ofPercentEncodedQuery query: String?) -> String? {
+        var components = URLComponents()
+        components.percentEncodedQuery = query
+        let lines = (components.queryItems ?? []).compactMap { item in
+            item.value.flatMap { $0.isEmpty ? nil : detailLine(name: item.name, value: $0) }
+        }
+        return lines.isEmpty ? nil : lines.joined(separator: "\n")
+    }
+
+    /// One parameter per line, line breaks escaped, so a value can never fake another parameter.
+    static func detailLine(name: String, value: String) -> String {
+        let flat = value.unicodeScalars.map { scalar -> String in
+            switch scalar {
+            case "\n": "\\n"
+            case "\r": "\\r"
+            case _ where CharacterSet.newlines.contains(scalar):
+                "\\u{" + String(scalar.value, radix: 16, uppercase: true) + "}"
+            default: String(scalar)
+            }
+        }.joined()
+        return "\(name): \(flat)"
+    }
+
     /// The row and input a remembered key stands for; nil for one this build can't read.
     static func parts(ofKey key: String) -> (entryID: String, input: DeepLinkInput)? {
         let split = key.split(separator: "?", maxSplits: 1, omittingEmptySubsequences: false)

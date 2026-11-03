@@ -627,7 +627,8 @@ JSON, `fallbackText`, `context` (or `launchContext`) as a URL-encoded JSON objec
 command always takes over the palette, so it launches as `userInitiated`. The owner is a hint: a
 scoped install matches by `owner/extension` first and falls back to the bare slug, so short links
 keep working. Anything else on a Raycast scheme just reopens the palette, and an unknown command says
-so rather than failing silently. Every other `tinycast://` link is a built-in's, and never reaches
+so rather than failing silently. A command link from outside asks before it runs, as built-in links
+do; see [deeplinks.md](deeplinks.md#consent). Every other `tinycast://` link is a built-in's, and never reaches
 `ExtensionDeepLink`. `ExtensionDeepLink` owns the claimed schemes and the parsing,
 covered by `Tests/ext-test.swift`. Two-segment links without `source=webstore` keep running commands
 as `<extension>/<command>`; three-segment command links keep running even with that parameter.

@@ -278,6 +278,16 @@ struct DeepLinkTests {
             "a summary shows the input as it was sent")
         let long = DeepLinkInput(fallbackText: String(repeating: "x", count: 500))
         expect(long.summary.count == 161 && long.summary.hasSuffix("…"), "a long summary is cut")
+        let hidden = DeepLinkInput(
+            arguments: .positional([String(repeating: "x", count: 200), "~/Documents"]))
+        expect(
+            hidden.details.hasSuffix(#""~/Documents"]"#),
+            "a consent question shows every argument, however long the ones before it")
+        expect(
+            DeepLinkInput(fallbackText: "a\nb", arguments: .named(["q": "rust"])).details
+                == "fallbackText: a\\nb\narguments: {\"q\":\"rust\"}",
+            "each parameter is one line, named as the link names it, its line breaks escaped")
+        expect(DeepLinkInput.none.consentDetails == nil, "a link with no input shows no detail box")
     }
 
     static func routeInputChecks() {
@@ -358,6 +368,36 @@ struct DeepLinkTests {
         expect(
             DeepLinkConsentPolicy.parts(ofKey: "system-action:lock-screen")?.input == plain,
             "a plain key is the row alone")
+        extensionConsentChecks()
+    }
+
+    static func extensionConsentChecks() {
+        let row = "extension:mail/send"
+        let query = "arguments=%7B%22to%22%3A%22a%40b.c%22%7D&launchType=background"
+        let key = DeepLinkConsentPolicy.key(entryID: row, percentEncodedQuery: query)
+        let encodedRow = DeepLinkConsentPolicy.key(entryID: row, input: .none)
+        expect(key == encodedRow + "?" + query, "an extension grant keeps the whole query")
+        expect(
+            key != DeepLinkConsentPolicy.key(entryID: row, percentEncodedQuery: "launchType=background"),
+            "an extension grant covers only its exact input")
+        expect(
+            DeepLinkConsentPolicy.key(entryID: row, percentEncodedQuery: nil) == encodedRow,
+            "an extension link with no query is the row alone")
+        expect(
+            DeepLinkConsentPolicy.details(ofPercentEncodedQuery: query)
+                == "arguments: {\"to\":\"a@b.c\"}\nlaunchType: background",
+            "an extension link shows every parameter, launch type included")
+        expect(
+            DeepLinkConsentPolicy.details(
+                ofPercentEncodedQuery: "fallbackText=x%0AlaunchType%3A%20userInitiated&launchType=background")
+                == "fallbackText: x\\nlaunchType: userInitiated\nlaunchType: background",
+            "a value can't fake another parameter's line")
+        expect(
+            DeepLinkConsentPolicy.detailLine(name: "t", value: "a\u{2028}b\r\nc") == #"t: a\u{2028}b\r\nc"#,
+            "every kind of line break is escaped")
+        expect(
+            DeepLinkConsentPolicy.details(ofPercentEncodedQuery: "launchType=") == nil,
+            "an extension link with only empty parameters shows no detail box")
     }
 
     static func consentChecks() {

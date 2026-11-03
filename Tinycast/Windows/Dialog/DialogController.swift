@@ -22,7 +22,8 @@ final class DialogController: NSObject, NSWindowDelegate {
 
     func confirm(
         title: String, message: String?, symbol: String?, tone: DialogTone, confirmTitle: String,
-        confirmRole: DialogAction.Role, dismissTitle: String = String(localized: "Cancel")
+        confirmRole: DialogAction.Role, dismissTitle: String = String(localized: "Cancel"),
+        details: String? = nil
     ) async -> Bool {
         let request = DialogRequest(
             title: title, message: message, symbol: symbol, tone: tone,
@@ -30,18 +31,19 @@ final class DialogController: NSObject, NSWindowDelegate {
                 DialogAction(title: confirmTitle, role: confirmRole),
                 DialogAction(title: dismissTitle, role: .cancel)
             ],
-            defaultIndex: 0, cancelIndex: 1)
+            defaultIndex: 0, cancelIndex: 1, accessory: details.map(DialogAccessory.details))
         return await present(request) == 0
     }
 
     /// More than two ways forward; `options` is in dispatch order and the last one is the cancel.
     func choose(
         title: String, message: String?, symbol: String?, tone: DialogTone,
-        options: [DialogAction], defaultIndex: Int
+        options: [DialogAction], defaultIndex: Int, details: String? = nil
     ) async -> Int {
         let request = DialogRequest(
             title: title, message: message, symbol: symbol, tone: tone, actions: options,
-            defaultIndex: defaultIndex, cancelIndex: options.count - 1)
+            defaultIndex: defaultIndex, cancelIndex: options.count - 1,
+            accessory: details.map(DialogAccessory.details))
         return await present(request)
     }
 
@@ -138,7 +140,7 @@ final class DialogController: NSObject, NSWindowDelegate {
             let width =
                 switch request.accessory {
                 case nil, .volume, .textInput: metrics.size.dialogCompactWidth
-                case .snippetArguments, .clipboardText: metrics.size.dialogWidth
+                case .snippetArguments, .clipboardText, .details: metrics.size.dialogWidth
                 }
             let content = hostingView(
                 DialogView(

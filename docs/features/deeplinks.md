@@ -125,7 +125,9 @@ The search screens are `clipboard-history`, `search-emoji`, `calculator-history`
 row's fields, as a hotkey with no selection does. Any other target ignores its input.
 
 - A `create-*` list asks once, then adds every item it can, skipping duplicates as a file import
-  does, and reports the count in a HUD. A quicklink list's question shows each name and link.
+  does, and reports the count in a HUD. A quicklink list's question shows each name and link. A
+  snippet list's shows every name, keyword and text in a detail box, quoted with escapes
+  (`SnippetLinkReview`), so a trailing line break that would run a command on expansion is visible.
 - A volume outside `0`–`100`, or a note named `.` or `..`, refuses the link before anything asks.
 - `openWith` is kept only when it names an installed app's bundle ID.
 - A window size refuses, rather than clamps, a value outside what a saved size allows. `anchor` is a
@@ -149,19 +151,28 @@ so a new command fails to build until it is classed:
 Input always asks because a page chose it: typed into the launcher it is one Return from a fallback
 row, and as arguments it reaches a script.
 
-The question names the target, shows the input (`DeepLinkInput.summary`, cut at 160 characters) and
-offers **Always Allow**, **Run Once** and **Cancel**. **Cancel is the default**, because the dialog
+The question names the target, shows the whole input in a scrolling detail box
+(`DeepLinkInput.details`, one parameter per line, never cut, so nothing past a long first argument
+hides) and offers **Always Allow**, **Run Once** and **Cancel**. **Cancel is the default**, because the dialog
 takes key and a stray Return must not run anything. A target that does not exist is reported as an
 unknown link before any question, so a page cannot learn what exists by asking.
 
 Always Allow stores `DeepLinkConsentPolicy.key(entryID:input:)`: the row alone, or the row with its
 exact input, the row's ID percent-encoded so a `?` in a snippet path cannot fake the split. A grant
 never covers different input, so a Karabiner key with fixed text asks once and an attacker's text
-still asks. A search link's row is `search`. A size spelled out in a link is one target,
+still asks. Settings lists a grant with `DeepLinkInput.summary`, which is cut at 160 characters:
+it only names the grant. A search link's row is `search`. A size spelled out in a link is one target,
 `window-size`, whatever the size.
 Destructive system actions still ask their own question after it. One question shows at a time: a
 link that arrives meanwhile is logged and dropped. The gate is checked again after the answer, so a
 feature turned off during the question still wins.
+
+An extension command link from outside (`raycast://`, `com.raycast:` or `tinycast://extensions/…`)
+asks the same question through `DeepLinkCoordinator.runExtensionLink`, after its command resolves:
+an extension acts outside Tinycast like any row that always asks. Its detail box shows every query
+parameter as sent, `launchType` and `context` included, and Always Allow stores
+`DeepLinkConsentPolicy.key(entryID:percentEncodedQuery:)`: the command's row with its exact query.
+An extension's own `open("raycast://…")` never reaches this path, so it never asks.
 
 A link Tinycast opens itself — a quicklink whose link is the channel's own scheme — runs in-process
 with `source: .tinycast`. It never asks, because the reader chose it in Tinycast. It never goes

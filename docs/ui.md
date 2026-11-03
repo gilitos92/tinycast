@@ -667,8 +667,9 @@ it would couple two unrelated surfaces.
 
 A dialog carries at most one control beyond its buttons, and `DialogAccessory` makes that structural
 rather than a convention — `.volume` for the Set Volume prompt, `.snippetArguments` for a snippet's
-`{argument}` values, `.textInput` for a single typed answer such as an emoji's custom name, and
-`.clipboardText` for Edit Entry. Text fields take `dialogTextField()`; inline enumerated arguments are
+`{argument}` values, `.textInput` for a single typed answer such as an emoji's custom name,
+`.clipboardText` for Edit Entry, and `.details` for read-only text a reader must see in full before
+agreeing, such as a link's input. `.details` scrolls in a `dialogTextHeight` box rather than cut. Text fields take `dialogTextField()`; inline enumerated arguments are
 `DialogChip`s. `DialogPanel.handlesArrowKeys` is set from `DialogAccessory.claimsArrowKeys`, so the
 slider steps on ←/→ while snippet argument text fields keep their caret, and `acceptsLineBreaks` from
 the accessory of the same name, so only Edit Entry's `dialogTextHeight` text area takes ↵. Create

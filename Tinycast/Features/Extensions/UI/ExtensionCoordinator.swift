@@ -91,21 +91,34 @@ final class ExtensionCoordinator {
             scheme: AppURLScheme.current)
     }
 
-    /// A `raycast://extensions/…` link: the same command the launcher would run, by slug.
-    func runDeepLink(_ link: ExtensionDeepLink) {
+    /// A `raycast://extensions/…` link from outside: the launcher's command, run once the user agrees.
+    func runDeepLink(_ link: ExtensionDeepLink, percentEncodedQuery query: String?) {
+        guard let (owner, command) = resolveDeepLink(link) else { return }
+        let entryID = ExtensionCommandRef(extensionName: owner.manifest.name, commandName: command.name)
+            .entryID
+        core.deepLinkCoordinator.runExtensionLink(
+            entryID: entryID, name: command.title, percentEncodedQuery: query
+        ) { [weak self] in
+            // The question was a wait: the extension may have been turned off or removed meanwhile.
+            guard let self, let (owner, command) = resolveDeepLink(link) else { return }
+            run(
+                owner, command: command, arguments: link.arguments, fallbackText: link.fallbackText,
+                launchType: link.launchType, launchContext: link.launchContext)
+        }
+    }
+
+    private func resolveDeepLink(_ link: ExtensionDeepLink) -> (InstalledExtension, ExtensionCommand)? {
         guard settings.extensionsEnabled else {
             core.showMessage(
                 String(localized: "Extensions are disabled — enable them in Settings"), tone: .danger)
-            return
+            return nil
         }
-        guard let (owner, command) = extensions.resolve(link) else {
+        guard let resolved = extensions.resolve(link) else {
             core.showMessage(
                 String(localized: "No installed extension provides '\(link.commandName)'"), tone: .danger)
-            return
+            return nil
         }
-        run(
-            owner, command: command, arguments: link.arguments, fallbackText: link.fallbackText,
-            launchType: link.launchType, launchContext: link.launchContext)
+        return resolved
     }
 
     // MARK: - Managing one extension from the launcher

@@ -148,7 +148,7 @@ final class SnippetCoordinator {
                 title: String(localized: "Add \(incoming.count) snippets from a link?"),
                 message: ListFormatter.localizedString(byJoining: incoming.map(\.name)),
                 symbol: "curlybraces", confirmTitle: String(localized: "Add"), tone: .neutral,
-                confirmRole: .standard)
+                confirmRole: .standard, details: SnippetLinkReview.details(of: incoming))
         else { return }
         // Matched as a backup import matches, so the same link twice leaves no second copy.
         let existing = Set(store.snippets.map { [$0.snippet.name, $0.snippet.text] })

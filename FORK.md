@@ -27,6 +27,10 @@ A personal fork of [abue-ammar/tinycast](https://github.com/abue-ammar/tinycast)
   opened this session; Quick AI steps through the saved chats.
 - **Search Menu Bar Items can pin items** per app: `⌘.` pins or unpins, `⌥⌘↑/↓` reorders, and pins lead
   the list in a Pinned section.
+- **Links from outside show everything before they run.** An extension command link (`raycast://`,
+  `com.raycast:`) asks first, like a built-in one. The consent question shows the link's whole input
+  in a scrolling box instead of cutting it at 160 characters, and a snippet list from a link shows
+  each keyword and text. Drop these once upstream asks and shows input the same way.
 - **Releases are built here and published by hand.** The in-app updater reads this fork's GitHub
   releases, so an upstream release never replaces this build. Pulling upstream's changes means running
   `Scripts/update-from-upstream.sh` (below).
@@ -122,10 +126,11 @@ there is expected and the fork's side must survive:
 | Notes action panel | `Notes/Model/NoteAction.swift` (`NoteActionCatalog`, the only list of note actions), `Notes/UI/**` |
 | Clipboard Quick Look | `Clipboard/UI/ClipboardQuickLook.swift`, `Clipboard/UI/ClipboardCoordinator.swift`, `Clipboard/UI/ClipboardScreen.swift`, `Palette/PalettePanel.swift` |
 | Menu pins | `MenuSearch/**`, `App/AppCore.swift` (`pinnedMenuItems`), `Palette/RootPaletteView.swift` (`movePinnedOrFavorite`) |
+| Link consent | `DeepLinks/UI/DeepLinkCoordinator.swift` (`runExtensionLink`, `askConsent`, `extensionConsentName`), `DeepLinks/Model/DeepLinkConsentPolicy.swift` (`key(entryID:percentEncodedQuery:)`, `details`), `DeepLinks/Model/DeepLinkInput.swift` (`details`), `Extensions/UI/ExtensionCoordinator.swift` (`runDeepLink`), `App/AppCore.swift` (`handleOpenURL`, `confirm`, `choose`), `Windows/Dialog/` (`.details`, `DialogDetailsField`), `Snippets/Model/SnippetLinkReview.swift`, `Snippets/UI/SnippetCoordinator.swift` (`importSnippets`) |
 | Fork setup | `Updates/Model/ReleaseFeed.swift` (`repository`), `Scripts/install-local.sh`, `Scripts/publish-release.sh`, `Scripts/update-from-upstream.sh`, `Scripts/check-migrations.sh` (`not_upstream`), `Scripts/run-tests.sh` (harness file lists), every harness's `UserDefaults` suite (a fixed name via `isolatedDefaults`, never a UUID) |
 
-Paths are under `Tinycast/Features/` unless they start with `Platform/`, `Palette/`, `App/` or
-`Scripts/`. If upstream later ships its own fix for one of these, prefer upstream's and drop the patch.
+Paths are under `Tinycast/Features/` unless they start with `Platform/`, `Palette/`, `App/`,
+`Windows/` or `Scripts/`. If upstream later ships its own fix for one of these, prefer upstream's and drop the patch.
 
 ### Check that it worked
 
