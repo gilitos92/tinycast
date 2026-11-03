@@ -6,6 +6,33 @@ changes are in its [releases](https://github.com/abue-ammar/tinycast/releases).
 
 ## [Unreleased]
 
+Based on upstream v0.12.6-beta.130.
+
+### Added
+
+- Upstream's changes since v0.12.3-beta.127: `tinycast://` deeplinks for every built-in command, with
+  Copy Deeplink (⇧⌘C) and a prompt before an outside link runs a built-in command with input or one
+  that acts outside Tinycast; an Expand thinking setting
+  in Settings → AI; folders in the Search Files scope picker; and a direct way to configure an
+  extension whose required preferences are missing.
+- Raycast extensions get AES-GCM encryption, network interfaces, the user and group IDs, file owners
+  and `SharedArrayBuffer`.
+
+### Changed
+
+- The compact bar uses native glass with no extra overlay, and its keyboard selection matches
+  Spotlight.
+
+### Fixed
+
+- Upstream's audit fixes: Codex, Claude title generation, clipboard images, quicklink import, updates,
+  translation and the camera panel no longer misbehave when cancelled or closed mid-task.
+- OpenAI tool calls through MCP servers work again.
+- A command's prompt shows while it waits for input, even without a line ending.
+- An input method keeps the arrow keys, Return and Escape while composing text.
+- Extension sign-in finishes cleanly when its task is cancelled.
+- An unavailable Apple Intelligence is no longer described as downloading; it links to its settings.
+
 ## [1.7.2] - 2026-10-29
 
 Based on upstream v0.12.3-beta.127.
