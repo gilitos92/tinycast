@@ -68,8 +68,9 @@ launchers. We accept that to keep the app simple.
   already learns what you open and moves it higher. ([#59](https://github.com/abue-ammar/tinycast/issues/59), [#772](https://github.com/abue-ammar/tinycast/issues/772), [#1446](https://github.com/abue-ammar/tinycast/issues/1446))
 - **⌘1–⌘9 to open any result.** Number shortcuts work only on Favorites in the launcher and on
   pinned items in Clipboard History. ([#1090](https://github.com/abue-ammar/tinycast/issues/1090), [#1357](https://github.com/abue-ammar/tinycast/issues/1357), [#951](https://github.com/abue-ammar/tinycast/issues/951), [#396](https://github.com/abue-ammar/tinycast/issues/396), [#278](https://github.com/abue-ammar/tinycast/issues/278), [#1508](https://github.com/abue-ammar/tinycast/issues/1508))
-- **Space to act like Enter.** Space never runs a command. After an alias whose command has
-  inputs, Space moves to the first input, as in Raycast. Space in an empty search box won't open
+- **Space to act like Enter, or to enter inputs after a name.** Space never runs a command, and
+  after a command's name it types a space. Only after the start of an alias whose command has
+  inputs does Space move to the first input, as in Raycast. Space in an empty search box won't open
   File Search either.
   ([#696](https://github.com/abue-ammar/tinycast/issues/696), [#923](https://github.com/abue-ammar/tinycast/issues/923), [#1185](https://github.com/abue-ammar/tinycast/issues/1185), [#1070](https://github.com/abue-ammar/tinycast/issues/1070))
 - **Vim keys (j/k).** **Instead:** use Ctrl-N and Ctrl-P. ([#786](https://github.com/abue-ammar/tinycast/issues/786), [#334](https://github.com/abue-ammar/tinycast/issues/334))
