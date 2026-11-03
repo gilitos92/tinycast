@@ -68,6 +68,18 @@ struct DeepLinkInput: Equatable, Sendable {
 
     private static let summaryLength = 160
 
+    /// Nil when there is nothing to show, so the question reads as a plain run.
+    var consentDetails: [[ReviewLine]]? { isEmpty ? nil : [details] }
+
+    /// Every parameter in full, re-encoded from what was parsed: exactly what will run.
+    var details: [ReviewLine] {
+        [
+            fallbackText.map { ReviewLine(name: "fallbackText", value: $0) },
+            arguments.flatMap(Self.json).map { ReviewLine(name: "arguments", json: $0) },
+            context.flatMap(Self.json).map { ReviewLine(name: "context", json: $0) }
+        ].compactMap { $0 }
+    }
+
     /// The inverse of `init?(queryItems:)`, encoded strictly so the link reads back exactly.
     var percentEncodedQueryItems: [URLQueryItem] {
         let values: [(String, String?)] = [

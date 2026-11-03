@@ -32,7 +32,7 @@ protocol ExtensionHostContext: AnyObject {
         command: String, extensionName: String?, arguments: [String: String],
         fallbackText: String?, launchType: ExtensionLaunchType, launchContext: [String: RenderValue]
     ) throws
-    func launch(_ link: ExtensionDeepLink) throws
+    func launch(_ link: ExtensionDeepLink, percentEncodedQuery: String?) throws
 }
 
 struct ExtensionToast: Sendable, Equatable, Identifiable {
@@ -543,7 +543,9 @@ final class ExtensionHostBridge: ExtensionHostAPI {
 
     /// A command URL runs it when installed; every other Raycast URL just brings the palette back.
     private func openRaycastURL(_ url: URL) {
-        if let link = ExtensionDeepLink.parse(url: url), (try? context?.launch(link)) != nil {
+        if let link = ExtensionDeepLink.parse(url: url),
+            (try? context?.launch(link, percentEncodedQuery: url.query(percentEncoded: true))) != nil
+        {
             return
         }
         context?.reopenPalette()

@@ -101,6 +101,17 @@ final class DeepLinkCoordinator {
         return DeepLinkInput(arguments: .positional(Array(filled)))
     }
 
+    /// An extension acts outside Tinycast too, so a link from outside asks like any such row.
+    func runExtensionLink(
+        entryID: String, name: String, details: [[ReviewLine]], percentEncodedQuery query: String?,
+        _ body: @escaping @MainActor () -> Void
+    ) {
+        runAfterConsent(
+            name: name, details: details,
+            key: DeepLinkConsentPolicy.key(entryID: entryID, percentEncodedQuery: query), asks: true,
+            source: .outside, body)
+    }
+
     // MARK: - Allowed links
 
     /// Named for Settings; a row deleted since keeps its ID as its name, so it can still go.
@@ -114,12 +125,24 @@ final class DeepLinkCoordinator {
 
     private func consentName(forKey key: String) -> String {
         if key == DeepLink.windowSizeHost { return String(localized: "Custom Size") }
+        if let name = extensionConsentName(forKey: key) { return name }
         guard let parts = DeepLinkConsentPolicy.parts(ofKey: key),
             let action = parts.entryID == DeepLink.searchHost
                 ? .togglePalette : HotKeyAction(entryID: parts.entryID)
         else { return key }
         let name = hotKeys.displayName(of: action)
         return parts.input.isEmpty ? name : name + " · " + parts.input.summary
+    }
+
+    private func extensionConsentName(forKey key: String) -> String? {
+        let split = key.split(separator: "?", maxSplits: 1)
+        guard let entryID = split.first.flatMap({ String($0).removingPercentEncoding }),
+            ExtensionCommandRef(entryID: entryID) != nil
+        else { return nil }
+        let name = hotKeys.displayName(of: .extensionCommand(entryID: entryID))
+        let query = split.count == 2 ? String(split[1]) : nil
+        let details = ExtensionDeepLink.reviewLines(ofPercentEncodedQuery: query)
+        return ([name] + details.map { $0.name + ": " + $0.value }).joined(separator: " · ")
     }
 
     // MARK: - Running
@@ -150,7 +173,7 @@ final class DeepLinkCoordinator {
         guard exists(action), accepts(input, for: action) else { return reportUnknownLink() }
         guard isAllowed(action) else { return }
         runAfterConsent(
-            name: hotKeys.displayName(of: action), input: input,
+            name: hotKeys.displayName(of: action), details: input.consentDetails,
             key: DeepLinkConsentPolicy.key(entryID: entryID, input: input),
             asks: DeepLinkConsentPolicy.requiresConsent(action, input: input), source: source
         ) { [weak self] in
@@ -182,7 +205,7 @@ final class DeepLinkCoordinator {
         }
         let input = DeepLinkInput(fallbackText: text)
         runAfterConsent(
-            name: hotKeys.displayName(of: .togglePalette), input: input,
+            name: hotKeys.displayName(of: .togglePalette), details: input.consentDetails,
             key: DeepLinkConsentPolicy.key(entryID: DeepLink.searchHost, input: input), asks: true,
             source: source
         ) { [weak self] in
@@ -197,7 +220,7 @@ final class DeepLinkCoordinator {
             return
         }
         runAfterConsent(
-            name: name, input: .none, key: DeepLink.windowSizeHost, asks: true, source: source
+            name: name, details: nil, key: DeepLink.windowSizeHost, asks: true, source: source
         ) { [weak self] in
             self?.core.windowCommandCoordinator.runWindowSize(size)
         }
@@ -205,7 +228,7 @@ final class DeepLinkCoordinator {
 
     /// One question at a time; a link arriving meanwhile is dropped, since nobody saw it.
     private func runAfterConsent(
-        name: String, input: DeepLinkInput, key: String, asks: Bool, source: DeepLinkSource,
+        name: String, details: [[ReviewLine]]?, key: String, asks: Bool, source: DeepLinkSource,
         _ body: @escaping @MainActor () -> Void
     ) {
         guard asks, source == .outside, !settings.allowedDeepLinks.contains(key) else {
@@ -217,7 +240,7 @@ final class DeepLinkCoordinator {
         }
         isAskingConsent = true
         Task {
-            let choice = await askConsent(name: name, input: input)
+            let choice = await askConsent(name: name, details: details)
             isAskingConsent = false
             guard choice != .cancel else { return }
             if choice == .alwaysAllow, !settings.allowedDeepLinks.contains(key) {
@@ -228,13 +251,13 @@ final class DeepLinkCoordinator {
     }
 
     /// Cancel is the default: the panel takes key, and a stray Return must not run anything.
-    private func askConsent(name: String, input: DeepLinkInput) async -> ConsentChoice {
+    private func askConsent(name: String, details: [[ReviewLine]]?) async -> ConsentChoice {
         let message =
-            input.isEmpty
+            details == nil
             ? String(localized: "An app or web page asked Tinycast to run this. Allow only links you trust.")
             : String(
                 localized: """
-                    An app or web page asked Tinycast to run this with “\(input.summary)”. \
+                    An app or web page asked Tinycast to run this with the input below. \
                     Allow only links you trust.
                     """)
         let answer = await core.choose(
@@ -246,7 +269,7 @@ final class DeepLinkCoordinator {
                 DialogAction(title: String(localized: "Run Once")),
                 DialogAction(title: String(localized: "Cancel"), role: .cancel)
             ],
-            defaultIndex: ConsentChoice.cancel.rawValue)
+            defaultIndex: ConsentChoice.cancel.rawValue, details: details)
         return ConsentChoice(rawValue: answer) ?? .cancel
     }
 

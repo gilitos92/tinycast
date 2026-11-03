@@ -15,6 +15,13 @@ enum DeepLinkConsentPolicy {
         return query.isEmpty ? row : row + "?" + query.joined(separator: "&")
     }
 
+    /// An extension link keeps its query as sent: launch type and context matter too.
+    static func key(entryID: String, percentEncodedQuery query: String?) -> String {
+        let row = key(entryID: entryID, input: .none)
+        guard let query, !query.isEmpty else { return row }
+        return row + "?" + query
+    }
+
     /// The row and input a remembered key stands for; nil for one this build can't read.
     static func parts(ofKey key: String) -> (entryID: String, input: DeepLinkInput)? {
         let split = key.split(separator: "?", maxSplits: 1, omittingEmptySubsequences: false)

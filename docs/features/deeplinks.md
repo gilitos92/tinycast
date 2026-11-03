@@ -125,7 +125,10 @@ The search screens are `clipboard-history`, `search-emoji`, `calculator-history`
 row's fields, as a hotkey with no selection does. Any other target ignores its input.
 
 - A `create-*` list asks once, then adds every item it can, skipping duplicates as a file import
-  does, and reports the count in a HUD. A quicklink list's question shows each name and link.
+  does, and reports the count in a HUD. Its question has no message: a detail box lists each
+  quicklink's every saved field (name, link, Open With, icon), or each snippet's name, keyword and
+  text (`SnippetLinkReview`), spelled out so a trailing line break that would run a command on
+  expansion is visible.
 - A volume outside `0`–`100`, or a note named `.` or `..`, refuses the link before anything asks.
 - `openWith` is kept only when it names an installed app's bundle ID.
 - A window size refuses, rather than clamps, a value outside what a saved size allows. `anchor` is a
@@ -149,23 +152,57 @@ so a new command fails to build until it is classed:
 Input always asks because a page chose it: typed into the launcher it is one Return from a fallback
 row, and as arguments it reaches a script.
 
-The question names the target, shows the input (`DeepLinkInput.summary`, cut at 160 characters) and
-offers **Always Allow**, **Run Once** and **Cancel**. **Cancel is the default**, because the dialog
+The question names the target, shows the whole input in a scrolling detail box and offers
+**Always Allow**, **Run Once** and **Cancel**. The box (`DeepLinkInput.details`) is never cut and
+lists each parameter as a `ReviewLine`: its name in one column and its value in the next, so a
+wrapped value can never start where a name would. `ReviewLine` doubles `\` and `VisibleText.escaped`
+spells out, as `\n` or `\u{…}`, anything that could hide or fake a line: line breaks, invisible and
+zero-width characters, direction marks, blank-looking letters, piled-up marks and runs of spaces.
+Emoji sequences and a single space, plain or ideographic, stay as they are; any run of either is
+spelled out. The two answers that run stay off until the box has been
+scrolled to its end, because the app shows scrollers only while scrolling. **Cancel is the default**, because the dialog
 takes key and a stray Return must not run anything. A target that does not exist is reported as an
 unknown link before any question, so a page cannot learn what exists by asking.
 
 Always Allow stores `DeepLinkConsentPolicy.key(entryID:input:)`: the row alone, or the row with its
 exact input, the row's ID percent-encoded so a `?` in a snippet path cannot fake the split. A grant
 never covers different input, so a Karabiner key with fixed text asks once and an attacker's text
-still asks. A search link's row is `search`. A size spelled out in a link is one target,
+still asks. Settings lists a grant with `DeepLinkInput.summary`, which is cut at 160 characters:
+it only names the grant. A search link's row is `search`. A size spelled out in a link is one target,
 `window-size`, whatever the size.
 Destructive system actions still ask their own question after it. One question shows at a time: a
 link that arrives meanwhile is logged and dropped. The gate is checked again after the answer, so a
 feature turned off during the question still wins.
 
+An extension command link from outside (`raycast://`, `com.raycast:` or `tinycast://extensions/…`)
+asks the same question through `DeepLinkCoordinator.runExtensionLink`, after its command resolves:
+an extension acts outside Tinycast like any row that always asks. The question is titled with the
+command and its extension. Its detail box starts with the extension and command the link resolved
+to, since the link's owner is only a hint. Then come the fields the command reads, `launchType` and
+`context` included, under their own names and as parsed (`ExtensionDeepLink.reviewLines`):
+
+- One row per argument the command declares; `keepingArguments` drops every other key before it runs.
+- `context` as the command receives it after `parseContext`.
+
+So a JSON key given twice shows only the copy that acts, and a parameter or key no command reads, or
+one whose name only looks like a real one, never shows. Built-in rows are re-encoded from the parsed
+input the same way.
+
+Always Allow stores `DeepLinkConsentPolicy.key(entryID:percentEncodedQuery:)`: the command's row with
+its exact query. A link that sets a field twice, in any spelling (`ExtensionDeepLink.repeatsField`),
+is always refused, since the box would show both while only the last one acts. A query over 64 KB is
+refused when the link would ask, since no one can read that much. After the answer the link resolves
+again and runs only if it is still the same command.
+
+An extension's own `open("raycast://…")` runs a command of the same extension directly. A command of
+another extension asks first, because the URL may come from the extension's data, such as a feed
+item. `launchCommand` never asks: the extension's code names that target itself.
+
 A link Tinycast opens itself — a quicklink whose link is the channel's own scheme — runs in-process
 with `source: .tinycast`. It never asks, because the reader chose it in Tinycast. It never goes
-through LaunchServices either.
+through LaunchServices either. A quicklink to an extension link runs in-process the same way when
+macOS would hand that link back to Tinycast (`AppCore.openChosenExtensionLink`) and the quicklink
+opens with no other app. Otherwise it goes to the app that owns the scheme, such as Raycast.
 
 ## Copy Deeplink
 
