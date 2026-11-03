@@ -1523,13 +1523,14 @@ struct RootPaletteView: View {
         guard let panel = window as? PalettePanel else { return }
         panel.onTrailingSpace = {
             guard !menuOpen, !vm.isControlListOpen, !isCollapsed, !vm.isComposing,
-                searchFocused, argumentFocused == nil,
-                let field = headerAccessory?.fieldNames.first
+                searchFocused, argumentFocused == nil
             else { return false }
             let screen = screen
-            guard screen.spaceEntersArguments(at: selection(in: screen), query: vm.query) else {
-                return false
-            }
+            let selection = selection(in: screen)
+            guard screen.spaceEntersArguments(at: selection, query: vm.query),
+                let field = screen.headerAccessory(at: selection, focus: $argumentFocused)?
+                    .fieldNames.first
+            else { return false }
             argumentFocused = field
             searchFocused = false
             return true
