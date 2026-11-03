@@ -11,7 +11,8 @@ Based on upstream v0.12.6-beta.130.
 ### Added
 
 - Upstream's changes since v0.12.3-beta.127: `tinycast://` deeplinks for every built-in command, with
-  Copy Deeplink (⇧⌘C) and a one-time prompt before an outside link acts; an Expand thinking setting
+  Copy Deeplink (⇧⌘C) and a prompt before an outside link runs a built-in command with input or one
+  that acts outside Tinycast; an Expand thinking setting
   in Settings → AI; folders in the Search Files scope picker; and a direct way to configure an
   extension whose required preferences are missing.
 - Raycast extensions get AES-GCM encryption, network interfaces, the user and group IDs, file owners
