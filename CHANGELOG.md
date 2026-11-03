@@ -6,6 +6,10 @@ changes are in its [releases](https://github.com/abue-ammar/tinycast/releases).
 
 ## [Unreleased]
 
+## [1.9.0] - 2026-11-03
+
+Based on upstream v0.12.6-beta.130.
+
 ### Added
 
 - Type the start of an alias, then press Space, to jump into its command's inputs, as in Raycast.
