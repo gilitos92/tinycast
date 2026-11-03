@@ -6,6 +6,8 @@ changes are in its [releases](https://github.com/abue-ammar/tinycast/releases).
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-11-03
+
 Based on upstream v0.12.6-beta.130.
 
 ### Added
