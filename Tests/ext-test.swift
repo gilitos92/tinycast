@@ -913,6 +913,12 @@ struct ExtensionTests {
             "distinct fields and unread parameters are no repeat",
             !ExtensionDeepLink.repeatsField(inPercentEncodedQuery: "arguments=%7B%7D&launchType=background&x=1&x=2")
                 && !ExtensionDeepLink.repeatsField(inPercentEncodedQuery: nil))
+        let reviewed = ExtensionDeepLink.reviewLines(
+            ofPercentEncodedQuery: "%D0%B0rguments=%7B%7D&ARGUMENTS=%7B%22q%22%3A%22x%22%7D&launch_type=background&x=1&context=")
+            .map { $0.name + ": " + $0.value }
+        check(
+            "an extension link shows only the fields a command reads, by their own names",
+            reviewed == [#"arguments: {"q":"x"}"#, "launchType: background"], String(describing: reviewed))
         let tiny = ExtensionDeepLink.parse(
             url: URL(string: "tinycast://extensions/linear/linear/create-issue")!)
         check("deeplink mirrors raycast:// as tinycast://", tiny == canonical)

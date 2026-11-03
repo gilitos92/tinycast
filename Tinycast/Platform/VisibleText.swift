@@ -28,7 +28,7 @@ enum VisibleText {
             case "\t": result += "\\t"
             case " ", "\u{3000}":
                 let isEdge = previous == nil || next == nil
-                result += isEdge || previous == scalar ? spelled(scalar) : String(scalar)
+                result += isEdge || isSpace(previous) ? spelled(scalar) : String(scalar)
             case "\u{200D}" where isEmoji(previous) && isEmoji(next):
                 result += String(scalar)
             case "\u{FE0F}" where isEmoji(previous):
@@ -38,6 +38,11 @@ enum VisibleText {
             }
         }
         return result
+    }
+
+    /// Either kind of space after another makes a run, which could push text onto a fake line.
+    private static func isSpace(_ scalar: Unicode.Scalar?) -> Bool {
+        scalar == " " || scalar == "\u{3000}"
     }
 
     /// A joiner or presentation selector only shapes emoji; elsewhere it could hide in plain text.

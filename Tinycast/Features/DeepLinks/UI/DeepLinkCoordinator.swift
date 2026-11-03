@@ -106,7 +106,7 @@ final class DeepLinkCoordinator {
         entryID: String, name: String, identity: [ReviewLine], percentEncodedQuery query: String?,
         _ body: @escaping @MainActor () -> Void
     ) {
-        let input = DeepLinkConsentPolicy.details(ofPercentEncodedQuery: query)
+        let input = ExtensionDeepLink.reviewLines(ofPercentEncodedQuery: query)
         runAfterConsent(
             name: name, details: input.isEmpty ? [identity] : [identity, input],
             key: DeepLinkConsentPolicy.key(entryID: entryID, percentEncodedQuery: query), asks: true,
@@ -142,7 +142,7 @@ final class DeepLinkCoordinator {
         else { return nil }
         let name = hotKeys.displayName(of: .extensionCommand(entryID: entryID))
         let query = split.count == 2 ? String(split[1]) : nil
-        let details = DeepLinkConsentPolicy.details(ofPercentEncodedQuery: query)
+        let details = ExtensionDeepLink.reviewLines(ofPercentEncodedQuery: query)
         return ([name] + details.map { $0.name + ": " + $0.value }).joined(separator: " · ")
     }
 

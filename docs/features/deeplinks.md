@@ -126,8 +126,9 @@ row's fields, as a hotkey with no selection does. Any other target ignores its i
 
 - A `create-*` list asks once, then adds every item it can, skipping duplicates as a file import
   does, and reports the count in a HUD. Its question has no message: a detail box lists each
-  quicklink's name and link, or each snippet's name, keyword and text (`SnippetLinkReview`), spelled
-  out so a trailing line break that would run a command on expansion is visible.
+  quicklink's every saved field (name, link, Open With, icon), or each snippet's name, keyword and
+  text (`SnippetLinkReview`), spelled out so a trailing line break that would run a command on
+  expansion is visible.
 - A volume outside `0`–`100`, or a note named `.` or `..`, refuses the link before anything asks.
 - `openWith` is kept only when it names an installed app's bundle ID.
 - A window size refuses, rather than clamps, a value outside what a saved size allows. `anchor` is a
@@ -157,7 +158,8 @@ lists each parameter as a `ReviewLine`: its name in one column and its value in 
 wrapped value can never start where a name would. `ReviewLine` doubles `\` and `VisibleText.escaped`
 spells out, as `\n` or `\u{…}`, anything that could hide or fake a line: line breaks, invisible and
 zero-width characters, direction marks, blank-looking letters, piled-up marks and runs of spaces.
-Emoji sequences and a single ideographic space stay as they are. The two answers that run stay off until the box has been
+Emoji sequences and a single space, plain or ideographic, stay as they are; any run of either is
+spelled out. The two answers that run stay off until the box has been
 scrolled to its end, because the app shows scrollers only while scrolling. **Cancel is the default**, because the dialog
 takes key and a stray Return must not run anything. A target that does not exist is reported as an
 unknown link before any question, so a page cannot learn what exists by asking.
@@ -176,8 +178,9 @@ An extension command link from outside (`raycast://`, `com.raycast:` or `tinycas
 asks the same question through `DeepLinkCoordinator.runExtensionLink`, after its command resolves:
 an extension acts outside Tinycast like any row that always asks. The question is titled with the
 command and its extension. Its detail box starts with the extension and command the link resolved
-to, since the link's owner is only a hint, then every query parameter as sent, `launchType` and
-`context` included. Always Allow stores `DeepLinkConsentPolicy.key(entryID:percentEncodedQuery:)`:
+to, since the link's owner is only a hint, then each field the command reads, `launchType` and
+`context` included, under its own name (`ExtensionDeepLink.reviewLines`): a parameter no command
+reads, or one whose name only looks like a field's, never shows. Always Allow stores `DeepLinkConsentPolicy.key(entryID:percentEncodedQuery:)`:
 the command's row with its exact query. A query over 64 KB is refused, and so is one that sets a
 field twice, in any spelling (`ExtensionDeepLink.repeatsField`): the box would show both while only
 the last one acts. After the answer the link

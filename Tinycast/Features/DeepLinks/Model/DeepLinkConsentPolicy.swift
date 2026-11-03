@@ -22,15 +22,6 @@ enum DeepLinkConsentPolicy {
         return row + "?" + query
     }
 
-    /// An extension link's parameters in full, as sent; empty ones are left out since none acts.
-    static func details(ofPercentEncodedQuery query: String?) -> [ReviewLine] {
-        var components = URLComponents()
-        components.percentEncodedQuery = query
-        return (components.queryItems ?? []).compactMap { item in
-            item.value.flatMap { $0.isEmpty ? nil : ReviewLine(name: item.name, value: $0) }
-        }
-    }
-
     /// The row and input a remembered key stands for; nil for one this build can't read.
     static func parts(ofKey key: String) -> (entryID: String, input: DeepLinkInput)? {
         let split = key.split(separator: "?", maxSplits: 1, omittingEmptySubsequences: false)

@@ -771,6 +771,7 @@ run slow ext-test          -parse-as-library \
                            Tinycast/DesignSystem/InterfaceMetrics.swift \
                            $E/Model/ExtensionBootConfig.swift \
                            $E/Model/ExtensionDeepLink.swift \
+                           Tinycast/Platform/VisibleText.swift \
                            $E/Model/ExtensionLaunchType.swift \
                            $E/Model/ExtensionFormField.swift \
                            $E/Model/ExtensionGridLayout.swift \

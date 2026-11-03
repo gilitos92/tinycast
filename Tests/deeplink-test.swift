@@ -394,6 +394,9 @@ struct DeepLinkTests {
         expect(
             VisibleText.escaped("a\u{200D}b") == #"a\u{200D}b"#,
             "a joiner between letters is spelled out")
+        expect(
+            !VisibleText.escaped("ls \u{3000} \u{3000}x").contains("\u{3000} "),
+            "a run mixing plain and ideographic spaces is spelled out")
     }
 
     static func extensionConsentChecks() {
@@ -409,23 +412,11 @@ struct DeepLinkTests {
             DeepLinkConsentPolicy.key(entryID: row, percentEncodedQuery: nil) == encodedRow,
             "an extension link with no query is the row alone")
         expect(
-            shown(DeepLinkConsentPolicy.details(ofPercentEncodedQuery: query))
-                == [#"arguments: {"to":"a@b.c"}"#, "launchType: background"],
-            "an extension link shows every parameter, launch type included")
-        expect(
-            shown(DeepLinkConsentPolicy.details(
-                ofPercentEncodedQuery: "fallbackText=x%0AlaunchType%3A%20userInitiated&launchType=background"))
-                == [#"fallbackText: x\nlaunchType: userInitiated"#, "launchType: background"],
-            "a value can't fake another parameter's row")
-        expect(
             ReviewLine(name: "t", value: "a\u{2028}b\r\nc").value == #"a\u{2028}b\r\nc"#,
             "every kind of line break is escaped")
         expect(
             ReviewLine(name: "t", value: #"a\nb"#).value == #"a\\nb"#,
             "a typed backslash is doubled, so it never passes for an escaped line break")
-        expect(
-            DeepLinkConsentPolicy.details(ofPercentEncodedQuery: "launchType=").isEmpty,
-            "an extension link with only empty parameters shows no detail box")
     }
 
     static func shown(_ lines: [ReviewLine]) -> [String] {

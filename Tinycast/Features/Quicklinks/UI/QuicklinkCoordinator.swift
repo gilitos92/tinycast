@@ -458,6 +458,14 @@ final class QuicklinkCoordinator {
     }
 
     /// A link's batch: nothing is added until the reader agrees, and duplicates are skipped.
+    /// Every field an import saves, so nothing it adds goes unseen.
+    private static func reviewLines(_ quicklink: Quicklink) -> [ReviewLine] {
+        var lines = [ReviewLine(name: "name", value: quicklink.name), ReviewLine(name: "link", value: quicklink.link)]
+        if let app = quicklink.openWithBundleID { lines.append(ReviewLine(name: "openWith", value: app)) }
+        if let icon = quicklink.iconSymbol { lines.append(ReviewLine(name: "icon", value: icon)) }
+        return lines
+    }
+
     func importQuicklinks(offered incoming: [Quicklink]) async {
         guard settings.quicklinksEnabled, !incoming.isEmpty else { return }
         guard
@@ -465,9 +473,7 @@ final class QuicklinkCoordinator {
                 title: String(localized: "Add \(incoming.count) quicklinks from a link?"),
                 message: nil, symbol: Quicklink.sfSymbol, confirmTitle: String(localized: "Add"),
                 tone: .neutral, confirmRole: .standard,
-                details: incoming.map {
-                    [ReviewLine(name: "name", value: $0.name), ReviewLine(name: "link", value: $0.link)]
-                })
+                details: incoming.map(Self.reviewLines))
         else { return }
         let added = addImportedQuicklinks(incoming)
         guard !added.isEmpty else {

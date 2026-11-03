@@ -129,6 +129,16 @@ struct ExtensionDeepLink: Sendable, Equatable {
 
     enum Field {
         case arguments, fallbackText, launchType, launchContext
+
+        /// The name a reader sees, whichever spelling the link used.
+        var name: String {
+            switch self {
+            case .arguments: "arguments"
+            case .fallbackText: "fallbackText"
+            case .launchType: "launchType"
+            case .launchContext: "context"
+            }
+        }
     }
 
     /// The one field each accepted spelling sets; nil for a parameter no command reads.
@@ -139,6 +149,18 @@ struct ExtensionDeepLink: Sendable, Equatable {
         case "launchtype", "launch_type": .launchType
         case "context", "launchcontext": .launchContext
         default: nil
+        }
+    }
+
+    /// Only the fields a command reads, by their own names: a look-alike name can't pose as one.
+    static func reviewLines(ofPercentEncodedQuery query: String?) -> [ReviewLine] {
+        var components = URLComponents()
+        components.percentEncodedQuery = query
+        return (components.queryItems ?? []).compactMap { item in
+            guard let field = field(named: item.name), let value = item.value, !value.isEmpty else {
+                return nil
+            }
+            return ReviewLine(name: field.name, value: value)
         }
     }
 
