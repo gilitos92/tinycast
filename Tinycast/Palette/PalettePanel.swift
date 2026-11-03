@@ -19,6 +19,8 @@ final class PalettePanel: NSPanel, AnimatedPanel {
     var onFieldEditorFocused: ((NSTextInputContext) -> Void)?
     /// Inline argument fields use arrows at their text boundaries to continue their focus ring.
     var onHeaderFieldBoundaryArrow: ((HeaderFieldBoundary) -> Bool)?
+    /// A bare Space with the caret at the text's end, offered before the field editor types it.
+    var onTrailingSpace: (() -> Bool)?
     var onDismissMenu: (() -> Void)?
     private var dismissingMouseButton: Int?
     /// Arms hover from `sendEvent`, the one place both event streams pass through.
@@ -53,6 +55,15 @@ final class PalettePanel: NSPanel, AnimatedPanel {
             return .trailing
         default: return nil
         }
+    }
+
+    /// Held keys stay text: only a fresh press may leave the field it was typed into.
+    private func isTrailingSpace(_ event: NSEvent) -> Bool {
+        guard Int(event.keyCode) == kVK_Space, !event.isARepeat,
+            event.modifierFlags.isDisjoint(with: [.command, .option, .control, .shift]),
+            let editor = fieldEditor, !editor.hasMarkedText(), editor.selectedRange().length == 0
+        else { return false }
+        return editor.selectedRange().location == (editor.string as NSString).length
     }
 
     /// Mirrors the field editor's marked text. docs/features/palette.md#ime-composition
@@ -223,6 +234,9 @@ final class PalettePanel: NSPanel, AnimatedPanel {
         if event.type == .keyDown, let boundary = headerFieldBoundary(for: event),
             onHeaderFieldBoundaryArrow?(boundary) == true
         {
+            return
+        }
+        if event.type == .keyDown, isTrailingSpace(event), onTrailingSpace?() == true {
             return
         }
         // The controller owns the chords the field editor or a missing main menu would eat.
