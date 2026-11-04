@@ -6,6 +6,11 @@ changes are in its [releases](https://github.com/abue-ammar/tinycast/releases).
 
 ## [Unreleased]
 
+### Added
+
+- Type a command's whole alias, then press Space, to run it, as in Raycast. For example, `sn`
+  Space opens Search Snippets if `sn` is its alias. Commands with inputs still jump into them.
+
 ## [1.9.0] - 2026-11-03
 
 Based on upstream v0.12.6-beta.130.

@@ -27,8 +27,8 @@ A personal fork of [abue-ammar/tinycast](https://github.com/abue-ammar/tinycast)
   opened this session; Quick AI steps through the saved chats.
 - **Search Menu Bar Items can pin items** per app: `⌘.` pins or unpins, `⌥⌘↑/↓` reorders, and pins lead
   the list in a Pinned section.
-- **Space after an alias jumps into its command's inputs**, as in Raycast. The start of the alias is
-  enough, and only a row with an alias and inputs answers (`AliasSpacePolicy`).
+- **Space after an alias acts like Raycast's.** It jumps into a command's inputs from the start of
+  its alias, and runs a command without inputs once the whole alias is typed (`AliasSpacePolicy`).
 - **Links from outside show everything before they run.** An extension command link (`raycast://`,
   `com.raycast:`) asks first, like a built-in one. The consent question shows the link's whole input
   in a scrolling box instead of cutting it at 160 characters, with hidden characters spelled out, and
