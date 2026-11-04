@@ -123,8 +123,8 @@ private extension MenuPanelCorner {
         at selection: Int, focus: FocusState<String?>.Binding
     )
         -> PaletteHeaderAccessory?
-    /// Space at the query's end moves into the row's arguments instead of typing a space.
-    func spaceEntersArguments(at selection: Int, query: String) -> Bool
+    /// The user's alias for the row, which Space typed right after it acts on.
+    func alias(at selection: Int) -> String?
     @ViewBuilder func body(selection: Int, scroll: ScrollIntent) -> AnyView
 }
 
@@ -162,7 +162,7 @@ extension PaletteScreen {
     )
         -> PaletteHeaderAccessory?
     { nil }
-    func spaceEntersArguments(at selection: Int, query: String) -> Bool { false }
+    func alias(at selection: Int) -> String? { nil }
 }
 
 extension PopoverMenuContent {

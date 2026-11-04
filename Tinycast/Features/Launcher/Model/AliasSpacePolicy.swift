@@ -1,12 +1,19 @@
 import Foundation
 
-/// Whether Space after a typed alias jumps into its command's arguments, as Raycast's does.
+/// What Space after a typed alias does, as in Raycast; nil leaves it a typed space.
 enum AliasSpacePolicy {
-    /// The start of the alias is enough; a match anywhere else, or on the title, keeps the space.
-    static func entersArguments(query: String, alias: String?) -> Bool {
-        guard let alias else { return false }
+    enum Action: Equatable {
+        case enterArguments
+        case run
+    }
+
+    /// Inputs need only the alias's start; running needs all of it, so a stray `s␣` never launches.
+    static func action(query: String, alias: String?, hasArguments: Bool) -> Action? {
+        guard let alias else { return nil }
         let typed = SearchText(query, transliterated: false).units
-        guard !typed.isEmpty else { return false }
-        return SearchText(alias, transliterated: false).units.starts(with: typed)
+        guard !typed.isEmpty else { return nil }
+        let aliasUnits = SearchText(alias, transliterated: false).units
+        if hasArguments { return aliasUnits.starts(with: typed) ? .enterArguments : nil }
+        return aliasUnits == typed ? .run : nil
     }
 }

@@ -1518,7 +1518,7 @@ struct RootPaletteView: View {
         }
     }
 
-    /// Raycast's alias then Space: the typed alias stays the query and the caret moves on.
+    /// Raycast's alias then Space: into the row's inputs, or run it like ↵ when it has none.
     private func installTrailingSpaceHandler(in window: NSWindow?) {
         guard let panel = window as? PalettePanel else { return }
         panel.onTrailingSpace = {
@@ -1527,12 +1527,20 @@ struct RootPaletteView: View {
             else { return false }
             let screen = screen
             let selection = selection(in: screen)
-            guard screen.spaceEntersArguments(at: selection, query: vm.query),
-                let field = screen.headerAccessory(at: selection, focus: $argumentFocused)?
-                    .fieldNames.first
-            else { return false }
-            argumentFocused = field
-            searchFocused = false
+            guard let alias = screen.alias(at: selection) else { return false }
+            let fields =
+                screen.headerAccessory(at: selection, focus: $argumentFocused)?.fieldNames ?? []
+            switch AliasSpacePolicy.action(
+                query: vm.query, alias: alias, hasArguments: !fields.isEmpty)
+            {
+            case .enterArguments:
+                argumentFocused = fields.first
+                searchFocused = false
+            case .run:
+                screen.activate(at: selection)
+            case nil:
+                return false
+            }
             return true
         }
     }
