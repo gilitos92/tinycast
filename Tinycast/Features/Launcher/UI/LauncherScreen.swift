@@ -199,10 +199,8 @@ struct LauncherScreen: PaletteScreen {
             onSubmit: { activate(at: selection) })
     }
 
-    func spaceEntersArguments(at selection: Int, query: String) -> Bool {
-        guard let entry = entry(at: selection) else { return false }
-        return AliasSpacePolicy.entersArguments(
-            query: query, alias: core.aliases.alias(for: entry.preferenceKey))
+    func alias(at selection: Int) -> String? {
+        entry(at: selection).flatMap { core.aliases.alias(for: $0.preferenceKey) }
     }
 
     private func headerFieldBinding(entry: AppEntry, name: String) -> Binding<String> {

@@ -388,8 +388,8 @@ can carry one. An alias is deliberate in a way no vendor field is, so an exact h
 prefix hit rule 6. Only a hit **from its start** earns those rules; anywhere else the alias ranks as
 an alternate title by score, so `dark` finds an alias `toggle light / dark`, while `term` inside
 `iterm` never beats Terminal's own prefix. `AppIndex` reads the alias at rank time, keying its
-memos on the store's revision. Space after the start of a selected row's alias jumps into that
-row's arguments ([palette.md](palette.md#inline-row-arguments)).
+memos on the store's revision. Space after a selected row's alias jumps into its arguments, or runs
+a row without them once the alias is typed whole ([palette.md](palette.md#inline-row-arguments)).
 
 A launcher row shows its entry's alias as a small chip after the name, so what a badge-bearing
 result will answer to is visible without opening anything.
@@ -399,7 +399,7 @@ per-invocation action, so the ⌘K menu stays out of it. Visibility is the one e
 one direction: an unwanted result is noticed while searching, so ⌘K can hide a row, but putting it
 back is still the pane's checkbox. Every pane built
 on `LauncherItemsSection` puts an `AliasField` on each row, dressed like the `ShortcutRecorder`
-beside it; edits store as typed and trim when the field loses focus, and a blank means none. That
+beside it; an edit commits trimmed on ↵ or when the field loses focus, and a blank means none. That
 list filters by **membership only**, keeping the index's name order — re-ranking it per keystroke
 would move the row being edited out from under its own field editor. A pane with a hand-written row
 hands `AliasField` the key itself: Settings ▸ Quicklinks passes `Quicklink.entryID`, Settings ▸
