@@ -12,7 +12,9 @@ enum AliasSpacePolicy {
         guard let alias else { return nil }
         let typed = SearchText(query, transliterated: false).units
         guard !typed.isEmpty else { return nil }
-        let aliasUnits = SearchText(alias, transliterated: false).units
+        // A store written before its field lost focus can keep a stray edge space the chip hides.
+        let trimmed = alias.trimmingCharacters(in: .whitespacesAndNewlines)
+        let aliasUnits = SearchText(trimmed, transliterated: false).units
         if hasArguments { return aliasUnits.starts(with: typed) ? .enterArguments : nil }
         return aliasUnits == typed ? .run : nil
     }

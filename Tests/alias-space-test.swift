@@ -48,6 +48,8 @@ struct AliasSpaceTests {
         expect(noInputs("snx", "sn"), nil, "typing past the alias keeps the space")
         expect(noInputs("", "sn"), nil, "an empty query never runs")
         expect(noInputs("snippets", nil), nil, "a title match without an alias never runs")
+        expect(noInputs("sn", "sn "), .run, "a stray trailing space on the stored alias still runs")
+        expect(inputs("tr", " translate "), .enterArguments, "stray edge spaces never hide the start")
 
         print("\(passes) passed, \(failures) failed")
         if failures > 0 { exit(1) }
