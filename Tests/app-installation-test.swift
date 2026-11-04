@@ -141,7 +141,10 @@ struct AppInstallationTest {
             unpinned.entries.prefix(unpinned.suggestionCount).filter { $0.bundleID == id }.map(\.url) == [
                 stable
             ])
-        aliases.setAlias("ide", for: id)
+        aliases.setAlias(" ide ", for: id)
+        check("an alias is stored without its edge spaces", aliases.alias(for: id) == "ide")
+        aliases.replace([id: "ide "])
+        check("an imported alias is stored without its edge spaces", aliases.alias(for: id) == "ide")
         check("aliases remain app-wide", results("ide").entries.filter { $0.bundleID == id }.count == 4)
         visibility.setItemVisible(false, forKey: id)
         check(
