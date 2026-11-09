@@ -35,11 +35,13 @@ A personal fork of [abue-ammar/tinycast](https://github.com/abue-ammar/tinycast)
   its run answers wait until the box is read to its end. A snippet list from a link shows each
   keyword and text. An extension that opens another extension's link asks too. Drop these once
   upstream asks and shows input the same way.
-- **Releases are built here and published by hand.** The in-app updater reads this fork's GitHub
+- **Releases come from the fork's own workflow,** signed with the fork's Developer ID and its own
+  update key ([docs/signing.md](docs/signing.md)). The in-app updater reads this fork's GitHub
   releases, so an upstream release never replaces this build. Pulling upstream's changes means running
   `Scripts/update-from-upstream.sh` (below).
-- **No CI or community files.** `.github/` (release, website and bot workflows, issue forms) and
-  `.coderabbit.yaml` are removed, and `docs/release.md` describes upstream's process only.
+- **No upstream CI or community files.** `.github/` holds only the fork's `release.yml`; upstream's
+  website and bot workflows, issue forms and `.coderabbit.yaml` are removed, and `docs/release.md`
+  describes upstream's process only.
 
 ## Install
 
@@ -73,17 +75,19 @@ generate`), merge `--no-ff` into `main` and `development`, tag `fork-vX.Y.Z` on 
 branches and the tag, and install from `main` with `./Scripts/install-local.sh`. Then publish it:
 
 ```sh
-./Scripts/publish-release.sh
+gh workflow run release.yml --repo gilitos92/tinycast --ref main
 ```
 
-It takes the version from `project.yml`, or as an argument, and refuses to run until
-`fork-v<version>` is pushed. It checks that tag out in a temporary worktree, so any branch works,
-builds it signed with `Tinycast Self-Signed` and runs `verify-signature.sh`. It then packs
-`Tinycast-<version>.zip` for the updater and `Tinycast-<version>.dmg` for people, and publishes both
-as release `v<version>` with that version's changelog section as the notes. The build is not notarized, so a downloaded copy
-needs Gatekeeper's one-time approval; the [README](README.md#install-this-fork) walks through it. The
-updater only installs a build signed by the identity the running copy carries, so every published
-release must be built on a Mac holding this same `Tinycast Self-Signed` key.
+The **Release** workflow takes the version from `project.yml` and refuses to run unless
+`fork-v<version>` points at `main`. On GitHub's `xcode-27` runner it builds that commit, signs it
+with the fork's Developer ID, notarizes and staples the DMG, signs the updater zip with the release
+key, and checks that the last release can install it. It then publishes release `v<version>` with
+`Tinycast-<version>.dmg`, `Tinycast-<version>.zip` and its `.sig`, and that version's changelog
+section as the notes.
+
+1.11.0 is the bridge to Developer ID: 1.10.0 and older only install a build signed with
+`Tinycast Self-Signed`, so 1.11.0 is still published by hand with `./Scripts/publish-release.sh`,
+which builds it with that identity, and it already trusts the release key the workflow signs with.
 
 ## Branches
 
@@ -102,8 +106,8 @@ The script:
 
 1. Refuses to run off `development` or with uncommitted changes.
 2. Fetches `upstream` and stops if there is nothing new.
-3. Merges `upstream/main` with `--no-ff`. Upstream edits to files the fork deleted (`.github/`,
-   `.coderabbit.yaml`) are dropped automatically.
+3. Merges `upstream/main` with `--no-ff`. `.github/` and `.coderabbit.yaml` are restored to the
+   fork's own version, so upstream's workflows and their edits never land.
 4. Regenerates `Tinycast.xcodeproj` with XcodeGen, so files upstream added or removed are built.
 5. Runs `./Scripts/run-tests.sh`, then `./Scripts/install-local.sh`, then pushes `development`.
 
@@ -131,7 +135,7 @@ there is expected and the fork's side must survive:
 | Clipboard Quick Look | `Clipboard/UI/ClipboardQuickLook.swift`, `Clipboard/UI/ClipboardCoordinator.swift`, `Clipboard/UI/ClipboardScreen.swift`, `Palette/PalettePanel.swift` |
 | Menu pins | `MenuSearch/**`, `App/AppCore.swift` (`pinnedMenuItems`), `Palette/RootPaletteView.swift` (`movePinnedOrFavorite`) |
 | Link consent | `DeepLinks/UI/DeepLinkCoordinator.swift` (`runExtensionLink`, `askConsent`, `extensionConsentName`), `DeepLinks/Model/DeepLinkConsentPolicy.swift` (`key(entryID:percentEncodedQuery:)`), `DeepLinks/Model/DeepLinkInput.swift` (`details`), `Extensions/UI/ExtensionCoordinator.swift` (`runDeepLink`), `App/AppCore.swift` (`handleOpenURL`, `openChosenExtensionLink`, `confirm`, `choose`), `Quicklinks/UI/QuicklinkCoordinator.swift` (`performQuicklinkOpen`, `importQuicklinks(offered:)`, `reviewLines`), `Extensions/Model/ExtensionDeepLink.swift` (`field(named:)`, `reviewLines`, `keepingArguments`, `repeatsField`), `Extensions/Service/ExtensionManager.swift` (`launch(_:percentEncodedQuery:from:)`), `Extensions/Service/ExtensionHostBridge.swift` (`openRaycastURL`), `Extensions/Service/ExtensionMenuBarHost.swift`, `Platform/VisibleText.swift`, `Windows/Dialog/` (`.details`, `DialogDetailsField`, `allows`), `Snippets/Model/SnippetLinkReview.swift`, `Snippets/UI/SnippetCoordinator.swift` (`importSnippets`), `Scripts/run-tests.sh` and `Tests/quicklink-coordinator-test.swift` (`VisibleText`, `openChosenExtensionLink`, `confirm`) |
-| Fork setup | `Updates/Model/ReleaseFeed.swift` (`repository`), `Scripts/install-local.sh`, `Scripts/publish-release.sh`, `Scripts/update-from-upstream.sh`, `Scripts/check-migrations.sh` (`not_upstream`), `Scripts/run-tests.sh` (harness file lists), every harness's `UserDefaults` suite (a fixed name via `isolatedDefaults`, never a UUID) |
+| Fork setup | `Updates/Model/ReleaseFeed.swift` (`repository`), `Info.plist` (`TinycastUpdatePublicKey`), `Palette/RootPaletteView.swift` (Changelog link), `.github/workflows/release.yml`, `Scripts/install-local.sh`, `Scripts/publish-release.sh`, `Scripts/update-from-upstream.sh`, `Scripts/check-migrations.sh` (`not_upstream`), `Scripts/run-tests.sh` (harness file lists), every harness's `UserDefaults` suite (a fixed name via `isolatedDefaults`, never a UUID) |
 
 Paths are under `Tinycast/Features/` unless they start with `Platform/`, `Palette/`, `App/`,
 `Windows/` or `Scripts/`. If upstream later ships its own fix for one of these, prefer upstream's and drop the patch.

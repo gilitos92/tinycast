@@ -55,18 +55,22 @@ environment deploys from `main` only, so a workflow pushed to any other branch c
 | `NOTARY_KEY_ID`, `NOTARY_ISSUER_ID` | that key's ID and its issuer ID                                                                 |
 | `UPDATE_SIGNING_KEY`                | the release key: an Ed25519 private key, base64, whose public half is `TinycastUpdatePublicKey` |
 
+The fork signs with a Developer ID Application certificate made for Tinycast alone, so revoking it
+never touches the team's other apps. It shares its name with the team's other certificate, so tell
+them apart by expiry date in Keychain Access.
+
 Export the Developer ID identity alone — `security export -t identities` bundles every identity in
 the keychain. In Keychain Access, open **My Certificates**, select
-`Developer ID Application: … (J656U8XZ93)`, choose **File → Export Items…** and save a `.p12` with a
+`Developer ID Application: … (GC28C3K5G9)`, choose **File → Export Items…** and save a `.p12` with a
 password. Then:
 
 ```sh
-base64 -i DeveloperID.p12 | gh secret set DEVELOPER_ID_P12_BASE64 --env release --repo abue-ammar/tinycast
-gh secret set DEVELOPER_ID_P12_PASSWORD --env release --repo abue-ammar/tinycast
-base64 -i AuthKey_<key-id>.p8 | gh secret set NOTARY_KEY_P8_BASE64 --env release --repo abue-ammar/tinycast
-gh secret set NOTARY_KEY_ID --env release --repo abue-ammar/tinycast --body "<key-id>"
-gh secret set NOTARY_ISSUER_ID --env release --repo abue-ammar/tinycast --body "<issuer-id>"
-gh secret set UPDATE_SIGNING_KEY --env release --repo abue-ammar/tinycast
+base64 -i DeveloperID.p12 | gh secret set DEVELOPER_ID_P12_BASE64 --env release --repo gilitos92/tinycast
+gh secret set DEVELOPER_ID_P12_PASSWORD --env release --repo gilitos92/tinycast
+base64 -i AuthKey_<key-id>.p8 | gh secret set NOTARY_KEY_P8_BASE64 --env release --repo gilitos92/tinycast
+gh secret set NOTARY_KEY_ID --env release --repo gilitos92/tinycast --body "<key-id>"
+gh secret set NOTARY_ISSUER_ID --env release --repo gilitos92/tinycast --body "<issuer-id>"
+gh secret set UPDATE_SIGNING_KEY --env release --repo gilitos92/tinycast
 ```
 
 The password and the private key go in at `gh`'s prompt, never through `--body`, which would leave
@@ -120,8 +124,8 @@ hardened-runtime entitlement.
 
 `./Scripts/verify-signature.sh <path-to-.app>` asserts all of this — the runtime flag and a
 timestamped Developer ID signature on the app *and* every helper, an intact nested seal, no
-`get-task-allow`, and an entitlement for every usage string `Info.plist` declares. Both release jobs
-run it before submitting: a nested binary missing the runtime flag is the most common notarization
+`get-task-allow`, and an entitlement for every usage string `Info.plist` declares. The release job
+runs it before submitting: a nested binary missing the runtime flag is the most common notarization
 rejection, and a usage string missing its entitlement ships a permission that can never be granted.
 
 ## Update trust
