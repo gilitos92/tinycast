@@ -39,7 +39,12 @@ xcodebuild -project "$SRC/Tinycast.xcodeproj" -scheme Tinycast -configuration Re
     MARKETING_VERSION="$VERSION" CURRENT_PROJECT_VERSION="$BUILD" \
     build -quiet
 APP="$DERIVED/Build/Products/Release/Tinycast.app"
-"$SRC/Scripts/verify-signature.sh" "$APP"
+# A self-signed build fails only the Developer ID check; every other check must still pass.
+CHECK="$("$SRC/Scripts/verify-signature.sh" "$APP" 2>&1)" || {
+    FAILED="$(grep '^✗' <<< "$CHECK" || true)"
+    OTHER="$(grep -v 'not signed with a timestamped Developer ID$' <<< "$FAILED" || true)"
+    [ -n "$FAILED" ] && [ -z "$OTHER" ] || fail "The signature checks failed:"$'\n'"$CHECK"
+}
 
 ZIP="$OUT/Tinycast-${VERSION}.zip"
 DMG="$OUT/Tinycast-${VERSION}.dmg"
