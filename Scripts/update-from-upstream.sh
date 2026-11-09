@@ -4,8 +4,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-# Files the fork deleted on purpose; upstream edits to them are dropped, never restored.
-REMOVED=(.github .coderabbit.yaml)
+# The fork owns these: its .github holds only its own release workflow, and upstream's never land.
+FORK_OWNED=(.github .coderabbit.yaml)
 
 merge_upstream() {
     local behind
@@ -16,11 +16,11 @@ merge_upstream() {
     fi
     echo "▸ Merging ${behind} upstream commit(s)"
     git log --oneline HEAD..upstream/main
-    git merge --no-ff --no-edit upstream/main && return
-    for path in "${REMOVED[@]}"; do
-        if git ls-files --unmerged -- "$path" | grep -q .; then
-            git rm -rqf --ignore-unmatch -- "$path"
-        fi
+    git merge --no-ff --no-commit upstream/main || true
+    for path in "${FORK_OWNED[@]}"; do
+        git rm -rqf --ignore-unmatch -- "$path"
+        rm -rf "$path"
+        git checkout HEAD -- "$path" 2> /dev/null || true
     done
     if [ -n "$(git diff --name-only --diff-filter=U)" ]; then
         echo "✗ Resolve these conflicts, then: git commit --no-edit && $0 --finish"
