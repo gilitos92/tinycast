@@ -147,7 +147,7 @@ Paths are under `Tinycast/Features/` unless they start with `Platform/`, `Palett
 ### Check that it worked
 
 The tests cover emoji ranking and menu pins. Paste focus is only checked by hand, in the Debug build
-(`Tinycast Dev`): copy something, open a
+(`Tinycast Dev`, ⌘R in Xcode): copy something, open a
 text field in any app, paste from Clipboard History, then repeat from inside a Tinycast note. Last,
 start renaming a file in Finder and paste an emoji, then a snippet from the palette: each must land in
 the name, which stays editable.

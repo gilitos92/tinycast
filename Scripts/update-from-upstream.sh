@@ -1,5 +1,5 @@
 #!/bin/bash
-# Fork only: merge abue-ammar/tinycast into `development`, test, install and push the result.
+# Fork only: merge abue-ammar/tinycast into `development`, test and push the result.
 # After resolving merge conflicts by hand and committing, re-run with --finish.
 set -euo pipefail
 cd "$(dirname "$0")/.."
