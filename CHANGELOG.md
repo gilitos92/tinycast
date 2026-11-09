@@ -4,6 +4,16 @@ Releases of the gilitos92/tinycast fork. Each one names the
 [abue-ammar/tinycast](https://github.com/abue-ammar/tinycast) version it is based on; upstream's own
 changes are in its [releases](https://github.com/abue-ammar/tinycast/releases).
 
+## [1.12.0] - 2026-11-09
+
+Based on upstream v0.12.11.
+
+### Changed
+
+- Tinycast is signed with a Developer ID and notarized by Apple, so a downloaded copy opens without
+  a warning. After this update, macOS asks again for Accessibility and the other permissions
+  Tinycast uses, because the app's signer changed.
+
 ## [1.11.0] - 2026-11-09
 
 Based on upstream v0.12.11.
