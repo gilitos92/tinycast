@@ -310,6 +310,12 @@ enum SettingsSearchCatalog {
             .aiSystemPrompt, "Send a system prompt",
             keywords: ["instructions", "persona"]),
         .init(
+            group: .aiChatPresets, "Chat Presets",
+            keywords: ["persona", "instructions", "system prompt"]),
+        .init(
+            .aiChatPresets, "Add Chat Preset",
+            keywords: ["new", "persona", "instructions", "system prompt"]),
+        .init(
             .aiMCPServers, "Enable MCP servers",
             keywords: ["tools", "model context protocol"]),
         .init(
@@ -452,6 +458,12 @@ enum SettingsSearchCatalog {
         .init(
             .windowManagementOptions, "Gap between windows",
             keywords: ["padding", "spacing", "margin", "points"]),
+        .init(
+            .windowManagementOptions, "Wrap around displays",
+            keywords: ["next display", "previous display", "monitor", "screens", "loop"]),
+        .init(
+            .windowManagementOptions, "Keep aspect ratio",
+            keywords: ["next display", "previous display", "monitor", "scale", "resize"]),
         .init(
             .windowManagementOptions, "Shortcut preset",
             keywords: ["rectangle", "magnet", "spectacle", "defaults", "import", "shortcuts"]),

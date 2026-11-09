@@ -41,9 +41,6 @@ Each version is offered at most once per launch.
 The stable version only updates to stable releases, and the beta only to beta releases. They're
 separate apps, and an update never switches you from one to the other.
 
-On an Intel Mac, Tinycast only installs the universal build. If a release doesn't include one,
-Tinycast doesn't offer it, so it never installs a build that won't open.
-
 ## Safety checks
 
 Nothing is installed unless every check passes. If any check fails, the app you're running stays
@@ -52,7 +49,7 @@ exactly as it was.
 - **The signature must show that the download is Tinycast**, signed the same way as the copy you're
   running.
 - The app identifier and version must match what's expected.
-- Tinycast never runs `xattr` or asks for an administrator password. If it can't write to
+- Tinycast never asks for an administrator password. If it can't write to
   `/Applications`, it tells you instead of working around it.
 
 Updating never changes your settings, clipboard history, notes, snippets or anything else you

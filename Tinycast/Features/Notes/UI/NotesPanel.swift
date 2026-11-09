@@ -15,6 +15,8 @@ final class NotesPanel: NSPanel, AnimatedPanel {
     /// Offered every modified key before any view, so a focused field cannot swallow the chord.
     var onShortcut: ((NoteShortcut) -> Bool)?
     var onMouseDown: (() -> Void)?
+    /// The system title bar runs its own double-click action, so the band claims it before AppKit.
+    var claimsTitleBarDoubleClick: ((NSEvent) -> Bool)?
 
     private let acceptsMain: Bool
 
@@ -62,6 +64,11 @@ final class NotesPanel: NSPanel, AnimatedPanel {
         if event.type == .leftMouseDown || event.type == .rightMouseDown { onMouseDown?() }
         if event.type == .keyDown, !event.isARepeat, let onShortcut,
             let shortcut = NoteShortcut(event: event), onShortcut(shortcut)
+        {
+            return
+        }
+        if event.type == .leftMouseDown, event.clickCount == 2,
+            claimsTitleBarDoubleClick?(event) == true
         {
             return
         }
