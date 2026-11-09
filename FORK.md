@@ -90,6 +90,9 @@ section as the notes.
 which builds it with that identity, and it already trusts the release key the workflow signs with.
 The script lets that build fail only `verify-signature.sh`'s Developer ID check. Updating to 1.12.0
 changes the app's signer, so macOS asks again for Accessibility and every other permission.
+1.10.0 only ever looks at the newest release, and it cannot install 1.12.0. Therefore, publish
+1.12.0 only after every installed copy shows 1.11.0; a copy left behind needs
+`Tinycast-1.12.0.dmg` installed by hand, which Gatekeeper opens without a warning.
 
 ## Branches
 
