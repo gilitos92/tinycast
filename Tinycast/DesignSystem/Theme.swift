@@ -356,8 +356,6 @@ enum Theme {
         static let capsule = Animation.spring(response: 0.44, dampingFraction: 0.62)
         /// The buttons barely overshoot: the last rests on the window's edge, which would clip it.
         static let button = Animation.spring(response: 0.44, dampingFraction: 0.86)
-        /// Past the last button's spring and the capsule's undershoot, so the shadow lands at rest.
-        static let settle: TimeInterval = 1.2
     }
 
     enum MenuMotion {
@@ -418,6 +416,7 @@ enum Theme {
             adaptive(dark: .srgbInk(1, alpha: dark), light: .srgbInk(0, alpha: light))
         }
 
+        static let panelScrim = adaptive(dark: .srgbInk(0, alpha: 0.40), light: .srgbInk(1, alpha: 0.55))
         static let dialogDimming = adaptive(
             dark: .srgbInk(0, alpha: 0.34), light: .srgbInk(0, alpha: 0.34))
         /// Find's marks, the Mac's own yellow: every match faint, the current one solid.

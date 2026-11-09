@@ -23,9 +23,6 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
     private let dropGuides = PaletteDropGuideController()
     /// ⌘V: `Edit ▸ Paste` claims it before `sendEvent` whenever the board also carries text.
     private var pasteMonitor: Any?
-    /// Recuts the shadow each frame until `shadowDeadline`, while the compact bar's glass moves.
-    private var shadowLink: CADisplayLink?
-    private var shadowDeadline: CFTimeInterval = 0
     /// ⌘esc: the window server claims it, so no keystroke is left for the responder chain to see.
     private lazy var commandEscapeTap = CommandEscapeTap { [weak self] in
         guard let self, self.panel?.isKeyWindow == true else { return }
@@ -100,7 +97,6 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
             // Non-activating, so summoning never raises our own aux windows behind it.
             panel.makeKeyAndOrderFront(nil)
             panel.orderFrontRegardless()
-            followShadow(of: panel)
             // A never-activated login item can drop the first key request, so re-assert.
             DispatchQueue.main.async { [weak panel] in
                 guard let panel, panel.isVisible, !panel.isKeyWindow else { return }
@@ -119,7 +115,6 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
     // Isolated so teardown may touch the main-actor monitor; the block is already weak.
     isolated deinit {
         if let pasteMonitor { NSEvent.removeMonitor(pasteMonitor) }
-        shadowLink?.invalidate()
     }
 
     /// The character a bare-⌘ chord names, through the ASCII layout so an IME cannot move it.
@@ -170,7 +165,6 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
         panel?.orderOut(nil)
         NotesPanel.refusesInheritedKey = false
         commandEscapeTap.disable()
-        stopFollowingShadow()
         core.inputSourceSwitcher.endSession()
         core.calendarCoordinator.paletteDidHide()
         core.roomCoordinator.paletteDidHide()
@@ -520,29 +514,6 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
         let frame = PalettePlacement.frame(
             at: anchor, size: CGSize(width: size.panelWidth, height: height), outset: renderingOutset)
         panel.setFrame(frame, display: true)
-        if panel.isVisible { followShadow(of: panel) }
-    }
-
-    /// A shadow is cut once from the window's alpha, so it is recut until the bar's springs settle.
-    private func followShadow(of panel: NSPanel) {
-        panel.invalidateShadow()
-        let settle = Motion.duration(Theme.CompactBarMotion.settle)
-        guard settle > 0, let view = panel.contentView else { return }
-        shadowDeadline = CACurrentMediaTime() + settle
-        guard shadowLink == nil else { return }
-        let link = view.displayLink(target: self, selector: #selector(recutShadow(_:)))
-        link.add(to: .main, forMode: .common)
-        shadowLink = link
-    }
-
-    @objc private func recutShadow(_ link: CADisplayLink) {
-        panel?.invalidateShadow()
-        if link.timestamp >= shadowDeadline { stopFollowingShadow() }
-    }
-
-    private func stopFollowingShadow() {
-        shadowLink?.invalidate()
-        shadowLink = nil
     }
 
     /// The display to anchor to; never `NSScreen.main`, which follows the focused window.

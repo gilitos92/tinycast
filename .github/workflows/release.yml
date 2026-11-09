@@ -1,0 +1,177 @@
+name: Release
+
+run-name: "Tinycast release #${{ github.run_number }}"
+
+# Fork only: one stable channel, built from the fork-v<version> tag that main carries.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  SIGNING_IDENTITY: "Developer ID Application: GILBERTO GOMEZ VALADEZ (GC28C3K5G9)"
+  TEAM_ID: GC28C3K5G9
+
+jobs:
+  build:
+    # The release environment deploys from main only, so another branch never reads its secrets.
+    if: github.ref == 'refs/heads/main'
+    runs-on: xcode-27
+    environment: release
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # The migration check and the build number need every commit and tag; blobs they never read.
+          fetch-depth: 0
+          filter: blob:none
+
+      # The fork's remote also carries upstream's v* tags, which check-migrations skips via this ref.
+      - name: Fetch upstream's main
+        run: |
+          git fetch --quiet --filter=blob:none --no-tags \
+            https://github.com/abue-ammar/tinycast.git main:refs/remotes/upstream/main
+
+      - name: Check migrations
+        run: ./Scripts/check-migrations.sh
+
+      - name: Select Xcode 27
+        run: |
+          # Real folders only: an image's Xcode_27.N.app symlink can point at a release candidate.
+          XCODE_PATH="$(find -E /Applications -maxdepth 1 -type d -regex '.*/Xcode_27(\.[0-9]+)*\.app' | sort -V | tail -n1)"
+          if [ -z "$XCODE_PATH" ]; then
+            echo "::error::No released Xcode 27.x found on this runner. Installed Xcodes:"
+            ls /Applications | grep -i xcode || true
+            exit 1
+          fi
+          echo "Using $XCODE_PATH"
+          echo "DEVELOPER_DIR=$XCODE_PATH/Contents/Developer" >> "$GITHUB_ENV"
+
+      - name: Compute release metadata
+        id: meta
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="$(sed -nE 's/^ *MARKETING_VERSION: *"?([0-9.]+)"?.*/\1/p' project.yml | head -1)"
+          [ -n "$VERSION" ] || { echo "::error::No MARKETING_VERSION in project.yml"; exit 1; }
+          # The release workflow tags main before this runs, so the tag names exactly what ships.
+          TAGGED="$(git rev-parse -q --verify "refs/tags/fork-v${VERSION}^{commit}" || true)"
+          if [ "$TAGGED" != "$GITHUB_SHA" ]; then
+            echo "::error::fork-v${VERSION} must point at main's ${GITHUB_SHA:0:10}; push the tag first."
+            exit 1
+          fi
+          if gh release view "v${VERSION}" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "::error::v${VERSION} is already published."
+            exit 1
+          fi
+          {
+            echo "version=${VERSION}"
+            echo "build=$(git rev-list --count HEAD)"
+            echo "dmg_file=Tinycast-${VERSION}.dmg"
+            echo "zip_file=Tinycast-${VERSION}.zip"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Import signing certificate
+        env:
+          P12_BASE64: ${{ secrets.DEVELOPER_ID_P12_BASE64 }}
+          P12_PASSWORD: ${{ secrets.DEVELOPER_ID_P12_PASSWORD }}
+        run: ./Scripts/import-signing-identity.sh
+
+      - name: Build app
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+          BUILD_NUMBER: ${{ steps.meta.outputs.build }}
+        run: |
+          xcodebuild -project Tinycast.xcodeproj -scheme Tinycast -configuration Release \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="$SIGNING_IDENTITY" DEVELOPMENT_TEAM="$TEAM_ID" \
+            OTHER_CODE_SIGN_FLAGS="--timestamp" \
+            MARKETING_VERSION="$VERSION" CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
+            build
+
+      # Apple silicon users pay for no Intel slice, and a bundled helper is shipped code too.
+      - name: Assert the build is arm64-only
+        run: |
+          APP="$RUNNER_TEMP/DerivedData/Build/Products/Release/Tinycast.app"
+          for BIN in "$APP/Contents/MacOS/Tinycast" "$APP/Contents/Helpers/ClipboardTextHelper" "$APP/Contents/Helpers/FileIndexHelper" "$APP/Contents/Helpers/Tinycast Dictation.app/Contents/MacOS/Tinycast Dictation"; do
+            SLICES="$(lipo -archs "$BIN")"
+            if [ "$SLICES" != "arm64" ]; then
+              echo "::error::${BIN##*/}: expected arm64 alone, got '$SLICES'"
+              exit 1
+            fi
+          done
+
+      # Notarization rejects a nested binary without the hardened runtime; don't trust Xcode.
+      - name: Assert the signature is notarizable
+        run: ./Scripts/verify-signature.sh "$RUNNER_TEMP/DerivedData/Build/Products/Release/Tinycast.app"
+
+      # A build the last release cannot install strands every copy of it, so it never ships.
+      - name: Assert the last release can install this build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./Scripts/check-update-path.sh "$RUNNER_TEMP/DerivedData/Build/Products/Release/Tinycast.app" stable
+
+      - name: Notarize DMG and ZIP
+        env:
+          DMG_FILE: ${{ steps.meta.outputs.dmg_file }}
+          ZIP_FILE: ${{ steps.meta.outputs.zip_file }}
+          NOTARY_KEY_P8_BASE64: ${{ secrets.NOTARY_KEY_P8_BASE64 }}
+          NOTARY_KEY_ID: ${{ secrets.NOTARY_KEY_ID }}
+          NOTARY_ISSUER_ID: ${{ secrets.NOTARY_ISSUER_ID }}
+          UPDATE_SIGNING_KEY: ${{ secrets.UPDATE_SIGNING_KEY }}
+        run: |
+          ./Scripts/package-release.sh "$RUNNER_TEMP/DerivedData/Build/Products/Release/Tinycast.app" \
+            "dist/${DMG_FILE}" "dist/${ZIP_FILE}"
+
+      # Gatekeeper opens a downloaded app without "Open Anyway" only when this team notarized it.
+      - name: Assert the app is notarized by this team
+        env:
+          ZIP_FILE: ${{ steps.meta.outputs.zip_file }}
+        run: |
+          CHECK="$RUNNER_TEMP/check"
+          ditto -x -k "dist/${ZIP_FILE}" "$CHECK"
+          APP="$CHECK/Tinycast.app"
+          TEAM="$(codesign -dv "$APP" 2>&1 | sed -n 's/^TeamIdentifier=//p')"
+          [ "$TEAM" = "$TEAM_ID" ] || { echo "::error::Signed by team '$TEAM', not $TEAM_ID."; exit 1; }
+          xcrun stapler validate "$APP"
+          spctl --assess --type execute --verbose=2 "$APP" 2>&1 | tee /dev/stderr |
+            grep -q "Notarized Developer ID" || { echo "::error::The app isn't notarized."; exit 1; }
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Tinycast-${{ steps.meta.outputs.version }}
+          path: dist/
+
+      - name: Compose release notes
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+        run: |
+          NOTES="$RUNNER_TEMP/notes.md"
+          awk -v head="## [${VERSION}]" '
+              index($0, head) == 1 { found = 1; next }
+              found && /^## \[/ { exit }
+              found { print }
+          ' CHANGELOG.md > "$NOTES"
+          grep -q '[^[:space:]]' "$NOTES" || { echo "::error::CHANGELOG.md has no [${VERSION}] section."; exit 1; }
+          cat >> "$NOTES" << EOF
+
+          <!-- tinycast:install -->
+
+          ## Install
+
+          Download \`Tinycast-${VERSION}.dmg\`, open it and drag Tinycast into Applications. It needs
+          macOS 26 or later on Apple silicon. After that, Tinycast updates itself.
+          EOF
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.meta.outputs.version }}
+          DMG_FILE: ${{ steps.meta.outputs.dmg_file }}
+          ZIP_FILE: ${{ steps.meta.outputs.zip_file }}
+        run: |
+          # The updater parses only vX.Y.Z, so the published tag drops the fork- prefix.
+          gh release create "v${VERSION}" --target "$GITHUB_SHA" \
+            "dist/${DMG_FILE}" "dist/${ZIP_FILE}" "dist/${ZIP_FILE}.sig" \
+            --title "Tinycast ${VERSION}" --notes-file "$RUNNER_TEMP/notes.md"
