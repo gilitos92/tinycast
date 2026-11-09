@@ -88,6 +88,8 @@ section as the notes.
 1.11.0 is the bridge to Developer ID: 1.10.0 and older only install a build signed with
 `Tinycast Self-Signed`, so 1.11.0 is still published by hand with `./Scripts/publish-release.sh`,
 which builds it with that identity, and it already trusts the release key the workflow signs with.
+The script lets that build fail only `verify-signature.sh`'s Developer ID check. Updating to 1.12.0
+changes the app's signer, so macOS asks again for Accessibility and every other permission.
 
 ## Branches
 
