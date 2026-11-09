@@ -56,7 +56,9 @@ It builds a Release app outside this iCloud-synced folder, stamps it with the fo
 Tinycast, replaces `/Applications/Tinycast.app`
 and relaunches it. Settings, history, notes and pins live in `~/Library` and survive. The signing
 identity stays the same, so Accessibility stays granted; recreating the identity means removing and
-re-adding Tinycast under System Settings › Privacy & Security › Accessibility once.
+re-adding Tinycast under System Settings › Privacy & Security › Accessibility once. Releases are
+signed with the fork's Developer ID instead, so switching between a local build and a release makes
+macOS ask again for Accessibility and the other permissions.
 
 ## Versions and releases
 
@@ -72,7 +74,7 @@ upstream's 0.x. Each [CHANGELOG.md](CHANGELOG.md) entry names the upstream versi
 To release, follow the release workflow: on a `Release-X.Y.Z` branch from `development`, move the
 changelog's Unreleased entries under the new version, bump `MARKETING_VERSION` (then `xcodegen
 generate`), merge `--no-ff` into `main` and `development`, tag `fork-vX.Y.Z` on `main`, push both
-branches and the tag, and install from `main` with `./Scripts/install-local.sh`. Then publish it:
+branches and the tag. Then publish it:
 
 ```sh
 gh workflow run release.yml --repo gilitos92/tinycast --ref main
@@ -85,14 +87,10 @@ key, and checks that the last release can install it. It then publishes release 
 `Tinycast-<version>.dmg`, `Tinycast-<version>.zip` and its `.sig`, and that version's changelog
 section as the notes.
 
-1.11.0 is the bridge to Developer ID: 1.10.0 and older only install a build signed with
-`Tinycast Self-Signed`, so 1.11.0 is still published by hand with `./Scripts/publish-release.sh`,
-which builds it with that identity, and it already trusts the release key the workflow signs with.
-The script lets that build fail only `verify-signature.sh`'s Developer ID check. Updating to 1.12.0
-changes the app's signer, so macOS asks again for Accessibility and every other permission.
-1.10.0 only ever looks at the newest release, and it cannot install 1.12.0. Therefore, publish
-1.12.0 only after every installed copy shows 1.11.0; a copy left behind needs
-`Tinycast-1.12.0.dmg` installed by hand, which Gatekeeper opens without a warning.
+Releases up to 1.11.0 were signed with `Tinycast Self-Signed`; 1.12.0 is the first with the
+Developer ID. 1.10.0 and older install only a self-signed build and look only at the newest release,
+so they cannot update anymore: install the latest DMG by hand, which Gatekeeper opens without a
+warning.
 
 ## Branches
 
@@ -140,7 +138,7 @@ there is expected and the fork's side must survive:
 | Clipboard Quick Look | `Clipboard/UI/ClipboardQuickLook.swift`, `Clipboard/UI/ClipboardCoordinator.swift`, `Clipboard/UI/ClipboardScreen.swift`, `Palette/PalettePanel.swift` |
 | Menu pins | `MenuSearch/**`, `App/AppCore.swift` (`pinnedMenuItems`), `Palette/RootPaletteView.swift` (`movePinnedOrFavorite`) |
 | Link consent | `DeepLinks/UI/DeepLinkCoordinator.swift` (`runExtensionLink`, `askConsent`, `extensionConsentName`), `DeepLinks/Model/DeepLinkConsentPolicy.swift` (`key(entryID:percentEncodedQuery:)`), `DeepLinks/Model/DeepLinkInput.swift` (`details`), `Extensions/UI/ExtensionCoordinator.swift` (`runDeepLink`), `App/AppCore.swift` (`handleOpenURL`, `openChosenExtensionLink`, `confirm`, `choose`), `Quicklinks/UI/QuicklinkCoordinator.swift` (`performQuicklinkOpen`, `importQuicklinks(offered:)`, `reviewLines`), `Extensions/Model/ExtensionDeepLink.swift` (`field(named:)`, `reviewLines`, `keepingArguments`, `repeatsField`), `Extensions/Service/ExtensionManager.swift` (`launch(_:percentEncodedQuery:from:)`), `Extensions/Service/ExtensionHostBridge.swift` (`openRaycastURL`), `Extensions/Service/ExtensionMenuBarHost.swift`, `Platform/VisibleText.swift`, `Windows/Dialog/` (`.details`, `DialogDetailsField`, `allows`), `Snippets/Model/SnippetLinkReview.swift`, `Snippets/UI/SnippetCoordinator.swift` (`importSnippets`), `Scripts/run-tests.sh` and `Tests/quicklink-coordinator-test.swift` (`VisibleText`, `openChosenExtensionLink`, `confirm`) |
-| Fork setup | `Updates/Model/ReleaseFeed.swift` (`repository`), `Info.plist` (`TinycastUpdatePublicKey`), `Palette/RootPaletteView.swift` (Changelog link), `.github/workflows/release.yml`, `Scripts/install-local.sh`, `Scripts/publish-release.sh`, `Scripts/update-from-upstream.sh`, `Scripts/check-migrations.sh` (`not_upstream`), `Scripts/run-tests.sh` (harness file lists), every harness's `UserDefaults` suite (a fixed name via `isolatedDefaults`, never a UUID) |
+| Fork setup | `Updates/Model/ReleaseFeed.swift` (`repository`), `Info.plist` (`TinycastUpdatePublicKey`), `Palette/RootPaletteView.swift` (Changelog link), `.github/workflows/release.yml`, `Scripts/install-local.sh`, `Scripts/update-from-upstream.sh`, `Scripts/check-migrations.sh` (`not_upstream`), `Scripts/run-tests.sh` (harness file lists), every harness's `UserDefaults` suite (a fixed name via `isolatedDefaults`, never a UUID) |
 
 Paths are under `Tinycast/Features/` unless they start with `Platform/`, `Palette/`, `App/`,
 `Windows/` or `Scripts/`. If upstream later ships its own fix for one of these, prefer upstream's and drop the patch.
