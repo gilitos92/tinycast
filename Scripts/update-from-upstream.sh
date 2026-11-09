@@ -1,5 +1,5 @@
 #!/bin/bash
-# Fork only: merge abue-ammar/tinycast into `development`, test, install and push the result.
+# Fork only: merge abue-ammar/tinycast into `development`, test and push the result.
 # After resolving merge conflicts by hand and committing, re-run with --finish.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -45,6 +45,5 @@ if [ -n "$(git status --porcelain Tinycast.xcodeproj)" ]; then
 fi
 
 ./Scripts/run-tests.sh
-./Scripts/install-local.sh
 git push origin development
 echo "✓ Updated to upstream $(git describe --tags --abbrev=0 --match 'v*' upstream/main)"
