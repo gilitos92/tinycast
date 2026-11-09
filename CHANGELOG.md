@@ -6,6 +6,31 @@ changes are in its [releases](https://github.com/abue-ammar/tinycast/releases).
 
 ## [Unreleased]
 
+### Added
+
+- Upstream's changes up to v0.12.11: chat presets that start an AI Chat from saved instructions, a
+  model and tools; a reasoning effort picker for the OpenAI, Anthropic and Gemini APIs; calculator
+  dates, time zones, split bills, interest, rounding and unit fractions; currency pairs without a
+  connector; move-to-edge window commands and moving fullscreen windows between displays; bilingual
+  dictionary entries; and OpenCode using the MCP servers set up in Tinycast.
+- Clipboard History records copies that carry only HTML or only RTF.
+
+### Changed
+
+- An available update shows as a pill in the palette instead of a window, and installs when
+  Tinycast quits. The Changelog menu item opens this fork's changelog.
+- Exchange rates come from tinycast.dev instead of Raycast's private servers, once a day.
+- The compact launcher's shadow uses upstream's native shadow instead of the fork's own redraw.
+
+### Fixed
+
+- A text area no longer crashes Tinycast while SwiftUI measures it.
+- The floating Notes window drags by its title bar again.
+- Settings, AI Chat and command output menus show in a fullscreen Space.
+- Toggle System Appearance names the appearance it switched to.
+- Raycast extension forms keep fields that set `storeValue`, and `spawn` honours its `stdio` file
+  descriptors.
+
 ## [1.10.0] - 2026-11-03
 
 Based on upstream v0.12.6-beta.130.
