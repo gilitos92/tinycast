@@ -112,7 +112,8 @@ The script:
 3. Merges `upstream/main` with `--no-ff`. `.github/` and `.coderabbit.yaml` are restored to the
    fork's own version, so upstream's workflows and their edits never land.
 4. Regenerates `Tinycast.xcodeproj` with XcodeGen, so files upstream added or removed are built.
-5. Runs `./Scripts/run-tests.sh`, then `./Scripts/install-local.sh`, then pushes `development`.
+5. Runs `./Scripts/run-tests.sh`, then pushes `development`. It installs nothing, because a local
+   build is self-signed and would replace the notarized release in Applications.
 
 ### When the merge stops on a conflict
 
@@ -145,7 +146,8 @@ Paths are under `Tinycast/Features/` unless they start with `Platform/`, `Palett
 
 ### Check that it worked
 
-The tests cover emoji ranking and menu pins. Paste focus is only checked by hand: copy something, open a
+The tests cover emoji ranking and menu pins. Paste focus is only checked by hand, in the Debug build
+(`Tinycast Dev`): copy something, open a
 text field in any app, paste from Clipboard History, then repeat from inside a Tinycast note. Last,
 start renaming a file in Finder and paste an emoji, then a snippet from the palette: each must land in
 the name, which stays editable.

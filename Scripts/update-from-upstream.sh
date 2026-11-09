@@ -45,6 +45,5 @@ if [ -n "$(git status --porcelain Tinycast.xcodeproj)" ]; then
 fi
 
 ./Scripts/run-tests.sh
-./Scripts/install-local.sh
 git push origin development
 echo "✓ Updated to upstream $(git describe --tags --abbrev=0 --match 'v*' upstream/main)"
