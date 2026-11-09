@@ -16,19 +16,10 @@ Tinycast needs macOS 26 or later on a Mac with Apple silicon.
 1. Download the latest `Tinycast-<version>.dmg` from
    [Releases](https://github.com/gilitos92/tinycast/releases/latest).
 2. Open the DMG and drag **Tinycast** into **Applications**.
-3. Open Tinycast. macOS says it can't verify the app, because this fork isn't notarized by Apple.
-   Click **Done**.
-4. Open **System Settings › Privacy & Security**, scroll down to **Security**, and click
-   **Open Anyway** next to the message about Tinycast. Confirm with Touch ID or your password, then
-   click **Open Anyway** once more.
+3. Open Tinycast. Releases are signed with a Developer ID and notarized by Apple, so macOS opens it
+   without a warning.
 
-Instead of steps 3 and 4, you can run this once in Terminal:
-
-```sh
-xattr -dr com.apple.quarantine /Applications/Tinycast.app
-```
-
-You only do this once. Tinycast then updates itself from this fork's releases.
+Tinycast then updates itself from this fork's releases.
 
 <p align="center">
   A native macOS launcher for everyday productivity. Lightweight and open source.

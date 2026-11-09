@@ -4,6 +4,16 @@ Releases of the gilitos92/tinycast fork. Each one names the
 [abue-ammar/tinycast](https://github.com/abue-ammar/tinycast) version it is based on; upstream's own
 changes are in its [releases](https://github.com/abue-ammar/tinycast/releases).
 
+## [1.12.1] - 2026-11-09
+
+Based on upstream v0.12.11.
+
+### Changed
+
+- The install steps no longer ask you to open Tinycast with Open Anyway or Terminal, because
+  releases are now notarized. A copy still on 1.10.0 or older can't update by itself; install the
+  latest DMG by hand.
+
 ## [1.12.0] - 2026-11-09
 
 Based on upstream v0.12.11.
