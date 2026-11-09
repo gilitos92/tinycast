@@ -4,7 +4,9 @@ Releases of the gilitos92/tinycast fork. Each one names the
 [abue-ammar/tinycast](https://github.com/abue-ammar/tinycast) version it is based on; upstream's own
 changes are in its [releases](https://github.com/abue-ammar/tinycast/releases).
 
-## [Unreleased]
+## [1.11.0] - 2026-11-09
+
+Based on upstream v0.12.11.
 
 ### Added
 
@@ -21,6 +23,9 @@ changes are in its [releases](https://github.com/abue-ammar/tinycast/releases).
   Tinycast quits. The Changelog menu item opens this fork's changelog.
 - Exchange rates come from tinycast.dev instead of Raycast's private servers, once a day.
 - The compact launcher's shadow uses upstream's native shadow instead of the fork's own redraw.
+- This is the last self-signed release. From 1.12.0, releases are signed with a Developer ID and
+  notarized by Apple, so a downloaded copy opens without a warning. Updating to 1.12.0 makes macOS
+  ask again for Accessibility and the other permissions Tinycast uses.
 
 ### Fixed
 
